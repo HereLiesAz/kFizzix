@@ -4,7 +4,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.9.21" apply false
-    application
+    id("org.jetbrains.kotlin.android") version "1.9.21" apply false
+    id("com.android.application") version "8.2.1" apply false
     id("org.openjfx.javafxplugin") version "0.0.13" apply false
 }
 
@@ -15,15 +16,21 @@ allprojects {
 
     repositories {
         mavenCentral()
+        google()
     }
 }
 
 subprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
+    if (project.name != "kfizzix-android-app") {
+        apply(plugin = "java")
+        apply(plugin = "org.jetbrains.kotlin.jvm")
 
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(17))
+        afterEvaluate {
+            java {
+                toolchain {
+                    languageVersion.set(JavaLanguageVersion.of(17))
+                }
+            }
         }
     }
 }

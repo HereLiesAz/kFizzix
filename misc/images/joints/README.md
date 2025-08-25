@@ -1,0 +1,9 @@
+https://box2d.org/documentation_v3/distance_joint.svg
+https://box2d.org/documentation_v3/prismatic_joint.svg
+https://box2d.org/documentation_v3/revolute_joint.svg
+https://box2d.org/documentation_v3/wheel_joint.svg
+https://box2d.org/documentation/distance_joint.gif
+https://box2d.org/documentation/gear_joint.gif
+https://box2d.org/documentation/prismatic_joint.gif
+https://box2d.org/documentation/pulley_joint.gif
+https://box2d.org/documentation/revolute_joint.gif

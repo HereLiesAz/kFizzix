@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.hereliesaz.kfizzix.androidapp"
+    namespace = "com.hereliesaz.kfizzix.eightball"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.hereliesaz.kfizzix.androidapp"
+        applicationId = "com.hereliesaz.kfizzix.eightball"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

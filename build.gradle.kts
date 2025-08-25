@@ -20,17 +20,20 @@ allprojects {
     }
 }
 
-subprojects {
-    if (project.name != "kfizzix-android-app") {
-        apply(plugin = "java")
-        apply(plugin = "org.jetbrains.kotlin.jvm")
+configure(listOf(
+    project(":kfizzix-library"),
+    project(":kfizzix-serialization-kt"),
+    project(":jbox2d-testbed-jogl"),
+    project(":kfizzix-testbed-javafx"),
+    project(":kfizzix-testbed-javafx-kt"),
+    project(":kfizzix-magic-eight-ball")
+)) {
+    apply(plugin = "java")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
 
-        afterEvaluate {
-            java {
-                toolchain {
-                    languageVersion.set(JavaLanguageVersion.of(17))
-                }
-            }
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
         }
     }
 }

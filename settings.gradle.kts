@@ -18,5 +18,5 @@ include(
     ":kfizzix-testbed-javafx-kt",
     ":jbox2d-testbed-jogl",
     ":kfizzix-magic-eight-ball",
-    ":kfizzix-android-app"
+    ":kfizzix-8-ball"
 )

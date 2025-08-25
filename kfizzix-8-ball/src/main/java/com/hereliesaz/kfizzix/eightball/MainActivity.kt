@@ -1,4 +1,4 @@
-package com.hereliesaz.kfizzix.androidapp
+package com.hereliesaz.kfizzix.eightball
 
 import android.graphics.Canvas
 import android.graphics.Color

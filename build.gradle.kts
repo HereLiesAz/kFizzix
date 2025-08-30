@@ -1,4 +1,5 @@
 
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -31,7 +32,7 @@ configure(listOf(
     apply(plugin = "java")
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
-    java {
+    extensions.configure<JavaPluginExtension> {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(17))
         }

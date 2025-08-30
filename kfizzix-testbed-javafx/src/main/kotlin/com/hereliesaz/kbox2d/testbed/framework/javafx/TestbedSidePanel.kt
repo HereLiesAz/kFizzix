@@ -163,15 +163,41 @@ class TestbedSidePanel(val model: TestbedModel, val controller: AbstractTestbedC
             }
             when (setting.constraintType) {
                 TestbedSetting.ConstraintType.RANGE -> {
-                    val text = Label(setting.name + ": " + setting.value)
-                    val slider = Slider(setting.min.toDouble(), setting.max.toDouble(), setting.value.toDouble())
-                    // slider.setMaximumSize(new Dimension(200, 20));
-                    slider.valueProperty().addListener { _, _, _ -> stateChanged(slider) }
-                    putClientProperty(slider, "name", setting.name)
-                    putClientProperty(slider, SETTING_TAG, setting)
-                    putClientProperty(slider, LABEL_TAG, text)
-                    argPanel.children.add(text)
-                    argPanel.children.add(slider)
+                    val hBox = HBox()
+                    hBox.alignment = Pos.CENTER_LEFT
+                    hBox.spacing = 5.0
+                    val label = Label(setting.name)
+                    val textField = TextField(setting.value.toString())
+                    textField.prefWidth = 50.0
+
+                    val updateSetting = {
+                        try {
+                            var value = textField.text.toInt()
+                            if (value < setting.min) value = setting.min
+                            if (value > setting.max) value = setting.max
+                            setting.value = value
+                            textField.text = value.toString()
+                        } catch (e: NumberFormatException) {
+                            textField.text = setting.value.toString()
+                        }
+                    }
+
+                    // Action on Enter key press
+                    textField.setOnAction {
+                        updateSetting()
+                        model.panel.grabFocus()
+                    }
+
+                    // Action on focus lost (blur)
+                    textField.focusedProperty().addListener { _, _, newValue ->
+                        if (!newValue) { // Lost focus
+                            updateSetting()
+                            model.panel.grabFocus()
+                        }
+                    }
+
+                    hBox.children.addAll(label, textField)
+                    argPanel.children.add(hBox)
                 }
                 TestbedSetting.ConstraintType.BOOLEAN -> {
                     val checkbox = CheckBox(setting.name)

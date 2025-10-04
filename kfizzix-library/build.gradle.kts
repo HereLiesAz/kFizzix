@@ -10,6 +10,8 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
 
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
 }
 
 sourceSets {
@@ -24,4 +26,8 @@ java {
         languageVersion.set(JavaLanguageVersion.of(17))
 
     }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

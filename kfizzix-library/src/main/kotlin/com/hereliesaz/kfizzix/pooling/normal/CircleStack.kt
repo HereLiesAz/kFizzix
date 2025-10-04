@@ -21,9 +21,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.pooling.normal;
+package com.hereliesaz.kfizzix.pooling.normal;
 
-import de.pirckheimer_gymnasium.jbox2d.pooling.OrderedStack;
+import com.hereliesaz.kfizzix.pooling.OrderedStack;
 
 public abstract class CircleStack<E> implements OrderedStack<E>
 {

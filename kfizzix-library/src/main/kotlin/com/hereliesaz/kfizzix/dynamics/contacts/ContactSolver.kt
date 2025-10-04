@@ -21,22 +21,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts;
 
-import de.pirckheimer_gymnasium.jbox2d.collision.Manifold;
-import de.pirckheimer_gymnasium.jbox2d.collision.ManifoldPoint;
-import de.pirckheimer_gymnasium.jbox2d.collision.WorldManifold;
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.Shape;
-import de.pirckheimer_gymnasium.jbox2d.common.Mat22;
-import de.pirckheimer_gymnasium.jbox2d.common.MathUtils;
-import de.pirckheimer_gymnasium.jbox2d.common.Rot;
-import de.pirckheimer_gymnasium.jbox2d.common.Settings;
-import de.pirckheimer_gymnasium.jbox2d.common.Transform;
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Body;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Fixture;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.TimeStep;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.ContactVelocityConstraint.VelocityConstraintPoint;
+import com.hereliesaz.kfizzix.collision.Manifold;
+import com.hereliesaz.kfizzix.collision.ManifoldPoint;
+import com.hereliesaz.kfizzix.collision.WorldManifold;
+import com.hereliesaz.kfizzix.collision.shapes.Shape;
+import com.hereliesaz.kfizzix.common.Mat22;
+import com.hereliesaz.kfizzix.common.MathUtils;
+import com.hereliesaz.kfizzix.common.Rot;
+import com.hereliesaz.kfizzix.common.Settings;
+import com.hereliesaz.kfizzix.common.Transform;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.dynamics.Fixture;
+import com.hereliesaz.kfizzix.dynamics.TimeStep;
+import com.hereliesaz.kfizzix.dynamics.contacts.ContactVelocityConstraint.VelocityConstraintPoint;
 
 /**
  * @author Daniel Murphy

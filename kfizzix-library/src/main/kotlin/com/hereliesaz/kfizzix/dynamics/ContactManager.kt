@@ -21,14 +21,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics;
+package com.hereliesaz.kfizzix.dynamics;
 
-import de.pirckheimer_gymnasium.jbox2d.callbacks.ContactFilter;
-import de.pirckheimer_gymnasium.jbox2d.callbacks.ContactListener;
-import de.pirckheimer_gymnasium.jbox2d.callbacks.PairCallback;
-import de.pirckheimer_gymnasium.jbox2d.collision.broadphase.BroadPhase;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.Contact;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.ContactEdge;
+import com.hereliesaz.kfizzix.callbacks.ContactFilter;
+import com.hereliesaz.kfizzix.callbacks.ContactListener;
+import com.hereliesaz.kfizzix.callbacks.PairCallback;
+import com.hereliesaz.kfizzix.collision.broadphase.BroadPhase;
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
+import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge;
 
 /**
  * Delegate of World.

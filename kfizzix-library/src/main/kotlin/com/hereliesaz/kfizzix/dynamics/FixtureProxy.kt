@@ -21,9 +21,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics;
+package com.hereliesaz.kfizzix.dynamics;
 
-import de.pirckheimer_gymnasium.jbox2d.collision.AABB;
+import com.hereliesaz.kfizzix.collision.AABB;
 
 /**
  * This proxy is used internally to connect fixtures to the broad-phase.

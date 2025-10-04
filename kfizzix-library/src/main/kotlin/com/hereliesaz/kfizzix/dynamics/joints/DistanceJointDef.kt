@@ -43,10 +43,10 @@
  * misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints;
 
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.dynamics.Body;
 
 /**
  * Distance joint definition. This requires defining an anchor point on both

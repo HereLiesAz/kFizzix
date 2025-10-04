@@ -21,9 +21,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics;
+package com.hereliesaz.kfizzix.dynamics;
 
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.Shape;
+import com.hereliesaz.kfizzix.collision.shapes.Shape;
 
 /**
  * A fixture definition is used to create a fixture. This class defines an

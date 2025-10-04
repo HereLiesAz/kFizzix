@@ -21,11 +21,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.pooling.arrays;
+package com.hereliesaz.kfizzix.pooling.arrays;
 
 import java.util.HashMap;
 
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
+import com.hereliesaz.kfizzix.common.Vec2;
 
 /**
  * not thread safe Vec2[] pool

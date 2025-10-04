@@ -21,15 +21,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts;
 
-import de.pirckheimer_gymnasium.jbox2d.collision.Manifold;
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.EdgeShape;
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.PolygonShape;
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.ShapeType;
-import de.pirckheimer_gymnasium.jbox2d.common.Transform;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Fixture;
-import de.pirckheimer_gymnasium.jbox2d.pooling.WorldPool;
+import com.hereliesaz.kfizzix.collision.Manifold;
+import com.hereliesaz.kfizzix.collision.shapes.EdgeShape;
+import com.hereliesaz.kfizzix.collision.shapes.PolygonShape;
+import com.hereliesaz.kfizzix.collision.shapes.ShapeType;
+import com.hereliesaz.kfizzix.common.Transform;
+import com.hereliesaz.kfizzix.dynamics.Fixture;
+import com.hereliesaz.kfizzix.pooling.WorldPool;
 
 /**
  * @author Daniel Murphy

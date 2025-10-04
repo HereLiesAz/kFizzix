@@ -21,18 +21,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.pooling;
+package com.hereliesaz.kfizzix.pooling;
 
-import de.pirckheimer_gymnasium.jbox2d.collision.AABB;
-import de.pirckheimer_gymnasium.jbox2d.collision.Collision;
-import de.pirckheimer_gymnasium.jbox2d.collision.Distance;
-import de.pirckheimer_gymnasium.jbox2d.collision.TimeOfImpact;
-import de.pirckheimer_gymnasium.jbox2d.common.Mat22;
-import de.pirckheimer_gymnasium.jbox2d.common.Mat33;
-import de.pirckheimer_gymnasium.jbox2d.common.Rot;
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.common.Vec3;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.Contact;
+import com.hereliesaz.kfizzix.collision.AABB;
+import com.hereliesaz.kfizzix.collision.Collision;
+import com.hereliesaz.kfizzix.collision.Distance;
+import com.hereliesaz.kfizzix.collision.TimeOfImpact;
+import com.hereliesaz.kfizzix.common.Mat22;
+import com.hereliesaz.kfizzix.common.Mat33;
+import com.hereliesaz.kfizzix.common.Rot;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.common.Vec3;
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
 
 /**
  * World pool interface

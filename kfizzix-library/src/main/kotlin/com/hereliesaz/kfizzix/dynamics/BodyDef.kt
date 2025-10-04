@@ -21,9 +21,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics;
+package com.hereliesaz.kfizzix.dynamics;
 
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
+import com.hereliesaz.kfizzix.common.Vec2;
 
 /**
  * A body definition holds all the data needed to construct a rigid body. You

@@ -1,0 +1,9 @@
+LICENSE
+README.md
+setup.py
+pymath.egg-info/PKG-INFO
+pymath.egg-info/SOURCES.txt
+pymath.egg-info/dependency_links.txt
+pymath.egg-info/top_level.txt
+tests/test_lib.py
+tests/test_main.py

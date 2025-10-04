@@ -21,11 +21,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics;
+package com.hereliesaz.kfizzix.dynamics;
 
 import java.util.List;
 
-import de.pirckheimer_gymnasium.jbox2d.common.MathUtils;
+import com.hereliesaz.kfizzix.common.MathUtils;
 
 /**
  * @author Daniel Murphy

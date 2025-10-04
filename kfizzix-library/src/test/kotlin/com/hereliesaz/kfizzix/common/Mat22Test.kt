@@ -311,4 +311,29 @@ class Mat22Test {
         val expected = Mat22(17f, 23f, 39f, 53f)
         assertMat22Equals(expected, out, 1e-7f)
     }
+
+    @Test
+    fun `test equals and hashCode`() {
+        val mat1 = Mat22(1f, 2f, 3f, 4f)
+        val mat2 = Mat22(1f, 2f, 3f, 4f)
+        val mat3 = Mat22(5f, 6f, 7f, 8f)
+        assertEquals(mat1, mat2)
+        assert(mat1 != mat3)
+        assertEquals(mat1.hashCode(), mat2.hashCode())
+        assert(mat1.hashCode() != mat3.hashCode())
+    }
+
+    @Test
+    fun `test copy`() {
+        val mat1 = Mat22(1f, 2f, 3f, 4f)
+        val mat2 = mat1.copy()
+        assertEquals(mat1, mat2)
+        assert(mat1 !== mat2)
+    }
+
+    @Test
+    fun `test toString`() {
+        val mat = Mat22(1f, 2f, 3f, 4f)
+        assertEquals("[(${mat.ex.x}, ${mat.ey.x}), (${mat.ex.y}, ${mat.ey.y})]", mat.toString())
+    }
 }

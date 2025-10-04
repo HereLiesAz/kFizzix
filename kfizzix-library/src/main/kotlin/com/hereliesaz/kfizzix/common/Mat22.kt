@@ -30,47 +30,30 @@ import java.io.Serializable
  *
  * @author Daniel Murphy
  */
-class Mat22 : Serializable {
-    val ex: Vec2
-    val ey: Vec2
+data class Mat22(
+    @JvmField val ex: Vec2 = Vec2(),
+    @JvmField val ey: Vec2 = Vec2()
+) : Serializable {
 
     /**
-     * Convert the matrix to printable format.
+     * Convert the matrix to an improved printable format.
      */
     override fun toString(): String {
-        var s = ""
-        s += "[" + ex.x + "," + ey.x + "]\n"
-        s += "[" + ex.y + "," + ey.y + "]"
-        return s
+        return "[(${ex.x}, ${ey.x}), (${ex.y}, ${ey.y})]"
     }
 
     /**
-     * Construct zero matrixes. Note: this is NOT an identity matrix! djm fixed
-     * double allocation problem
-     */
-    constructor() {
-        ex = Vec2()
-        ey = Vec2()
-    }
-
-    /**
-     * Create a matrix with given vectors as columns.
+     * Creates a matrix with given vectors as columns.
      *
      * @param c1 Column 1 of matrix
      * @param c2 Column 2 of matrix
      */
-    constructor(c1: Vec2, c2: Vec2) {
-        ex = c1.clone()
-        ey = c2.clone()
-    }
+    constructor(c1: Vec2, c2: Vec2) : this(c1.copy(), c2.copy())
 
     /**
      * Create a matrix from four floats.
      */
-    constructor(exx: Float, col2x: Float, exy: Float, col2y: Float) {
-        ex = Vec2(exx, exy)
-        ey = Vec2(col2x, col2y)
-    }
+    constructor(exx: Float, col2x: Float, exy: Float, col2y: Float) : this(Vec2(exx, exy), Vec2(col2x, col2y))
 
     /**
      * Set as a copy of another matrix.
@@ -91,14 +74,6 @@ class Mat22 : Serializable {
         ey.x = col2x
         ey.y = col2y
         return this
-    }
-
-    /**
-     * Return a clone of this matrix. djm fixed double allocation
-     */
-    // @Override // annotation omitted for GWT-compatibility
-    public override fun clone(): Mat22 {
-        return Mat22(ex, ey)
     }
 
     /**
@@ -174,6 +149,10 @@ class Mat22 : Serializable {
         return B
     }
 
+    /**
+     * Inverts this matrix and returns it for chaining. This method alters the original matrix.
+     * For a non-mutating version, see [invert].
+     */
     fun invertLocal(): Mat22 {
         val a = ex.x
         val b = ey.x
@@ -190,6 +169,12 @@ class Mat22 : Serializable {
         return this
     }
 
+    /**
+     * Inverts this matrix and stores the result in the given output matrix.
+     * This is a performance-optimized version that avoids new object allocations.
+     *
+     * @param out the matrix to store the result in
+     */
     fun invertToOut(out: Mat22) {
         val a = ex.x
         val b = ey.x
@@ -205,8 +190,7 @@ class Mat22 : Serializable {
     }
 
     /**
-     * Return the matrix composed of the absolute values of all elements. djm:
-     * fixed double allocation
+     * Return the matrix composed of the absolute values of all elements.
      *
      * @return Absolute value matrix
      */
@@ -214,7 +198,10 @@ class Mat22 : Serializable {
         return Mat22(MathUtils.abs(ex.x), MathUtils.abs(ey.x), MathUtils.abs(ex.y), MathUtils.abs(ey.y))
     }
 
-    /* djm: added */
+    /**
+     * Sets the components of this matrix to their absolute values and returns it for chaining.
+     * This method alters the original matrix. For a non-mutating version, see [abs].
+     */
     fun absLocal() {
         ex.absLocal()
         ey.absLocal()
@@ -231,12 +218,27 @@ class Mat22 : Serializable {
         return Vec2(ex.x * v.x + ey.x * v.y, ex.y * v.x + ey.y * v.y)
     }
 
+    /**
+     * Multiplies a vector by this matrix and stores the result in the given output vector.
+     * This is a performance-optimized version that avoids new object allocations.
+     *
+     * @param v the vector to multiply
+     * @param out the vector to store the result in
+     */
     fun mulToOut(v: Vec2, out: Vec2) {
         val tempY = ex.y * v.x + ey.y * v.y
         out.x = ex.x * v.x + ey.x * v.y
         out.y = tempY
     }
 
+    /**
+     * Multiplies a vector by this matrix and stores the result in the given output vector.
+     * This is an unsafe version that assumes the output vector is not the same as the input vector.
+     *
+     * @param v the vector to multiply
+     * @param out the vector to store the result in
+     */
+    @DelicateFizzixApi
     fun mulToOutUnsafe(v: Vec2, out: Vec2) {
         assert(v !== out)
         out.x = ex.x * v.x + ey.x * v.y
@@ -244,26 +246,36 @@ class Mat22 : Serializable {
     }
 
     /**
-     * Multiply another matrix by this one (this one on left). djm optimized
+     * Multiply another matrix by this one (this one on left).
      */
     fun mul(R: Mat22): Mat22 {
-        /*
-     * Mat22 C = new Mat22();C.set(this.mul(R.ex), this.mul(R.ey));return C;
-     */
         val C = Mat22()
         C.ex.x = ex.x * R.ex.x + ey.x * R.ex.y
         C.ex.y = ex.y * R.ex.x + ey.y * R.ex.y
         C.ey.x = ex.x * R.ey.x + ey.x * R.ey.y
         C.ey.y = ex.y * R.ey.x + ey.y * R.ey.y
-        // C.set(ex,col2);
         return C
     }
 
+    /**
+     * Multiplies this matrix by another and returns it for chaining. This method alters the original matrix.
+     * For a non-mutating version, see [mul].
+     *
+     * @param R the matrix to multiply by
+     * @return this matrix for chaining
+     */
     fun mulLocal(R: Mat22): Mat22 {
         mulToOut(R, this)
         return this
     }
 
+    /**
+     * Multiplies this matrix by another and stores the result in the given output matrix.
+     * This is a performance-optimized version that avoids new object allocations.
+     *
+     * @param R the matrix to multiply by
+     * @param out the matrix to store the result in
+     */
     fun mulToOut(R: Mat22, out: Mat22) {
         val tempY1 = ex.y * R.ex.x + ey.y * R.ex.y
         out.ex.x = ex.x * R.ex.x + ey.x * R.ex.y
@@ -273,6 +285,14 @@ class Mat22 : Serializable {
         out.ey.y = tempY2
     }
 
+    /**
+     * Multiplies this matrix by another and stores the result in the given output matrix.
+     * This is an unsafe version that assumes the output matrix is not the same as the input matrices.
+     *
+     * @param R the matrix to multiply by
+     * @param out the matrix to store the result in
+     */
+    @DelicateFizzixApi
     fun mulToOutUnsafe(R: Mat22, out: Mat22) {
         assert(out !== R)
         assert(out !== this)
@@ -283,15 +303,9 @@ class Mat22 : Serializable {
     }
 
     /**
-     * Multiply another matrix by the transpose of this one (transpose of this
-     * one on left). djm: optimized
+     * Multiply another matrix by the transpose of this one (transpose of this one on left).
      */
     fun mulTrans(B: Mat22): Mat22 {
-        /*
-     * Vec2 c1 = new Vec2(Vec2.dot(this.ex, B.ex), Vec2.dot(this.ey, B.ex));
-     * Vec2 c2 = new Vec2(Vec2.dot(this.ex, B.ey), Vec2.dot(this.ey, B.ey));
-     * Mat22 C = new Mat22(); C.set(c1, c2); return C;
-     */
         val C = Mat22()
         C.ex.x = Vec2.dot(ex, B.ex)
         C.ex.y = Vec2.dot(ey, B.ex)
@@ -300,17 +314,26 @@ class Mat22 : Serializable {
         return C
     }
 
+    /**
+     * Multiplies this matrix's transpose by another and returns it for chaining. This method alters the original matrix.
+     * For a non-mutating version, see [mulTrans].
+     *
+     * @param B the matrix to multiply by
+     * @return this matrix for chaining
+     */
     fun mulTransLocal(B: Mat22): Mat22 {
         mulTransToOut(B, this)
         return this
     }
 
-    fun mulTransToOut(B: Mat22, out: Mat22) {
-        /*
-     * out.ex.x = Vec2.dot(this.ex, B.ex); out.ex.y = Vec2.dot(this.ey,
-     * B.ex); out.ey.x = Vec2.dot(this.ex, B.ey); out.ey.y =
-     * Vec2.dot(this.ey, B.ey);
+    /**
+     * Multiplies this matrix's transpose by another and stores the result in the given output matrix.
+     * This is a performance-optimized version that avoids new object allocations.
+     *
+     * @param B the matrix to multiply by
+     * @param out the matrix to store the result in
      */
+    fun mulTransToOut(B: Mat22, out: Mat22) {
         val x1 = ex.x * B.ex.x + ex.y * B.ex.y
         val y1 = ey.x * B.ex.x + ey.y * B.ex.y
         val x2 = ex.x * B.ey.x + ex.y * B.ey.y
@@ -321,6 +344,14 @@ class Mat22 : Serializable {
         out.ey.y = y2
     }
 
+    /**
+     * Multiplies this matrix's transpose by another and stores the result in the given output matrix.
+     * This is an unsafe version that assumes the output matrix is not the same as the input matrices.
+     *
+     * @param B the matrix to multiply by
+     * @param out the matrix to store the result in
+     */
+    @DelicateFizzixApi
     fun mulTransToOutUnsafe(B: Mat22, out: Mat22) {
         assert(B !== out)
         assert(this !== out)
@@ -334,17 +365,17 @@ class Mat22 : Serializable {
      * Multiply a vector by the transpose of this matrix.
      */
     fun mulTrans(v: Vec2): Vec2 {
-        // return new Vec2(Vec2.dot(v, ex), Vec2.dot(v, col2));
         return Vec2(v.x * ex.x + v.y * ex.y, v.x * ey.x + v.y * ey.y)
     }
 
-    /*
-   * djm added
-   */
-    fun mulTransToOut(v: Vec2, out: Vec2) {
-        /*
-     * out.x = Vec2.dot(v, ex); out.y = Vec2.dot(v, col2);
+    /**
+     * Multiply a vector by the transpose of this matrix and stores the result in the given output vector.
+     * This is a performance-optimized version that avoids new object allocations.
+     *
+     * @param v the vector to multiply
+     * @param out the vector to store the result in
      */
+    fun mulTransToOut(v: Vec2, out: Vec2) {
         val tempX = v.x * ex.x + v.y * ex.y
         out.y = v.x * ey.x + v.y * ey.y
         out.x = tempX
@@ -407,40 +438,37 @@ class Mat22 : Serializable {
         out.y = tempY
     }
 
-    override fun hashCode(): Int {
-        val prime = 31
-        var result = 1
-        result = prime * result + ex.hashCode()
-        result = prime * result + ey.hashCode()
-        return result
-    }
-
-    override fun equals(obj: Any?): Boolean {
-        if (this === obj) return true
-        if (obj == null) return false
-        if (javaClass != obj.javaClass) return false
-        val other = obj as Mat22
-        if (ex == null) {
-            if (other.ex != null) return false
-        } else if (ex != other.ex) return false
-        return if (ey == null) {
-            other.ey == null
-        } else ey == other.ey
-    }
-
     companion object {
         private const val serialVersionUID = 2L
+
         fun mul(R: Mat22, v: Vec2): Vec2 {
             // return R.mul(v);
             return Vec2(R.ex.x * v.x + R.ey.x * v.y, R.ex.y * v.x + R.ey.y * v.y)
         }
 
+        /**
+         * Multiplies a matrix by a vector and stores the result in the given output vector.
+         * This is a performance-optimized version that avoids new object allocations.
+         *
+         * @param R the matrix
+         * @param v the vector
+         * @param out the vector to store the result in
+         */
         fun mulToOut(R: Mat22, v: Vec2, out: Vec2) {
             val tempY = R.ex.y * v.x + R.ey.y * v.y
             out.x = R.ex.x * v.x + R.ey.x * v.y
             out.y = tempY
         }
 
+        /**
+         * Multiplies a matrix by a vector and stores the result in the given output vector.
+         * This is an unsafe version that assumes the output vector is not the same as the input vector.
+         *
+         * @param R the matrix
+         * @param v the vector
+         * @param out the vector to store the result in
+         */
+        @DelicateFizzixApi
         fun mulToOutUnsafe(R: Mat22, v: Vec2, out: Vec2) {
             assert(v !== out)
             out.x = R.ex.x * v.x + R.ey.x * v.y
@@ -457,6 +485,14 @@ class Mat22 : Serializable {
             return C
         }
 
+        /**
+         * Multiplies two matrices and stores the result in the given output matrix.
+         * This is a performance-optimized version that avoids new object allocations.
+         *
+         * @param A the first matrix
+         * @param B the second matrix
+         * @param out the matrix to store the result in
+         */
         fun mulToOut(A: Mat22, B: Mat22, out: Mat22) {
             val tempY1 = A.ex.y * B.ex.x + A.ey.y * B.ex.y
             val tempX1 = A.ex.x * B.ex.x + A.ey.x * B.ex.y
@@ -468,6 +504,15 @@ class Mat22 : Serializable {
             out.ey.y = tempY2
         }
 
+        /**
+         * Multiplies two matrices and stores the result in the given output matrix.
+         * This is an unsafe version that assumes the output matrix is not the same as the input matrices.
+         *
+         * @param A the first matrix
+         * @param B the second matrix
+         * @param out the matrix to store the result in
+         */
+        @DelicateFizzixApi
         fun mulToOutUnsafe(A: Mat22, B: Mat22, out: Mat22) {
             assert(out !== A)
             assert(out !== B)
@@ -481,12 +526,29 @@ class Mat22 : Serializable {
             return Vec2(v.x * R.ex.x + v.y * R.ex.y, v.x * R.ey.x + v.y * R.ey.y)
         }
 
+        /**
+         * Multiplies the transpose of a matrix by a vector and stores the result in the given output vector.
+         * This is a performance-optimized version that avoids new object allocations.
+         *
+         * @param R the matrix to transpose
+         * @param v the vector to multiply
+         * @param out the vector to store the result in
+         */
         fun mulTransToOut(R: Mat22, v: Vec2, out: Vec2) {
             val outX = v.x * R.ex.x + v.y * R.ex.y
             out.y = v.x * R.ey.x + v.y * R.ey.y
             out.x = outX
         }
 
+        /**
+         * Multiplies the transpose of a matrix by a vector and stores the result in the given output vector.
+         * This is an unsafe version that assumes the output vector is not the same as the input vector.
+         *
+         * @param R the matrix to transpose
+         * @param v the vector to multiply
+         * @param out the vector to store the result in
+         */
+        @DelicateFizzixApi
         fun mulTransToOutUnsafe(R: Mat22, v: Vec2, out: Vec2) {
             assert(out !== v)
             out.y = v.x * R.ey.x + v.y * R.ey.y
@@ -502,6 +564,14 @@ class Mat22 : Serializable {
             return C
         }
 
+        /**
+         * Multiplies the transpose of a matrix by another matrix and stores the result in the given output matrix.
+         * This is a performance-optimized version that avoids new object allocations.
+         *
+         * @param A the matrix to transpose
+         * @param B the matrix to multiply by
+         * @param out the matrix to store the result in
+         */
         fun mulTransToOut(A: Mat22, B: Mat22, out: Mat22) {
             val x1 = A.ex.x * B.ex.x + A.ex.y * B.ex.y
             val y1 = A.ey.x * B.ex.x + A.ey.y * B.ex.y
@@ -513,6 +583,15 @@ class Mat22 : Serializable {
             out.ey.y = y2
         }
 
+        /**
+         * Multiplies the transpose of a matrix by another matrix and stores the result in the given output matrix.
+         * This is an unsafe version that assumes the output matrix is not the same as the input matrices.
+         *
+         * @param A the matrix to transpose
+         * @param B the matrix to multiply by
+         * @param out the matrix to store the result in
+         */
+        @DelicateFizzixApi
         fun mulTransToOutUnsafe(A: Mat22, B: Mat22, out: Mat22) {
             assert(A !== out)
             assert(B !== out)

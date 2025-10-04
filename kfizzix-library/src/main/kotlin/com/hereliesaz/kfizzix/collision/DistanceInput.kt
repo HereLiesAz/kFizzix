@@ -29,13 +29,11 @@ import com.hereliesaz.kfizzix.common.Transform
 /**
  * Input for Distance. You have to option to use the shape radii in the
  * computation.
- *
- * @author Daniel Murphy
  */
-class DistanceInput {
-    var proxyA = DistanceProxy()
-    var proxyB = DistanceProxy()
-    var transformA = Transform()
-    var transformB = Transform()
-    var useRadii = false
-}
+data class DistanceInput(
+    var proxyA: DistanceProxy = DistanceProxy(),
+    var proxyB: DistanceProxy = DistanceProxy(),
+    var transformA: Transform = Transform(),
+    var transformB: Transform = Transform(),
+    var useRadii: Boolean = false
+)

@@ -94,8 +94,7 @@ class DynamicTree : BroadPhaseStrategy {
         val node = nodes[proxyId]
         assert(node.child1 == null)
         val nodeAABB = node.aabb
-        // if (nodeAABB.contains(aabb)) {
-        if (nodeAABB.lowerBound.x <= aabb.lowerBound.x && nodeAABB.lowerBound.y <= aabb.lowerBound.y && aabb.upperBound.x <= nodeAABB.upperBound.x && aabb.upperBound.y <= nodeAABB.upperBound.y) {
+        if (nodeAABB.contains(aabb)) {
             return false
         }
         removeLeaf(node)
@@ -147,9 +146,7 @@ class DynamicTree : BroadPhaseStrategy {
                     }
                 } else {
                     if (nodeStack.size - nodeStackIndex - 2 <= 0) {
-                        val newBuffer = Array<DynamicTreeNode?>(nodeStack.size * 2) { null }
-                        System.arraycopy(nodeStack, 0, newBuffer, 0, nodeStack.size)
-                        nodeStack = newBuffer
+                        nodeStack = nodeStack.copyOf(nodeStack.size * 2)
                     }
                     nodeStack[nodeStackIndex++] = node.child1
                     nodeStack[nodeStackIndex++] = node.child2
@@ -256,9 +253,7 @@ class DynamicTree : BroadPhaseStrategy {
                 }
             } else {
                 if (nodeStack.size - nodeStackIndex - 2 <= 0) {
-                    val newBuffer = Array<DynamicTreeNode?>(nodeStack.size * 2) { null }
-                    System.arraycopy(nodeStack, 0, newBuffer, 0, nodeStack.size)
-                    nodeStack = newBuffer
+                    nodeStack = nodeStack.copyOf(nodeStack.size * 2)
                 }
                 nodeStack[nodeStackIndex++] = node.child1
                 nodeStack[nodeStackIndex++] = node.child2

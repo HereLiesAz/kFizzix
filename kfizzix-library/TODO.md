@@ -5,7 +5,7 @@ This document outlines the tasks required to analyze, refactor, and test the kfi
 ## 1. Analysis
 
 - [x] Analyze `common` package (`Vec2.kt`, `Mat22.kt`, `Rot.kt`, `Transform.kt`)
-- [ ] Analyze `collision` package and its subpackages (`shapes`, `broadphase`)
+- [x] Analyze `collision` package and its subpackages (`shapes`, `broadphase`)
 - [ ] Analyze `dynamics` package and its subpackages (`contacts`, `joints`)
 - [ ] Analyze `particle` package
 - [ ] Analyze `pooling` package

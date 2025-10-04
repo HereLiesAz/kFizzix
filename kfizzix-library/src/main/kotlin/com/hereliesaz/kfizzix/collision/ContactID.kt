@@ -18,7 +18,7 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT of THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
@@ -46,57 +46,24 @@
 package com.hereliesaz.kfizzix.collision
 
 /**
- * Contact ids to facilitate warm starting. Note: the ContactFeatures class is
- * just embedded in here
- *
- * @author Daniel Murphy
+ * Contact ids to facilitate warm starting.
  */
-class ContactID : Comparable<ContactID> {
+data class ContactID(
+    var indexA: Byte = 0,
+    var indexB: Byte = 0,
+    var typeA: Byte = 0,
+    var typeB: Byte = 0
+) : Comparable<ContactID> {
     enum class Type {
         VERTEX, FACE
     }
 
-    var indexA: Byte = 0
-    var indexB: Byte = 0
-    var typeA: Byte = 0
-    var typeB: Byte = 0
-
     val key: Int
         get() = (indexA.toInt() shl 24) or (indexB.toInt() shl 16) or (typeA.toInt() shl 8) or typeB.toInt()
 
-    fun isEqual(cid: ContactID): Boolean {
-        return key == cid.key
-    }
-
-    constructor() {}
-    constructor(c: ContactID) {
-        set(c)
-    }
-
-    fun set(c: ContactID) {
-        indexA = c.indexA
-        indexB = c.indexB
-        typeA = c.typeA
-        typeB = c.typeB
-    }
-
     fun flip() {
-        var tempA = indexA
-        indexA = indexB
-        indexB = tempA
-        tempA = typeA
-        typeA = typeB
-        typeB = tempA
-    }
-
-    /**
-     * zeros out the data
-     */
-    fun zero() {
-        indexA = 0
-        indexB = 0
-        typeA = 0
-        typeB = 0
+        indexA = indexB.also { indexB = indexA }
+        typeA = typeB.also { typeB = typeA }
     }
 
     override fun compareTo(other: ContactID): Int {

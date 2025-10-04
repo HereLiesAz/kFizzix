@@ -160,4 +160,30 @@ class TransformTest {
         val expected = Transform(Vec2(2f, 2f), Rot(-PI.toFloat() / 4))
         assertTransformEquals(expected, out, 1e-7f)
     }
+
+    @Test
+    fun `test equals and hashCode`() {
+        val transform1 = Transform(Vec2(1f, 2f), Rot(PI.toFloat() / 2))
+        val transform2 = Transform(Vec2(1f, 2f), Rot(PI.toFloat() / 2))
+        val transform3 = Transform(Vec2(3f, 4f), Rot(PI.toFloat() / 4))
+        assertEquals(transform1, transform2)
+        assert(transform1 != transform3)
+        assertEquals(transform1.hashCode(), transform2.hashCode())
+        assert(transform1.hashCode() != transform3.hashCode())
+    }
+
+    @Test
+    fun `test copy`() {
+        val transform1 = Transform(Vec2(1f, 2f), Rot(PI.toFloat() / 2))
+        val transform2 = transform1.copy()
+        assertEquals(transform1, transform2)
+        assert(transform1 !== transform2)
+    }
+
+    @Test
+    fun `test toString`() {
+        val transform = Transform(Vec2(1f, 2f), Rot(PI.toFloat() / 2))
+        val expectedString = "XForm:\nPosition: ${transform.p}\nR: \n${transform.q}\n"
+        assertEquals(expectedString, transform.toString())
+    }
 }

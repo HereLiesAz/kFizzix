@@ -113,39 +113,34 @@ class ChainShape : Shape(ShapeType.CHAIN) {
     override fun raycast(output: RayCastOutput, input: RayCastInput, xf: Transform, childIndex: Int): Boolean {
         assert(childIndex < count)
         val edgeShape = pool0
-        var i2 = childIndex + 1
-        if (i2 == count) {
-            i2 = 0
-        }
-        val v = vertices!![childIndex]
-        edgeShape.vertex1.x = v.x
-        edgeShape.vertex1.y = v.y
-        val v1 = vertices!![i2]
-        edgeShape.vertex2.x = v1.x
-        edgeShape.vertex2.y = v1.y
+
+        val i2 = if (childIndex + 1 == count) 0 else childIndex + 1
+
+        edgeShape.vertex1.set(vertices!![childIndex])
+        edgeShape.vertex2.set(vertices!![i2])
+
         return edgeShape.raycast(output, input, xf, 0)
     }
 
     override fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int) {
         assert(childIndex < count)
-        val lower = aabb.lowerBound
-        val upper = aabb.upperBound
-        var i2 = childIndex + 1
-        if (i2 == count) {
-            i2 = 0
-        }
+
+        val i2 = if (childIndex + 1 == count) 0 else childIndex + 1
+
         val vi1 = vertices!![childIndex]
         val vi2 = vertices!![i2]
         val xfq = xf.q
         val xfp = xf.p
+
         val v1x = (xfq.c * vi1.x - xfq.s * vi1.y) + xfp.x
         val v1y = (xfq.s * vi1.x + xfq.c * vi1.y) + xfp.y
         val v2x = (xfq.c * vi2.x - xfq.s * vi2.y) + xfp.x
         val v2y = (xfq.s * vi2.x + xfq.c * vi2.y) + xfp.y
-        lower.x = Math.min(v1x, v2x)
-        lower.y = Math.min(v1y, v2y)
-        upper.x = Math.max(v1x, v2x)
-        upper.y = Math.max(v1y, v2y)
+
+        aabb.lowerBound.x = minOf(v1x, v2x)
+        aabb.lowerBound.y = minOf(v1y, v2y)
+        aabb.upperBound.x = maxOf(v1x, v2x)
+        aabb.upperBound.y = maxOf(v1y, v2y)
     }
 
     override fun computeMass(massData: MassData, density: Float) {

@@ -27,23 +27,9 @@ import com.hereliesaz.kfizzix.common.Vec2
 
 /**
  * Ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
- *
- * @author Daniel Murphy
  */
-class RayCastInput {
-    val p1: Vec2
-    val p2: Vec2
-    var maxFraction = 0f
-
-    constructor() {
-        p1 = Vec2()
-        p2 = Vec2()
-        maxFraction = 0f
-    }
-
-    fun set(rci: RayCastInput) {
-        p1.set(rci.p1)
-        p2.set(rci.p2)
-        maxFraction = rci.maxFraction
-    }
-}
+data class RayCastInput(
+    val p1: Vec2 = Vec2(),
+    val p2: Vec2 = Vec2(),
+    var maxFraction: Float = 0f
+)

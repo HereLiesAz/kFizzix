@@ -49,55 +49,12 @@ import com.hereliesaz.kfizzix.common.Vec2
 
 /**
  * This holds the mass data computed for a shape.
- *
- * @author Daniel Murphy
  */
-class MassData {
-    /**
-     * The mass of the shape, usually in kilograms.
-     */
-    var mass = 0f
-
-    /**
-     * The position of the shape's centroid relative to the shape's origin.
-     */
-    val center: Vec2
-
-    /**
-     * The rotational inertia of the shape about the local origin.
-     */
-    var i = 0f
-
-    /**
-     * Blank mass data
-     */
-    constructor() {
-        mass = 0f
-        i = 0f
-        center = Vec2()
-    }
-
-    /**
-     * Copies from the given mass data
-     *
-     * @param md The mass data to copy from.
-     */
-    constructor(md: MassData) {
-        mass = md.mass
-        i = md.i
-        center = md.center.clone()
-    }
-
-    fun set(md: MassData) {
-        mass = md.mass
-        i = md.i
-        center.set(md.center)
-    }
-
-    /**
-     * Return a copy of this object.
-     */
-    public override fun clone(): MassData {
-        return MassData(this)
-    }
-}
+data class MassData(
+    /** The mass of the shape, usually in kilograms. */
+    var mass: Float = 0f,
+    /** The position of the shape's centroid relative to the shape's origin. */
+    val center: Vec2 = Vec2(),
+    /** The rotational inertia of the shape about the local origin. */
+    var i: Float = 0f
+)

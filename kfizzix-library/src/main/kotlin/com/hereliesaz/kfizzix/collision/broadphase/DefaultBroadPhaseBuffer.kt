@@ -82,14 +82,9 @@ class DefaultBroadPhaseBuffer(private val tree: BroadPhaseStrategy) : TreeCallba
     }
 
     override fun testOverlap(proxyIdA: Int, proxyIdB: Int): Boolean {
-        // return AABB.testOverlap(proxyA.aabb, proxyB.aabb);
-        // return tree.overlap(proxyIdA, proxyIdB);
         val a = tree.getFatAABB(proxyIdA)
         val b = tree.getFatAABB(proxyIdB)
-        if (b.lowerBound.x - a.upperBound.x > 0.0f || b.lowerBound.y - a.upperBound.y > 0.0f) {
-            return false
-        }
-        return !(a.lowerBound.x - b.upperBound.x > 0.0f) && !(a.lowerBound.y - b.upperBound.y > 0.0f)
+        return AABB.testOverlap(a, b)
     }
 
     override fun drawTree(argDraw: DebugDraw) {
@@ -154,10 +149,8 @@ class DefaultBroadPhaseBuffer(private val tree: BroadPhaseStrategy) : TreeCallba
 
     fun bufferMove(proxyId: Int) {
         if (moveCount == moveCapacity) {
-            val old = moveBuffer
             moveCapacity *= 2
-            moveBuffer = IntArray(moveCapacity)
-            System.arraycopy(old, 0, moveBuffer, 0, old.size)
+            moveBuffer = moveBuffer.copyOf(moveCapacity)
         }
         moveBuffer[moveCount] = proxyId
         ++moveCount
@@ -181,13 +174,8 @@ class DefaultBroadPhaseBuffer(private val tree: BroadPhaseStrategy) : TreeCallba
         }
         // Grow the pair buffer as needed.
         if (pairCount == pairCapacity) {
-            val oldBuffer = pairBuffer
             pairCapacity *= 2
-            pairBuffer = LongArray(pairCapacity)
-            System.arraycopy(oldBuffer, 0, pairBuffer, 0, oldBuffer.size)
-            for (i in oldBuffer.size until pairCapacity) {
-                pairBuffer[i] = 0
-            }
+            pairBuffer = pairBuffer.copyOf(pairCapacity)
         }
         pairBuffer[pairCount] = if (proxyId < queryProxyId) {
             proxyId.toLong() shl 32 or queryProxyId.toLong()
@@ -203,9 +191,6 @@ class DefaultBroadPhaseBuffer(private val tree: BroadPhaseStrategy) : TreeCallba
         pairCapacity = 16
         pairCount = 0
         pairBuffer = LongArray(pairCapacity)
-        for (i in 0 until pairCapacity) {
-            pairBuffer[i] = 0
-        }
         moveCapacity = 16
         moveCount = 0
         moveBuffer = IntArray(moveCapacity)

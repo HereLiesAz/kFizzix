@@ -85,36 +85,26 @@ class EdgeShape : Shape(ShapeType.EDGE) {
     // for pooling
     private val normal = Vec2()
     override fun computeDistanceToOut(xf: Transform, p: Vec2, childIndex: Int, normalOut: Vec2): Float {
-        val xfqc = xf.q.c
-        val xfqs = xf.q.s
-        val xfpx = xf.p.x
-        val xfpy = xf.p.y
-        val v1x = (xfqc * vertex1.x - xfqs * vertex1.y) + xfpx
-        val v1y = (xfqs * vertex1.x + xfqc * vertex1.y) + xfpy
-        val v2x = (xfqc * vertex2.x - xfqs * vertex2.y) + xfpx
-        val v2y = (xfqs * vertex2.x + xfqc * vertex2.y) + xfpy
-        var dx = p.x - v1x
-        var dy = p.y - v1y
-        val sx = v2x - v1x
-        val sy = v2y - v1y
-        val ds = dx * sx + dy * sy
+        val v1 = xf.mul(vertex1)
+        val v2 = xf.mul(vertex2)
+
+        var d = p - v1
+        val s = v2 - v1
+        val ds = d.dot(s)
         if (ds > 0) {
-            val s2 = sx * sx + sy * sy
+            val s2 = s.dot(s)
             if (ds > s2) {
-                dx = p.x - v2x
-                dy = p.y - v2y
+                d = p - v2
             } else {
-                dx -= ds / s2 * sx
-                dy -= ds / s2 * sy
+                d.subLocal(s.mulLocal(ds / s2))
             }
         }
-        val d1 = MathUtils.sqrt(dx * dx + dy * dy)
-        if (d1 > 0) {
-            normalOut.x = 1 / d1 * dx
-            normalOut.y = 1 / d1 * dy
+
+        val d1 = d.length()
+        if (d1 > Settings.EPSILON) {
+            normalOut.set(d).mulLocal(1 / d1)
         } else {
-            normalOut.x = 0f
-            normalOut.y = 0f
+            normalOut.setZero()
         }
         return d1
     }
@@ -127,94 +117,64 @@ class EdgeShape : Shape(ShapeType.EDGE) {
         output: RayCastOutput, input: RayCastInput,
         xf: Transform, childIndex: Int
     ): Boolean {
-        var tempx: Float
-        var tempy: Float
+        // Put the ray into the edge's frame of reference.
+        val p1 = xf.q.mulT(input.p1 - xf.p)
+        val p2 = xf.q.mulT(input.p2 - xf.p)
+        val d = p2 - p1
+
         val v1 = vertex1
         val v2 = vertex2
-        val xfq = xf.q
-        val xfp = xf.p
-        // Put the ray into the edge's frame of reference.
-        // b2Vec2 p1 = b2MulT(xf.q, input.p1 - xf.p);
-        // b2Vec2 p2 = b2MulT(xf.q, input.p2 - xf.p);
-        tempx = input.p1.x - xfp.x
-        tempy = input.p1.y - xfp.y
-        val p1x = xfq.c * tempx + xfq.s * tempy
-        val p1y = -xfq.s * tempx + xfq.c * tempy
-        tempx = input.p2.x - xfp.x
-        tempy = input.p2.y - xfp.y
-        val p2x = xfq.c * tempx + xfq.s * tempy
-        val p2y = -xfq.s * tempx + xfq.c * tempy
-        val dx = p2x - p1x
-        val dy = p2y - p1y
-        // final Vec2 normal = pool2.set(v2).subLocal(v1);
-        // normal.set(normal.y, -normal.x);
-        normal.x = v2.y - v1.y
-        normal.y = v1.x - v2.x
+        val e = v2 - v1
+        normal.set(e.y, -e.x)
         normal.normalize()
-        val normalx = normal.x
-        val normaly = normal.y
+
         // q = p1 + t * d
         // dot(normal, q - v1) = 0
         // dot(normal, p1 - v1) + t * dot(normal, d) = 0
-        tempx = v1.x - p1x
-        tempy = v1.y - p1y
-        val numerator = normalx * tempx + normaly * tempy
-        val denominator = normalx * dx + normaly * dy
+        val numerator = normal.dot(v1 - p1)
+        val denominator = normal.dot(d)
+
         if (denominator == 0.0f) {
             return false
         }
+
         val t = numerator / denominator
-        if (t < 0.0f || 1.0f < t) {
+        if (t < 0.0f || t > 1.0f) {
             return false
         }
-        // Vec2 q = p1 + t * d;
-        val qx = p1x + t * dx
-        val qy = p1y + t * dy
+
+        val q = p1 + d * t
+
         // q = v1 + s * r
         // s = dot(q - v1, r) / dot(r, r)
-        // Vec2 r = v2 - v1;
-        val rx = v2.x - v1.x
-        val ry = v2.y - v1.y
-        val rr = rx * rx + ry * ry
+        val r = v2 - v1
+        val rr = r.dot(r)
         if (rr == 0.0f) {
             return false
         }
-        tempx = qx - v1.x
-        tempy = qy - v1.y
-        // float s = Vec2.dot(pool5, r) / rr;
-        val s = (tempx * rx + tempy * ry) / rr
-        if (s < 0.0f || 1.0f < s) {
+
+        val s = (q - v1).dot(r) / rr
+        if (s < 0.0f || s > 1.0f) {
             return false
         }
+
         output.fraction = t
         if (numerator > 0.0f) {
-            // output.normal = -b2Mul(xf.q, normal);
-            output.normal.x = -xfq.c * normal.x + xfq.s * normal.y
-            output.normal.y = -xfq.s * normal.x - xfq.c * normal.y
+            output.normal.set(xf.q.mul(normal)).negateLocal()
         } else {
-            // output->normal = b2Mul(xf.q, normal);
-            output.normal.x = xfq.c * normal.x - xfq.s * normal.y
-            output.normal.y = xfq.s * normal.x + xfq.c * normal.y
+            output.normal.set(xf.q.mul(normal))
         }
         return true
     }
 
     override fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int) {
-        val lowerBound = aabb.lowerBound
-        val upperBound = aabb.upperBound
-        val xfq = xf.q
-        val v1x = (xfq.c * vertex1.x - xfq.s * vertex1.y) + xf.p.x
-        val v1y = (xfq.s * vertex1.x + xfq.c * vertex1.y) + xf.p.y
-        val v2x = (xfq.c * vertex2.x - xfq.s * vertex2.y) + xf.p.x
-        val v2y = (xfq.s * vertex2.x + xfq.c * vertex2.y) + xf.p.y
-        lowerBound.x = Math.min(v1x, v2x)
-        lowerBound.y = Math.min(v1y, v2y)
-        upperBound.x = Math.max(v1x, v2x)
-        upperBound.y = Math.max(v1y, v2y)
-        lowerBound.x -= radius
-        lowerBound.y -= radius
-        upperBound.x += radius
-        upperBound.y += radius
+        val v1 = xf.mul(vertex1)
+        val v2 = xf.mul(vertex2)
+
+        aabb.lowerBound.x = minOf(v1.x, v2.x) - radius
+        aabb.lowerBound.y = minOf(v1.y, v2.y) - radius
+        aabb.upperBound.x = maxOf(v1.x, v2.x) + radius
+        aabb.upperBound.y = maxOf(v1.y, v2.y) + radius
     }
 
     override fun computeMass(massData: MassData, density: Float) {

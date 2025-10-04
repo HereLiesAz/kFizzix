@@ -333,7 +333,7 @@ public abstract class Contact
                 ManifoldPoint mp2 = manifold.points[i];
                 mp2.normalImpulse = 0.0f;
                 mp2.tangentImpulse = 0.0f;
-                ContactID id2 = mp2.id;
+                val id2 = mp2.id
                 for (int j = 0; j < oldManifold.pointCount; ++j)
                 {
                     ManifoldPoint mp1 = oldManifold.points[j];

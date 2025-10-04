@@ -105,8 +105,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
         assert(0 <= proxyId && proxyId < nodeCapacity)
         assert(child1[proxyId] == NULL_NODE)
         val nodeAABB = memberAabb[proxyId]
-        // if (nodeAABB.contains(aabb)) {
-        if (nodeAABB.lowerBound.x <= aabb.lowerBound.x && nodeAABB.lowerBound.y <= aabb.lowerBound.y && aabb.upperBound.x <= nodeAABB.upperBound.x && aabb.upperBound.y <= nodeAABB.upperBound.y) {
+        if (nodeAABB.contains(aabb)) {
             return false
         }
         removeLeaf(proxyId)
@@ -163,10 +162,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
                     }
                 } else {
                     if (nodeStack.size - nodeStackIndex - 2 <= 0) {
-                        nodeStack = BufferUtils.reallocateBuffer(
-                            nodeStack,
-                            nodeStack.size, nodeStack.size * 2
-                        )
+                        nodeStack = nodeStack.copyOf(nodeStack.size * 2)
                     }
                     nodeStack[nodeStackIndex++] = child1
                     nodeStack[nodeStackIndex++] = child2[node]
@@ -745,7 +741,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
         color.set(1f, (height - spot) * 1f / height, (height - spot) * 1f / height)
         argDraw.drawPolygon(drawVecs, 4, color)
         argDraw.viewportTransform!!.getWorldToScreen(a.upperBound, textVec)
-        argDraw.drawString(textVec.x, textVec.y, "$node-$spot+1/$height", color)
+        argDraw.drawString(textVec.x, textVec.y, "$node-${spot + 1}/$height", color)
         val c1 = child1[node]
         val c2 = child2[node]
         if (c1 != NULL_NODE) {

@@ -27,7 +27,6 @@ import com.hereliesaz.kfizzix.collision.AABB
 import com.hereliesaz.kfizzix.collision.RayCastInput
 import com.hereliesaz.kfizzix.collision.RayCastOutput
 import com.hereliesaz.kfizzix.common.MathUtils
-import com.hereliesaz.kfizzix.common.Rot
 import com.hereliesaz.kfizzix.common.Settings
 import com.hereliesaz.kfizzix.common.Transform
 import com.hereliesaz.kfizzix.common.Vec2
@@ -39,18 +38,10 @@ import com.hereliesaz.kfizzix.common.Vec2
  *
  * @author Daniel Murphy
  */
-class CircleShape : Shape(ShapeType.CIRCLE) {
-    val p: Vec2
-
-    init {
-        p = Vec2()
-        radius = 0f
-    }
+data class CircleShape(val p: Vec2 = Vec2()) : Shape(ShapeType.CIRCLE) {
 
     public override fun clone(): Shape {
-        val shape = CircleShape()
-        shape.p.x = p.x
-        shape.p.y = p.y
+        val shape = copy()
         shape.radius = radius
         return shape
     }
@@ -61,14 +52,14 @@ class CircleShape : Shape(ShapeType.CIRCLE) {
     /**
      * Get the supporting vertex index in the given direction.
      */
-    fun getSupport(d: Vec2): Int {
+    fun getSupport(@Suppress("UNUSED_PARAMETER") d: Vec2): Int {
         return 0
     }
 
     /**
      * Get the supporting vertex in the given direction.
      */
-    fun getSupportVertex(d: Vec2): Vec2 {
+    fun getSupportVertex(@Suppress("UNUSED_PARAMETER") d: Vec2): Vec2 {
         return p
     }
 
@@ -87,27 +78,20 @@ class CircleShape : Shape(ShapeType.CIRCLE) {
     }
 
     override fun testPoint(transform: Transform, p: Vec2): Boolean {
-        // Rot.mulToOutUnsafe(transform.q, p, center);
-        // center.addLocal(transform.p);
-        //
-        // final Vec2 d = center.subLocal(p).negateLocal();
-        // return Vec2.dot(d, d) <= radius * radius;
-        val q = transform.q
-        val tp = transform.p
-        val centerx = -(q.c * this.p.x - q.s * this.p.y + tp.x - p.x)
-        val centery = -(q.s * this.p.x + q.c * this.p.y + tp.y - p.y)
-        return centerx * centerx + centery * centery <= radius * radius
+        val center = transform.mul(this.p)
+        val d = p - center
+        return d.dot(d) <= radius * radius
     }
 
     override fun computeDistanceToOut(xf: Transform, p: Vec2, childIndex: Int, normalOut: Vec2): Float {
-        val xfq = xf.q
-        val centerx = xfq.c * this.p.x - xfq.s * this.p.y + xf.p.x
-        val centery = xfq.s * this.p.x + xfq.c * this.p.y + xf.p.y
-        val dx = p.x - centerx
-        val dy = p.y - centery
-        val d1 = MathUtils.sqrt(dx * dx + dy * dy)
-        normalOut.x = dx * 1 / d1
-        normalOut.y = dy * 1 / d1
+        val center = xf.mul(this.p)
+        val d = p - center
+        val d1 = d.length()
+        if (d1 > Settings.EPSILON) {
+            normalOut.set(d).mulLocal(1 / d1)
+        } else {
+            normalOut.set(0f, 0f)
+        }
         return d1 - radius
     }
 
@@ -119,38 +103,29 @@ class CircleShape : Shape(ShapeType.CIRCLE) {
         output: RayCastOutput, input: RayCastInput,
         transform: Transform, childIndex: Int
     ): Boolean {
-        val inputP1 = input.p1
-        val inputP2 = input.p2
-        val tq = transform.q
-        val tp = transform.p
-        // Rot.mulToOutUnsafe(transform.q, p, position);
-        // position.addLocal(transform.p);
-        val positionX = tq.c * p.x - tq.s * p.y + tp.x
-        val positionY = tq.s * p.x + tq.c * p.y + tp.y
-        val sx = inputP1.x - positionX
-        val sy = inputP1.y - positionY
-        // final float b = Vec2.dot(s, s) - radius * radius;
-        val b = sx * sx + sy * sy - radius * radius
+        val position = transform.mul(p)
+        val s = input.p1 - position
+        val b = s.dot(s) - radius * radius
+
         // Solve quadratic equation.
-        val rx = inputP2.x - inputP1.x
-        val ry = inputP2.y - inputP1.y
-        // final float c = Vec2.dot(s, r);
-        // final float rr = Vec2.dot(r, r);
-        val c = sx * rx + sy * ry
-        val rr = rx * rx + ry * ry
+        val r = input.p2 - input.p1
+        val c = s.dot(r)
+        val rr = r.dot(r)
         val sigma = c * c - rr * b
+
         // Check for negative discriminant and short segment.
         if (sigma < 0.0f || rr < Settings.EPSILON) {
             return false
         }
+
         // Find the point of intersection of the line with the circle.
         var a = -(c + MathUtils.sqrt(sigma))
+
         // Is the intersection point on the segment?
-        if (0.0f <= a && a <= input.maxFraction * rr) {
+        if (a in 0.0f..(input.maxFraction * rr)) {
             a /= rr
             output.fraction = a
-            output.normal.x = rx * a + sx
-            output.normal.y = ry * a + sy
+            output.normal.set(r).mulLocal(a).addLocal(s)
             output.normal.normalize()
             return true
         }
@@ -158,23 +133,17 @@ class CircleShape : Shape(ShapeType.CIRCLE) {
     }
 
     override fun computeAABB(aabb: AABB, transform: Transform, childIndex: Int) {
-        val tq = transform.q
-        val tp = transform.p
-        val px = tq.c * p.x - tq.s * p.y + tp.x
-        val py = tq.s * p.x + tq.c * p.y + tp.y
-        aabb.lowerBound.x = px - radius
-        aabb.lowerBound.y = py - radius
-        aabb.upperBound.x = px + radius
-        aabb.upperBound.y = py + radius
+        val center = transform.mul(p)
+        aabb.lowerBound.x = center.x - radius
+        aabb.lowerBound.y = center.y - radius
+        aabb.upperBound.x = center.x + radius
+        aabb.upperBound.y = center.y + radius
     }
 
     override fun computeMass(massData: MassData, density: Float) {
         massData.mass = density * Settings.PI * radius * radius
-        massData.center.x = p.x
-        massData.center.y = p.y
+        massData.center.set(p)
         // inertia about the local origin
-        // massData.I = massData.mass * (0.5f * radius * radius +
-        // Vec2.dot(p, p));
-        massData.i = massData.mass * (0.5f * radius * radius + (p.x * p.x + p.y * p.y))
+        massData.i = massData.mass * (0.5f * radius * radius + p.dot(p))
     }
 }

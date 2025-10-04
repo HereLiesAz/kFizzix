@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated the package names from `de.pirckheimer_gymnasium.jbox2d.common` to `com.hereliesaz.jbox2d.common`.
 
 ### Added
+- Add a `--no-sandbox` option to the `e2e` command to run tests in environments where the sandbox is not available.
 - Comprehensive KDoc documentation for the public API of the core library.
 - A new "Usage" section with a public API guide in the `README.md`.
 

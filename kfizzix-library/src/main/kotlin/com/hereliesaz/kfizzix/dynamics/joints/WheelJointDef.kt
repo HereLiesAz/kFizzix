@@ -21,10 +21,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints;
 
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.dynamics.Body;
 
 /**
  * Wheel joint definition. This requires defining a line of motion using an axis

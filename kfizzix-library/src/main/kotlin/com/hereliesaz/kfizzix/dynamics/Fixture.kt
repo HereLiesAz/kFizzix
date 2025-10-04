@@ -21,20 +21,20 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics;
+package com.hereliesaz.kfizzix.dynamics;
 
-import de.pirckheimer_gymnasium.jbox2d.collision.AABB;
-import de.pirckheimer_gymnasium.jbox2d.collision.RayCastInput;
-import de.pirckheimer_gymnasium.jbox2d.collision.RayCastOutput;
-import de.pirckheimer_gymnasium.jbox2d.collision.broadphase.BroadPhase;
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.MassData;
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.Shape;
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.ShapeType;
-import de.pirckheimer_gymnasium.jbox2d.common.MathUtils;
-import de.pirckheimer_gymnasium.jbox2d.common.Transform;
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.Contact;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.ContactEdge;
+import com.hereliesaz.kfizzix.collision.AABB;
+import com.hereliesaz.kfizzix.collision.RayCastInput;
+import com.hereliesaz.kfizzix.collision.RayCastOutput;
+import com.hereliesaz.kfizzix.collision.broadphase.BroadPhase;
+import com.hereliesaz.kfizzix.collision.shapes.MassData;
+import com.hereliesaz.kfizzix.collision.shapes.Shape;
+import com.hereliesaz.kfizzix.collision.shapes.ShapeType;
+import com.hereliesaz.kfizzix.common.MathUtils;
+import com.hereliesaz.kfizzix.common.Transform;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
+import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge;
 
 /**
  * A fixture is used to attach a shape to a body for collision detection. A

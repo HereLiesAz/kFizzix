@@ -21,11 +21,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.pooling.arrays;
+package com.hereliesaz.kfizzix.pooling.arrays;
 
 import java.util.HashMap;
 
-import de.pirckheimer_gymnasium.jbox2d.particle.VoronoiDiagram;
+import com.hereliesaz.kfizzix.particle.VoronoiDiagram;
 
 public class GeneratorArray
 {

@@ -21,19 +21,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts;
 
-import de.pirckheimer_gymnasium.jbox2d.callbacks.ContactListener;
-import de.pirckheimer_gymnasium.jbox2d.collision.ContactID;
-import de.pirckheimer_gymnasium.jbox2d.collision.Manifold;
-import de.pirckheimer_gymnasium.jbox2d.collision.ManifoldPoint;
-import de.pirckheimer_gymnasium.jbox2d.collision.WorldManifold;
-import de.pirckheimer_gymnasium.jbox2d.collision.shapes.Shape;
-import de.pirckheimer_gymnasium.jbox2d.common.MathUtils;
-import de.pirckheimer_gymnasium.jbox2d.common.Transform;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Body;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Fixture;
-import de.pirckheimer_gymnasium.jbox2d.pooling.WorldPool;
+import com.hereliesaz.kfizzix.callbacks.ContactListener;
+import com.hereliesaz.kfizzix.collision.ContactID;
+import com.hereliesaz.kfizzix.collision.Manifold;
+import com.hereliesaz.kfizzix.collision.ManifoldPoint;
+import com.hereliesaz.kfizzix.collision.WorldManifold;
+import com.hereliesaz.kfizzix.collision.shapes.Shape;
+import com.hereliesaz.kfizzix.common.MathUtils;
+import com.hereliesaz.kfizzix.common.Transform;
+import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.dynamics.Fixture;
+import com.hereliesaz.kfizzix.pooling.WorldPool;
 
 /**
  * The class manages contact between two shapes. A contact exists for each

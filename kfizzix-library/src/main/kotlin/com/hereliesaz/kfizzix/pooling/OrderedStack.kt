@@ -21,7 +21,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.pooling;
+package com.hereliesaz.kfizzix.pooling;
 
 /**
  * This stack assumes that when you push 'n' items back, you're pushing back the

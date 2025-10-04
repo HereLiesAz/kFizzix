@@ -21,15 +21,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints;
 
-import de.pirckheimer_gymnasium.jbox2d.common.MathUtils;
-import de.pirckheimer_gymnasium.jbox2d.common.Rot;
-import de.pirckheimer_gymnasium.jbox2d.common.Settings;
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Body;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.SolverData;
-import de.pirckheimer_gymnasium.jbox2d.pooling.WorldPool;
+import com.hereliesaz.kfizzix.common.MathUtils;
+import com.hereliesaz.kfizzix.common.Rot;
+import com.hereliesaz.kfizzix.common.Settings;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.dynamics.SolverData;
+import com.hereliesaz.kfizzix.pooling.WorldPool;
 
 /**
  * A wheel joint. This joint provides two degrees of freedom: translation along

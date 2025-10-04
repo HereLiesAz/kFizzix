@@ -21,13 +21,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints;
 
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Body;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.SolverData;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.World;
-import de.pirckheimer_gymnasium.jbox2d.pooling.WorldPool;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.dynamics.SolverData;
+import com.hereliesaz.kfizzix.dynamics.World;
+import com.hereliesaz.kfizzix.pooling.WorldPool;
 
 /**
  * The base joint class. Joints are used to constrain two bodies together in

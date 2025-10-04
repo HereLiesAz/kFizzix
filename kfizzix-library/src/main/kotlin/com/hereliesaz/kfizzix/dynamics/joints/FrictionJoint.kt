@@ -21,14 +21,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints;
 
-import de.pirckheimer_gymnasium.jbox2d.common.Mat22;
-import de.pirckheimer_gymnasium.jbox2d.common.MathUtils;
-import de.pirckheimer_gymnasium.jbox2d.common.Rot;
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.SolverData;
-import de.pirckheimer_gymnasium.jbox2d.pooling.WorldPool;
+import com.hereliesaz.kfizzix.common.Mat22;
+import com.hereliesaz.kfizzix.common.MathUtils;
+import com.hereliesaz.kfizzix.common.Rot;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.dynamics.SolverData;
+import com.hereliesaz.kfizzix.pooling.WorldPool;
 
 /**
  * @repolink https://github.com/erincatto/box2d/blob/main/include/box2d/b2_friction_joint.h
@@ -198,7 +198,7 @@ public class FrictionJoint extends Joint
     }
 
     /**
-     * @see de.pirckheimer_gymnasium.jbox2d.dynamics.joints.Joint#initVelocityConstraints(de.pirckheimer_gymnasium.jbox2d.dynamics.SolverData)
+     * @see com.hereliesaz.kfizzix.dynamics.joints.Joint#initVelocityConstraints(com.hereliesaz.kfizzix.dynamics.SolverData)
      */
     @Override
     public void initVelocityConstraints(final SolverData data)

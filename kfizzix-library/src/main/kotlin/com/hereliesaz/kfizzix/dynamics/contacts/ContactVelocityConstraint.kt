@@ -21,11 +21,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts;
 
-import de.pirckheimer_gymnasium.jbox2d.common.Mat22;
-import de.pirckheimer_gymnasium.jbox2d.common.Settings;
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
+import com.hereliesaz.kfizzix.common.Mat22;
+import com.hereliesaz.kfizzix.common.Settings;
+import com.hereliesaz.kfizzix.common.Vec2;
 
 /**
  * @author Daniel Murphy

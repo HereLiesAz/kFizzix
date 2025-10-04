@@ -21,9 +21,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts;
 
-import de.pirckheimer_gymnasium.jbox2d.dynamics.Body;
+import com.hereliesaz.kfizzix.dynamics.Body;
 
 /**
  * A contact edge is used to connect bodies and contacts together in a contact

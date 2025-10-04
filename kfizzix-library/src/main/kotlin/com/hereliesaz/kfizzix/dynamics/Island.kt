@@ -21,22 +21,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package de.pirckheimer_gymnasium.jbox2d.dynamics;
+package com.hereliesaz.kfizzix.dynamics;
 
-import de.pirckheimer_gymnasium.jbox2d.callbacks.ContactImpulse;
-import de.pirckheimer_gymnasium.jbox2d.callbacks.ContactListener;
-import de.pirckheimer_gymnasium.jbox2d.common.MathUtils;
-import de.pirckheimer_gymnasium.jbox2d.common.Settings;
-import de.pirckheimer_gymnasium.jbox2d.common.Sweep;
-import de.pirckheimer_gymnasium.jbox2d.common.Timer;
-import de.pirckheimer_gymnasium.jbox2d.common.Vec2;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.Contact;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.ContactSolver;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.ContactSolver.ContactSolverDef;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.ContactVelocityConstraint;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.Position;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.contacts.Velocity;
-import de.pirckheimer_gymnasium.jbox2d.dynamics.joints.Joint;
+import com.hereliesaz.kfizzix.callbacks.ContactImpulse;
+import com.hereliesaz.kfizzix.callbacks.ContactListener;
+import com.hereliesaz.kfizzix.common.MathUtils;
+import com.hereliesaz.kfizzix.common.Settings;
+import com.hereliesaz.kfizzix.common.Sweep;
+import com.hereliesaz.kfizzix.common.Timer;
+import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
+import com.hereliesaz.kfizzix.dynamics.contacts.ContactSolver;
+import com.hereliesaz.kfizzix.dynamics.contacts.ContactSolver.ContactSolverDef;
+import com.hereliesaz.kfizzix.dynamics.contacts.ContactVelocityConstraint;
+import com.hereliesaz.kfizzix.dynamics.contacts.Position;
+import com.hereliesaz.kfizzix.dynamics.contacts.Velocity;
+import com.hereliesaz.kfizzix.dynamics.joints.Joint;
 /*
  Position Correction Notes
  =========================

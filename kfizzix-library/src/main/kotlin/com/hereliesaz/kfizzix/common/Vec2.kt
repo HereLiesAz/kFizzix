@@ -413,7 +413,7 @@ data class Vec2(
          */
         @JvmStatic
         fun min(a: Vec2, b: Vec2): Vec2 {
-            return Vec2(Math.min(a.x, b.x), Math.min(a.y, b.y))
+            return Vec2(MathUtils.min(a.x, b.x), MathUtils.min(a.y, b.y))
         }
 
         /**
@@ -425,7 +425,7 @@ data class Vec2(
          */
         @JvmStatic
         fun max(a: Vec2, b: Vec2): Vec2 {
-            return new Vec2(Math.max(a.x, b.x), Math.max(a.y, b.y))
+            return Vec2(MathUtils.max(a.x, b.x), MathUtils.max(a.y, b.y))
         }
 
         /**
@@ -437,8 +437,8 @@ data class Vec2(
          */
         @JvmStatic
         fun minToOut(a: Vec2, b: Vec2, out: Vec2) {
-            out.x = Math.min(a.x, b.x)
-            out.y = Math.min(a.y, b.y)
+            out.x = MathUtils.min(a.x, b.x)
+            out.y = MathUtils.min(a.y, b.y)
         }
 
         /**
@@ -450,8 +450,8 @@ data class Vec2(
          */
         @JvmStatic
         fun maxToOut(a: Vec2, b: Vec2, out: Vec2) {
-            out.x = Math.max(a.x, b.x)
-            out.y = Math.max(a.y, b.y)
+            out.x = MathUtils.max(a.x, b.x)
+            out.y = MathUtils.max(a.y, b.y)
         }
     }
 }

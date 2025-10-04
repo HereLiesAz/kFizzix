@@ -6,11 +6,11 @@ This document outlines the tasks required to analyze, refactor, and test the kfi
 
 - [x] Analyze `common` package (`Vec2.kt`, `Mat22.kt`, `Rot.kt`, `Transform.kt`)
 - [x] Analyze `collision` package and its subpackages (`shapes`, `broadphase`)
-- [ ] Analyze `dynamics` package and its subpackages (`contacts`, `joints`)
-- [ ] Analyze `particle` package
-- [ ] Analyze `pooling` package
-- [ ] Analyze `serialization` package
-- [ ] Analyze existing test infrastructure in `src/test`
+- [x] Analyze `dynamics` package and its subpackages (`contacts`, `joints`)
+- [x] Analyze `particle` package
+- [x] Analyze `pooling` package
+- [x] Analyze `serialization` package
+- [x] Analyze existing test infrastructure in `src/test`
 
 ## 2. Refactoring and API Improvements
 
@@ -32,6 +32,30 @@ This document outlines the tasks required to analyze, refactor, and test the kfi
     - [ ] Improve the `toString()` implementation.
 - [ ] **Transform.kt:**
     - [ ] Address the non-thread-safe static `pool` field. Consider making it thread-local or using object pooling in a more controlled way.
+- [ ] **World.kt:**
+    - [ ] Convert public fields (e.g., `gravity`, `allowSleep`) to Kotlin properties.
+    - [ ] Refactor the main `step()` method to improve readability, potentially breaking out parts of the simulation loop into smaller, private functions.
+    - [ ] Replace manual `ContactRegister` initialization with a more robust, type-safe mechanism.
+- [ ] **Body.kt:**
+    - [ ] Convert public fields to Kotlin properties (e.g., `linearVelocity`, `angularVelocity`, `mass`).
+    - [ ] Convert accessor methods like `isAwake()` and `isActive()` to properties.
+    - [ ] Simplify the complex `resetMassData()` method.
+- [ ] **Fixture.kt:**
+    - [ ] Convert public fields to Kotlin properties (`density`, `friction`, `restitution`).
+    - [ ] Convert `isSensor()` to a property.
+- [ ] **ContactSolver.kt:**
+    - [ ] Carefully refactor this performance-critical class.
+    - [ ] Add detailed comments to the block solver logic in `solveVelocityConstraints` to explain the algorithm.
+    - [ ] Replace manual array resizing with a more idiomatic Kotlin approach, such as using `MutableList` or a better pre-allocation strategy.
+- [ ] **Joint.kt:**
+    - [ ] Refactor the `create` factory method to be more idiomatic, perhaps using a map of constructors instead of a `when` expression.
+- [ ] **ParticleSystem.kt:**
+    - [ ] This is a massive class. Break down the monolithic `solve()` method into smaller, more manageable private functions (e.g., `solvePressure`, `solveDamping`).
+    - [ ] Replace the manual, error-prone buffer management (`reallocateBuffer`, etc.) with `MutableList` or a more robust, idiomatic Kotlin approach.
+    - [ ] Convert public fields to properties where appropriate.
+- [ ] **DefaultWorldPool.kt:**
+    - [ ] Refactor the custom `OrderedStack` and `MutableStack` implementations to use standard Kotlin collections or a simplified, more readable pooling mechanism.
+    - [ ] Improve the type safety of the array caches, which currently use `HashMap<Integer, ...>`.
 
 ## 3. Testing
 

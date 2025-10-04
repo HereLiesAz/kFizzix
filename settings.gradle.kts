@@ -17,5 +17,6 @@ include(
     ":kfizzix-testbed-javafx-kt",
     ":jbox2d-testbed-jogl",
     ":kfizzix-magic-eight-ball",
-    ":kfizzix-8-ball"
+    ":kfizzix-8-ball",
+    ":kfizzix-dam-breaker"
 )

@@ -325,22 +325,16 @@ class Collision(private val pool: WorldPool) {
         val vertices2 = poly2.vertices
         val normals2 = poly2.normals
         assert(0 <= edge1 && edge1 < count1)
-        val c0 = c[0]
-        val c1 = c[1]
+
         val xf1q = xf1.q
         val xf2q = xf2.q
         // Get the normal of the reference edge in poly2's frame.
-        // Vec2 normal1 = MulT(xf2.R, Mul(xf1.R, normals1[edge1]));
-        // before inline:
-        // Rot.mulToOutUnsafe(xf1.q, normals1[edge1], normal1); // temporary
-        // Rot.mulTrans(xf2.q, normal1, normal1);
-        // after inline:
         val v = normals1[edge1]
         val tempX = xf1q.c * v.x - xf1q.s * v.y
         val tempY = xf1q.s * v.x + xf1q.c * v.y
         val normal1x = xf2q.c * tempX + xf2q.s * tempY
         val normal1y = -xf2q.s * tempX + xf2q.c * tempY
-        // end inline
+
         // Find the incident edge on poly2.
         var index = 0
         var minDot = Float.MAX_VALUE
@@ -355,24 +349,36 @@ class Collision(private val pool: WorldPool) {
         // Build the clip vertices for the incident edge.
         val i1 = index
         val i2 = if (i1 + 1 < count2) i1 + 1 else 0
-        // c0.v = Mul(xf2, vertices2[i1]);
+
         val v1 = vertices2[i1]
-        val out = c0.v
+        val v2 = vertices2[i2]
+
+        val out = Vec2()
         out.x = (xf2q.c * v1.x - xf2q.s * v1.y) + xf2.p.x
         out.y = (xf2q.s * v1.x + xf2q.c * v1.y) + xf2.p.y
-        c0.id.indexA = edge1.toByte()
-        c0.id.indexB = i1.toByte()
-        c0.id.typeA = ContactID.Type.FACE.ordinal.toByte()
-        c0.id.typeB = ContactID.Type.VERTEX.ordinal.toByte()
-        // c1.v = Mul(xf2, vertices2[i2]);
-        val v2 = vertices2[i2]
-        val out1 = c1.v
+        c[0] = ClipVertex(
+            out,
+            ContactID(
+                indexA = edge1.toByte(),
+                indexB = i1.toByte(),
+                typeA = ContactID.Type.FACE.ordinal.toByte(),
+                typeB = ContactID.Type.VERTEX.ordinal.toByte()
+            )
+        )
+
+
+        val out1 = Vec2()
         out1.x = (xf2q.c * v2.x - xf2q.s * v2.y) + xf2.p.x
         out1.y = (xf2q.s * v2.x + xf2q.c * v2.y) + xf2.p.y
-        c1.id.indexA = edge1.toByte()
-        c1.id.indexB = i2.toByte()
-        c1.id.typeA = ContactID.Type.FACE.ordinal.toByte()
-        c1.id.typeB = ContactID.Type.VERTEX.ordinal.toByte()
+        c[1] = ClipVertex(
+            out1,
+            ContactID(
+                indexA = edge1.toByte(),
+                indexB = i2.toByte(),
+                typeA = ContactID.Type.FACE.ordinal.toByte(),
+                typeB = ContactID.Type.VERTEX.ordinal.toByte()
+            )
+        )
     }
 
     private val results1 = EdgeResults()
@@ -511,7 +517,7 @@ class Collision(private val pool: WorldPool) {
                 val py = clipPoints2[i].v.y - xf2.p.y
                 out.x = (xf2.q.c * px + xf2.q.s * py)
                 out.y = (-xf2.q.s * px + xf2.q.c * py)
-                cp.id.set(clipPoints2[i].id)
+                cp.id.copy(clipPoints2[i].id)
                 if (flip) {
                     // Swap features
                     cp.id.flip()
@@ -573,7 +579,7 @@ class Collision(private val pool: WorldPool) {
             manifold.localNormal.setZero()
             manifold.localPoint.set(A)
             // manifold.points[0].id.key = 0;
-            manifold.points[0].id.set(cf)
+            manifold.points[0].id.copy(cf)
             manifold.points[0].localPoint.set(circleB.p)
             return
         }
@@ -602,7 +608,7 @@ class Collision(private val pool: WorldPool) {
             manifold.localNormal.setZero()
             manifold.localPoint.set(B)
             // manifold.points[0].id.key = 0;
-            manifold.points[0].id.set(cf)
+            manifold.points[0].id.copy(cf)
             manifold.points[0].localPoint.set(circleB.p)
             return
         }
@@ -630,7 +636,7 @@ class Collision(private val pool: WorldPool) {
         manifold.localNormal.set(n)
         manifold.localPoint.set(A)
         // manifold.points[0].id.key = 0;
-        manifold.points[0].id.set(cf)
+        manifold.points[0].id.copy(cf)
         manifold.points[0].localPoint.set(circleB.p)
     }
 
@@ -654,26 +660,7 @@ class Collision(private val pool: WorldPool) {
     /**
      * Used for computing contact manifolds.
      */
-    class ClipVertex {
-        val v: Vec2
-        val id: ContactID
-
-        constructor() {
-            v = Vec2()
-            id = ContactID()
-        }
-
-        fun set(cv: ClipVertex) {
-            val v1 = cv.v
-            v.x = v1.x
-            v.y = v1.y
-            val c = cv.id
-            id.indexA = c.indexA
-            id.indexB = c.indexB
-            id.typeA = c.typeA
-            id.typeB = c.typeB
-        }
-    }
+    data class ClipVertex(val v: Vec2 = Vec2(), val id: ContactID = ContactID())
 
     /**
      * This is used for determining the state of contact points.
@@ -1085,7 +1072,7 @@ class Collision(private val pool: WorldPool) {
                     if (primaryAxis.type == EPAxis.Type.EDGE_A) {
                         // cp.localPoint = MulT(xf, clipPoints2[i].v);
                         Transform.mulTransToOutUnsafe(xf, clipPoints2[i].v, cp.localPoint)
-                        cp.id.set(clipPoints2[i].id)
+                        cp.id.copy(clipPoints2[i].id)
                     } else {
                         cp.localPoint.set(clipPoints2[i].v)
                         cp.id.typeA = clipPoints2[i].id.typeB
@@ -1222,7 +1209,7 @@ class Collision(private val pool: WorldPool) {
                 val id = manifold1.points[i].id
                 state1[i] = PointState.REMOVE_STATE
                 for (j in 0 until manifold2.pointCount) {
-                    if (manifold2.points[j].id.isEqual(id)) {
+                    if (manifold2.points[j].id == id) {
                         state1[i] = PointState.PERSIST_STATE
                         break
                     }
@@ -1233,7 +1220,7 @@ class Collision(private val pool: WorldPool) {
                 val id = manifold2.points[i].id
                 state2[i] = PointState.ADD_STATE
                 for (j in 0 until manifold1.pointCount) {
-                    if (manifold1.points[j].id.isEqual(id)) {
+                    if (manifold1.points[j].id == id) {
                         state2[i] = PointState.PERSIST_STATE
                         break
                     }
@@ -1259,24 +1246,26 @@ class Collision(private val pool: WorldPool) {
             val distance1 = Vec2.dot(normal, vIn1v) - offset
             // If the points are behind the plane
             if (distance0 <= 0.0f) {
-                vOut[numOut++].set(vIn0)
+                vOut[numOut++] = vIn0
             }
             if (distance1 <= 0.0f) {
-                vOut[numOut++].set(vIn1)
+                vOut[numOut++] = vIn1
             }
             // If the points are on different sides of the plane
             if (distance0 * distance1 < 0.0f) {
                 // Find intersection point of edge and plane
                 val interp = distance0 / (distance0 - distance1)
-                val vOutNO = vOut[numOut]
-                // vOut[numOut].v = vIn[0].v + interp * (vIn[1].v - vIn[0].v);
-                vOutNO.v.x = vIn0v.x + interp * (vIn1v.x - vIn0v.x)
-                vOutNO.v.y = vIn0v.y + interp * (vIn1v.y - vIn0v.y)
-                // VertexA is hitting edgeB.
-                vOutNO.id.indexA = vertexIndexA.toByte()
-                vOutNO.id.indexB = vIn0.id.indexB
-                vOutNO.id.typeA = ContactID.Type.VERTEX.ordinal.toByte()
-                vOutNO.id.typeB = ContactID.Type.FACE.ordinal.toByte()
+                val v = Vec2(vIn0v).addLocal(interp * (vIn1v - vIn0v))
+
+                vOut[numOut] = ClipVertex(
+                    v = v,
+                    id = ContactID(
+                        indexA = vertexIndexA.toByte(),
+                        indexB = vIn0.id.indexB,
+                        typeA = ContactID.Type.VERTEX.ordinal.toByte(),
+                        typeB = ContactID.Type.FACE.ordinal.toByte()
+                    )
+                )
                 ++numOut
             }
             return numOut

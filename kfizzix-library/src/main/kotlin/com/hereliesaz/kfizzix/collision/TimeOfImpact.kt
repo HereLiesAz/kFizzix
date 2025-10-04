@@ -46,16 +46,16 @@ class TimeOfImpact(private val pool: WorldPool) {
      *
      * @author Daniel Murphy
      */
-    class TOIInput {
-        val proxyA = DistanceProxy()
-        val proxyB = DistanceProxy()
-        val sweepA = Sweep()
-        val sweepB = Sweep()
+    data class TOIInput(
+        val proxyA: DistanceProxy = DistanceProxy(),
+        val proxyB: DistanceProxy = DistanceProxy(),
+        val sweepA: Sweep = Sweep(),
+        val sweepB: Sweep = Sweep(),
         /**
          * defines sweep interval [0, tMax]
          */
-        var tMax = 0f
-    }
+        var tMax: Float = 0f
+    )
 
     enum class TOIOutputState {
         UNKNOWN, FAILED, OVERLAPPED, TOUCHING, SEPARATED
@@ -66,10 +66,10 @@ class TimeOfImpact(private val pool: WorldPool) {
      *
      * @author Daniel Murphy
      */
-    class TOIOutput {
-        var state: TOIOutputState? = null
-        var t = 0f
-    }
+    data class TOIOutput(
+        var state: TOIOutputState? = null,
+        var t: Float = 0f
+    )
 
     // djm pooling
     private val cache = SimplexCache()

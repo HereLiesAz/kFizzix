@@ -37,61 +37,14 @@ import com.hereliesaz.kfizzix.common.Vec2
  * This structure is stored across time steps, so we keep it small.<br></br>
  * Note: the impulses are used for internal caching and may not provide reliable
  * contact forces, especially for high speed collisions.
- *
- * @author Daniel Murphy
  */
-class ManifoldPoint {
-    /**
-     * usage depends on manifold type
-     */
-    val localPoint: Vec2
-
-    /**
-     * the non-penetration impulse
-     */
-    var normalImpulse = 0f
-
-    /**
-     * the friction impulse
-     */
-    var tangentImpulse = 0f
-
-    /**
-     * uniquely identifies a contact point between two shapes
-     */
-    val id: ContactID
-
-    /**
-     * Blank manifold point with everything zeroed out.
-     */
-    constructor() {
-        localPoint = Vec2()
-        normalImpulse = 0f
-        tangentImpulse = 0f
-        id = ContactID()
-    }
-
-    /**
-     * Creates a manifold point as a copy of the given point
-     *
-     * @param cp The point to copy from.
-     */
-    constructor(cp: ManifoldPoint) {
-        localPoint = cp.localPoint.clone()
-        normalImpulse = cp.normalImpulse
-        tangentImpulse = cp.tangentImpulse
-        id = ContactID(cp.id)
-    }
-
-    /**
-     * Sets this manifold point form the given one
-     *
-     * @param cp The point to copy from.
-     */
-    fun set(cp: ManifoldPoint) {
-        localPoint.set(cp.localPoint)
-        normalImpulse = cp.normalImpulse
-        tangentImpulse = cp.tangentImpulse
-        id.set(cp.id)
-    }
-}
+data class ManifoldPoint(
+    /** usage depends on manifold type */
+    val localPoint: Vec2 = Vec2(),
+    /** the non-penetration impulse */
+    var normalImpulse: Float = 0f,
+    /** the friction impulse */
+    var tangentImpulse: Float = 0f,
+    /** uniquely identifies a contact point between two shapes */
+    var id: ContactID = ContactID()
+)

@@ -28,20 +28,8 @@ import com.hereliesaz.kfizzix.common.Vec2
 /**
  * Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and
  * p2 come from b2RayCastInput.
- *
- * @author Daniel Murphy
  */
-class RayCastOutput {
-    val normal: Vec2
-    var fraction = 0f
-
-    constructor() {
-        normal = Vec2()
-        fraction = 0f
-    }
-
-    fun set(rco: RayCastOutput) {
-        normal.set(rco.normal)
-        fraction = rco.fraction
-    }
-}
+data class RayCastOutput(
+    val normal: Vec2 = Vec2(),
+    var fraction: Float = 0f
+)

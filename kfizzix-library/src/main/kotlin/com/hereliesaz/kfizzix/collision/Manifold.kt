@@ -47,75 +47,46 @@ import com.hereliesaz.kfizzix.common.Vec2
  *
  * We store contacts in this way so that position correction can account for
  * movement, which is critical for continuous physics. All contact scenarios
+
  * must be expressed in one of these types. This structure is stored across time
  * steps, so we keep it small.
- *
- * @author Daniel Murphy
  */
-class Manifold {
+data class Manifold(
+    /** The points of contact. */
+    val points: Array<ManifoldPoint> = Array(Settings.maxManifoldPoints) { ManifoldPoint() },
+    /** not use for Type::e_points */
+    val localNormal: Vec2 = Vec2(),
+    /** usage depends on manifold type */
+    val localPoint: Vec2 = Vec2(),
+    var type: ManifoldType? = null,
+    /** The number of manifold points. */
+    var pointCount: Int = 0
+) {
     enum class ManifoldType {
         CIRCLES, FACE_A, FACE_B
     }
 
-    /**
-     * The points of contact.
-     */
-    val points: Array<ManifoldPoint>
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
 
-    /**
-     * not use for Type::e_points
-     */
-    val localNormal: Vec2
+        other as Manifold
 
-    /**
-     * usage depends on manifold type
-     */
-    val localPoint: Vec2
-    var type: ManifoldType? = null
+        if (!points.contentEquals(other.points)) return false
+        if (localNormal != other.localNormal) return false
+        if (localPoint != other.localPoint) return false
+        if (type != other.type) return false
+        if (pointCount != other.pointCount) return false
 
-    /**
-     * The number of manifold points.
-     */
-    var pointCount: Int
-
-    /**
-     * Creates a manifold with 0 points, with its points array full of
-     * instantiated ManifoldPoints.
-     */
-    constructor() {
-        points = Array(Settings.maxManifoldPoints) { ManifoldPoint() }
-        localNormal = Vec2()
-        localPoint = Vec2()
-        pointCount = 0
+        return true
     }
 
-    /**
-     * Creates this manifold as a copy of the other.
-     */
-    constructor(other: Manifold) {
-        points = Array(Settings.maxManifoldPoints) { ManifoldPoint() }
-        localNormal = other.localNormal.clone()
-        localPoint = other.localPoint.clone()
-        pointCount = other.pointCount
-        type = other.type
-        // djm: this is correct now
-        for (i in 0 until Settings.maxManifoldPoints) {
-            points[i] = ManifoldPoint(other.points[i])
-        }
-    }
-
-    /**
-     * Copies this manifold from the given one.
-     *
-     * @param cp The manifold to copy from.
-     */
-    fun set(cp: Manifold) {
-        for (i in 0 until cp.pointCount) {
-            points[i].set(cp.points[i])
-        }
-        type = cp.type
-        localNormal.set(cp.localNormal)
-        localPoint.set(cp.localPoint)
-        pointCount = cp.pointCount
+    override fun hashCode(): Int {
+        var result = points.contentHashCode()
+        result = 31 * result + localNormal.hashCode()
+        result = 31 * result + localPoint.hashCode()
+        result = 31 * result + (type?.hashCode() ?: 0)
+        result = 31 * result + pointCount
+        return result
     }
 }

@@ -257,27 +257,19 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         get() = 1
 
     override fun testPoint(xf: Transform, p: Vec2): Boolean {
-        var tempx: Float
-        var tempy: Float
-        val xfq = xf.q
-        tempx = p.x - xf.p.x
-        tempy = p.y - xf.p.y
-        val pLocalx = xfq.c * tempx + xfq.s * tempy
-        val pLocaly = -xfq.s * tempx + xfq.c * tempy
+        val pLocal = xf.q.mulT(p - xf.p)
+
         if (debug) {
             println("--testPoint debug--")
             println("Vertices: ")
             for (i in 0 until count) {
                 println(vertices[i])
             }
-            println("pLocal: $pLocalx, $pLocaly")
+            println("pLocal: $pLocal")
         }
+
         for (i in 0 until count) {
-            val vertex = vertices[i]
-            val normal = normals[i]
-            tempx = pLocalx - vertex.x
-            tempy = pLocaly - vertex.y
-            val dot = normal.x * tempx + normal.y * tempy
+            val dot = normals[i].dot(pLocal - vertices[i])
             if (dot > 0.0f) {
                 return false
             }
@@ -286,31 +278,22 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
     }
 
     override fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int) {
-        val lower = aabb.lowerBound
-        val upper = aabb.upperBound
-        val v1 = vertices[0]
-        val xfqc = xf.q.c
-        val xfqs = xf.q.s
-        val xfpx = xf.p.x
-        val xfpy = xf.p.y
-        lower.x = (xfqc * v1.x - xfqs * v1.y) + xfpx
-        lower.y = (xfqs * v1.x + xfqc * v1.y) + xfpy
-        upper.x = lower.x
-        upper.y = lower.y
+        val v1 = xf.mul(vertices[0])
+        aabb.lowerBound.set(v1)
+        aabb.upperBound.set(v1)
+
         for (i in 1 until count) {
-            val v2 = vertices[i]
-            // Vec2 v = Mul(xf, vertices[i]);
-            val vx = (xfqc * v2.x - xfqs * v2.y) + xfpx
-            val vy = (xfqs * v2.x + xfqc * v2.y) + xfpy
-            lower.x = Math.min(lower.x, vx)
-            lower.y = Math.min(lower.y, vy)
-            upper.x = Math.max(upper.x, vx)
-            upper.y = Math.max(upper.y, vy)
+            val v2 = xf.mul(vertices[i])
+            aabb.lowerBound.x = minOf(aabb.lowerBound.x, v2.x)
+            aabb.lowerBound.y = minOf(aabb.lowerBound.y, v2.y)
+            aabb.upperBound.x = maxOf(aabb.upperBound.x, v2.x)
+            aabb.upperBound.y = maxOf(aabb.upperBound.y, v2.y)
         }
-        lower.x -= radius
-        lower.y -= radius
-        upper.x += radius
-        upper.y += radius
+
+        aabb.lowerBound.x -= radius
+        aabb.lowerBound.y -= radius
+        aabb.upperBound.x += radius
+        aabb.upperBound.y += radius
     }
 
     /**
@@ -330,89 +313,57 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
     }
 
     override fun computeDistanceToOut(xf: Transform, p: Vec2, childIndex: Int, normalOut: Vec2): Float {
-        val xfqc = xf.q.c
-        val xfqs = xf.q.s
-        var tx = p.x - xf.p.x
-        var ty = p.y - xf.p.y
-        val pLocalX = xfqc * tx + xfqs * ty
-        val pLocalY = -xfqs * tx + xfqc * ty
+        val pLocal = xf.q.mulT(p - xf.p)
         var maxDistance = -Float.MAX_VALUE
-        var normalForMaxDistanceX = pLocalX
-        var normalForMaxDistanceY = pLocalY
+        val normalForMaxDistance = Vec2()
+
         for (i in 0 until count) {
-            val vertex = vertices[i]
-            val normal = normals[i]
-            tx = pLocalX - vertex.x
-            ty = pLocalY - vertex.y
-            val dot = normal.x * tx + normal.y * ty
+            val dot = normals[i].dot(pLocal - vertices[i])
             if (dot > maxDistance) {
                 maxDistance = dot
-                normalForMaxDistanceX = normal.x
-                normalForMaxDistanceY = normal.y
+                normalForMaxDistance.set(normals[i])
             }
         }
-        val distance: Float
-        if (maxDistance > 0) {
-            var minDistanceX = normalForMaxDistanceX
-            var minDistanceY = normalForMaxDistanceY
-            var minDistance2 = maxDistance * maxDistance
+
+        return if (maxDistance > 0) {
+            var minDistance2 = Float.MAX_VALUE
+            val minDistanceVec = Vec2()
+
             for (i in 0 until count) {
-                val vertex = vertices[i]
-                val distanceVecX = pLocalX - vertex.x
-                val distanceVecY = pLocalY - vertex.y
-                val distance2 = distanceVecX * distanceVecX + distanceVecY * distanceVecY
-                if (minDistance2 > distance2) {
-                    minDistanceX = distanceVecX
-                    minDistanceY = distanceVecY
-                    minDistance2 = distance2
+                val distVec = pLocal - vertices[i]
+                val dist2 = distVec.lengthSquared()
+                if (minDistance2 > dist2) {
+                    minDistance2 = dist2
+                    minDistanceVec.set(distVec)
                 }
             }
-            distance = MathUtils.sqrt(minDistance2)
-            normalOut.x = xfqc * minDistanceX - xfqs * minDistanceY
-            normalOut.y = xfqs * minDistanceX + xfqc * minDistanceY
+            normalOut.set(xf.q.mul(minDistanceVec))
             normalOut.normalize()
+            MathUtils.sqrt(minDistance2)
         } else {
-            distance = maxDistance
-            normalOut.x = xfqc * normalForMaxDistanceX - xfqs * normalForMaxDistanceY
-            normalOut.y = xfqs * normalForMaxDistanceX + xfqc * normalForMaxDistanceY
+            normalOut.set(xf.q.mul(normalForMaxDistance))
+            maxDistance
         }
-        return distance
     }
 
     override fun raycast(
         output: RayCastOutput, input: RayCastInput,
         xf: Transform, childIndex: Int
     ): Boolean {
-        val xfqc = xf.q.c
-        val xfqs = xf.q.s
-        val xfp = xf.p
-        var tempx: Float
-        var tempy: Float
-        // b2Vec2 p1 = b2MulT(xf.q, input.p1 - xf.p);
-        // b2Vec2 p2 = b2MulT(xf.q, input.p2 - xf.p);
-        tempx = input.p1.x - xfp.x
-        tempy = input.p1.y - xfp.y
-        val p1x = xfqc * tempx + xfqs * tempy
-        val p1y = -xfqs * tempx + xfqc * tempy
-        tempx = input.p2.x - xfp.x
-        tempy = input.p2.y - xfp.y
-        val p2x = xfqc * tempx + xfqs * tempy
-        val p2y = -xfqs * tempx + xfqc * tempy
-        val dx = p2x - p1x
-        val dy = p2y - p1y
+        // Put the ray into the polygon's frame of reference.
+        val p1 = xf.q.mulT(input.p1 - xf.p)
+        val p2 = xf.q.mulT(input.p2 - xf.p)
+        val d = p2 - p1
+
         var lower = 0f
         var upper = input.maxFraction
+
         var index = -1
+
         for (i in 0 until count) {
-            val normal = normals[i]
-            val vertex = vertices[i]
-            // p = p1 + a * d
-            // dot(normal, p - v) = 0
-            // dot(normal, p1 - v) + a * dot(normal, d) = 0
-            val tempxn = vertex.x - p1x
-            val tempyn = vertex.y - p1y
-            val numerator = normal.x * tempxn + normal.y * tempyn
-            val denominator = normal.x * dx + normal.y * dy
+            val numerator = normals[i].dot(vertices[i] - p1)
+            val denominator = normals[i].dot(d)
+
             if (denominator == 0.0f) {
                 if (numerator < 0.0f) {
                     return false
@@ -421,8 +372,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
                 // Note: we want this predicate without division:
                 // lower < numerator / denominator, where denominator < 0
                 // Since denominator < 0, we have to flip the inequality:
-                // lower < numerator / denominator <==> denominator * lower >
-                // numerator.
+                // lower < numerator / denominator <==> denominator * lower > numerator.
                 if (denominator < 0.0f && numerator < lower * denominator) {
                     // Increase lower.
                     // The segment enters this half-space.
@@ -434,18 +384,17 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
                     upper = numerator / denominator
                 }
             }
+
             if (upper < lower) {
                 return false
             }
         }
-        assert(0.0f <= lower && lower <= input.maxFraction)
+
+        assert(lower in 0.0f..input.maxFraction)
+
         if (index >= 0) {
             output.fraction = lower
-            // normal = Mul(xf.R, normals[index]);
-            val normal = normals[index]
-            val out = output.normal
-            out.x = xfqc * normal.x - xfqs * normal.y
-            out.y = xfqs * normal.x + xfqc * normal.y
+            output.normal.set(xf.q.mul(normals[index]))
             return true
         }
         return false

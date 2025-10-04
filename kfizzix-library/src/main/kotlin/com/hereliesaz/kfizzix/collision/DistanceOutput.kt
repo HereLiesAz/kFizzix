@@ -18,7 +18,7 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF the use of this SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
 package com.hereliesaz.kfizzix.collision
@@ -27,23 +27,13 @@ import com.hereliesaz.kfizzix.common.Vec2
 
 /**
  * Output for Distance.
- *
- * @author Daniel Murphy
  */
-class DistanceOutput {
-    /**
-     * Closest point on shapeA
-     */
-    val pointA = Vec2()
-
-    /**
-     * Closest point on shapeB
-     */
-    val pointB = Vec2()
-    var distance = 0f
-
-    /**
-     * number of gjk iterations used
-     */
-    var iterations = 0
-}
+data class DistanceOutput(
+    /** Closest point on shapeA */
+    val pointA: Vec2 = Vec2(),
+    /** Closest point on shapeB */
+    val pointB: Vec2 = Vec2(),
+    var distance: Float = 0f,
+    /** number of gjk iterations used */
+    var iterations: Int = 0
+)

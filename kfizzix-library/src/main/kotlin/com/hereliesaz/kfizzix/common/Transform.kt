@@ -103,6 +103,7 @@ data class Transform(
 
         /**
          * Multiplies a transform by a vector and stores the result in the output vector.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param T the transform
          * @param v the vector
@@ -123,6 +124,7 @@ data class Transform(
          * @param v the vector
          * @param out the vector to store the result in
          */
+        @DelicateFizzixApi
         @JvmStatic
         fun mulToOutUnsafe(T: Transform, v: Vec2, out: Vec2) {
             assert(v !== out)
@@ -146,6 +148,7 @@ data class Transform(
 
         /**
          * Multiplies the transpose of a transform by a vector and stores the result in the output vector.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param T the transform to transpose
          * @param v the vector
@@ -168,6 +171,7 @@ data class Transform(
          * @param v the vector
          * @param out the vector to store the result in
          */
+        @DelicateFizzixApi
         @JvmStatic
         fun mulTransToOutUnsafe(T: Transform, v: Vec2, out: Vec2) {
             assert(v !== out)
@@ -195,6 +199,7 @@ data class Transform(
 
         /**
          * Multiplies two transforms and stores the result in the output transform.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param A the first transform
          * @param B the second transform
@@ -216,6 +221,7 @@ data class Transform(
          * @param B the second transform
          * @param out the transform to store the result in
          */
+        @DelicateFizzixApi
         @JvmStatic
         fun mulToOutUnsafe(A: Transform, B: Transform, out: Transform) {
             assert(out !== B)
@@ -224,8 +230,6 @@ data class Transform(
             Rot.mulToOutUnsafe(A.q, B.p, out.p)
             out.p.addLocal(A.p)
         }
-
-        private val pool = Vec2()
 
         /**
          * Multiplies the transpose of a transform by another transform.
@@ -238,13 +242,14 @@ data class Transform(
         fun mulTrans(A: Transform, B: Transform): Transform {
             val C = Transform()
             Rot.mulTransUnsafe(A.q, B.q, C.q)
-            pool.set(B.p).subLocal(A.p)
+            val pool = B.p - A.p
             Rot.mulTransUnsafe(A.q, pool, C.p)
             return C
         }
 
         /**
          * Multiplies the transpose of a transform by another transform and stores the result in the output transform.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param A the first transform (will be transposed)
          * @param B the second transform
@@ -254,7 +259,7 @@ data class Transform(
         fun mulTransToOut(A: Transform, B: Transform, out: Transform) {
             assert(out !== A)
             Rot.mulTrans(A.q, B.q, out.q)
-            pool.set(B.p).subLocal(A.p)
+            val pool = B.p - A.p
             Rot.mulTrans(A.q, pool, out.p)
         }
 
@@ -266,12 +271,13 @@ data class Transform(
          * @param B the second transform
          * @param out the transform to store the result in
          */
+        @DelicateFizzixApi
         @JvmStatic
         fun mulTransToOutUnsafe(A: Transform, B: Transform, out: Transform) {
             assert(out !== A)
             assert(out !== B)
             Rot.mulTransUnsafe(A.q, B.q, out.q)
-            pool.set(B.p).subLocal(A.p)
+            val pool = B.p - A.p
             Rot.mulTransUnsafe(A.q, pool, out.p)
         }
     }

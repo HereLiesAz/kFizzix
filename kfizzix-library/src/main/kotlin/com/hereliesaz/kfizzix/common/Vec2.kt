@@ -41,13 +41,6 @@ data class Vec2(
 ) : Serializable {
 
     /**
-     * Creates a new vector by copying the values from another vector.
-     *
-     * @param toCopy the vector to copy from
-     */
-    constructor(toCopy: Vec2) : this(toCopy.x, toCopy.y)
-
-    /**
      * Zero out this vector.
      * After this call, both x and y components will be 0.
      */
@@ -119,7 +112,8 @@ data class Vec2(
     }
 
     /**
-     * Flip the vector and return it - alters this vector.
+     * Flip the vector and return it. This method alters the original vector for chaining.
+     * For a non-mutating version, see [unaryMinus].
      *
      * @return this vector for chaining
      */
@@ -130,7 +124,8 @@ data class Vec2(
     }
 
     /**
-     * Add another vector to this one and returns result - alters this vector.
+     * Add another vector to this one and returns result. This method alters the original vector for chaining.
+     * For a non-mutating version, see [plus].
      *
      * @param v the vector to add
      * @return this vector for chaining
@@ -142,7 +137,7 @@ data class Vec2(
     }
 
     /**
-     * Adds values to this vector and returns result - alters this vector.
+     * Adds values to this vector and returns result. This method alters the original vector for chaining.
      *
      * @param x the x-component to add
      * @param y the y-component to add
@@ -155,7 +150,8 @@ data class Vec2(
     }
 
     /**
-     * Subtract another vector from this one and return result - alters this vector.
+     * Subtract another vector from this one and return result. This method alters the original vector for chaining.
+     * For a non-mutating version, see [minus].
      *
      * @param v the vector to subtract
      * @return this vector for chaining
@@ -167,7 +163,8 @@ data class Vec2(
     }
 
     /**
-     * Multiply this vector by a number and return result - alters this vector.
+     * Multiply this vector by a number and return result. This method alters the original vector for chaining.
+     * For a non-mutating version, see [times].
      *
      * @param a the scalar to multiply by
      * @return this vector for chaining
@@ -276,6 +273,7 @@ data class Vec2(
 
         /**
          * Sets the output vector to the absolute values of the components of the given vector.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param a the vector to take the absolute values of
          * @param out the vector to store the result in
@@ -324,6 +322,7 @@ data class Vec2(
 
         /**
          * Computes the cross product of a vector and a scalar, and stores the result in the output vector.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param a the vector
          * @param s the scalar
@@ -344,6 +343,7 @@ data class Vec2(
          * @param s the scalar
          * @param out the vector to store the result in
          */
+        @DelicateFizzixApi
         @JvmStatic
         fun crossToOutUnsafe(a: Vec2, s: Float, out: Vec2) {
             assert(out !== a)
@@ -365,6 +365,7 @@ data class Vec2(
 
         /**
          * Computes the cross product of a scalar and a vector, and stores the result in the output vector.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param s the scalar
          * @param a the vector
@@ -385,6 +386,7 @@ data class Vec2(
          * @param a the vector
          * @param out the vector to store the result in
          */
+        @DelicateFizzixApi
         @JvmStatic
         fun crossToOutUnsafe(s: Float, a: Vec2, out: Vec2) {
             assert(out !== a)
@@ -394,6 +396,7 @@ data class Vec2(
 
         /**
          * Sets the output vector to the negation of the input vector.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param a the vector to negate
          * @param out the vector to store the result in
@@ -430,6 +433,7 @@ data class Vec2(
 
         /**
          * Sets the output vector to the minimum components of two vectors.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param a the first vector
          * @param b the second vector
@@ -443,6 +447,7 @@ data class Vec2(
 
         /**
          * Sets the output vector to the maximum components of two vectors.
+         * This is a performance-optimized version that avoids new object allocations.
          *
          * @param a the first vector
          * @param b the second vector

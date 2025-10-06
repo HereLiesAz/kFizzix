@@ -517,7 +517,7 @@ class Collision(private val pool: WorldPool) {
                 val py = clipPoints2[i].v.y - xf2.p.y
                 out.x = (xf2.q.c * px + xf2.q.s * py)
                 out.y = (-xf2.q.s * px + xf2.q.c * py)
-                cp.id.copy(clipPoints2[i].id)
+                cp.id = clipPoints2[i].id.copy()
                 if (flip) {
                     // Swap features
                     cp.id.flip()

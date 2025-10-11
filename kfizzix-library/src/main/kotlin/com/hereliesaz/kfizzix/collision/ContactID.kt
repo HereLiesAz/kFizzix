@@ -48,7 +48,7 @@ package com.hereliesaz.kfizzix.collision
 /**
  * Contact ids to facilitate warm starting.
  */
-data class ContactID(
+class ContactID(
     var indexA: Byte = 0,
     var indexB: Byte = 0,
     var typeA: Byte = 0,
@@ -61,12 +61,33 @@ data class ContactID(
     val key: Int
         get() = (indexA.toInt() shl 24) or (indexB.toInt() shl 16) or (typeA.toInt() shl 8) or typeB.toInt()
 
-    fun flip() {
-        indexA = indexB.also { indexB = indexA }
-        typeA = typeB.also { typeB = typeA }
+    fun flip(): ContactID {
+        return ContactID(indexB, indexA, typeB, typeA)
     }
 
     override fun compareTo(other: ContactID): Int {
         return key - other.key
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as ContactID
+        return key == other.key
+    }
+
+    override fun hashCode(): Int {
+        return key
+    }
+
+    fun copy(): ContactID {
+        return ContactID(indexA, indexB, typeA, typeB)
+    }
+
+    fun set(other: ContactID) {
+        indexA = other.indexA
+        indexB = other.indexB
+        typeA = other.typeA
+        typeB = other.typeB
     }
 }

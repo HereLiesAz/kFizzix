@@ -353,7 +353,6 @@ class DynamicTree : BroadPhaseStrategy {
                 freeNode(node)
             }
         }
-        val b = AABB()
         while (count > 1) {
             var minCost = Float.MAX_VALUE
             var iMin = -1
@@ -362,7 +361,7 @@ class DynamicTree : BroadPhaseStrategy {
                 val aabbi = this.nodes[nodes[i]].aabb
                 for (j in i + 1 until count) {
                     val aabbj = this.nodes[nodes[j]].aabb
-                    b.combine(aabbi, aabbj)
+                    val b = AABB.combine(aabbi, aabbj)
                     val cost = b.perimeter
                     if (cost < minCost) {
                         iMin = i
@@ -379,7 +378,7 @@ class DynamicTree : BroadPhaseStrategy {
             parent.child1 = child1
             parent.child2 = child2
             parent.height = 1 + MathUtils.max(child1.height, child2.height)
-            parent.aabb.combine(child1.aabb, child2.aabb)
+            parent.aabb = AABB.combine(child1.aabb, child2.aabb)
             parent.parent = null
             child1.parent = parent
             child2.parent = parent
@@ -428,7 +427,6 @@ class DynamicTree : BroadPhaseStrategy {
         nodeCount--
     }
 
-    private val combinedAABB = AABB()
     private fun insertLeaf(leaf_index: Int) {
         val leaf = nodes[leaf_index]
         if (root == null) {
@@ -436,6 +434,7 @@ class DynamicTree : BroadPhaseStrategy {
             root!!.parent = null
             return
         }
+
         // find the best sibling
         val leafAABB = leaf.aabb
         var index: DynamicTreeNode? = root
@@ -443,39 +442,44 @@ class DynamicTree : BroadPhaseStrategy {
             val node = index
             val child1 = node.child1
             val child2 = node.child2
+
             val area = node.aabb.perimeter
-            combinedAABB.combine(node.aabb, leafAABB)
+            val combinedAABB = AABB.combine(node.aabb, leafAABB)
             val combinedArea = combinedAABB.perimeter
+
             // Cost of creating a new parent for this node and the new leaf
             val cost = 2.0f * combinedArea
+
             // Minimum cost of pushing the leaf further down the tree
             val inheritanceCost = 2.0f * (combinedArea - area)
+
             // Cost of descending into child1
             val cost1: Float
-            cost1 = if (child1!!.child1 == null) {
-                combinedAABB.combine(leafAABB, child1.aabb)
-                combinedAABB.perimeter + inheritanceCost
+            val combinedAABB1 = AABB.combine(leafAABB, child1!!.aabb)
+            cost1 = if (child1.child1 == null) {
+                combinedAABB1.perimeter + inheritanceCost
             } else {
-                combinedAABB.combine(leafAABB, child1.aabb)
                 val oldArea = child1.aabb.perimeter
-                val newArea = combinedAABB.perimeter
+                val newArea = combinedAABB1.perimeter
                 newArea - oldArea + inheritanceCost
             }
+
             // Cost of descending into child2
             val cost2: Float
-            cost2 = if (child2!!.child1 == null) {
-                combinedAABB.combine(leafAABB, child2.aabb)
-                combinedAABB.perimeter + inheritanceCost
+            val combinedAABB2 = AABB.combine(leafAABB, child2!!.aabb)
+            cost2 = if (child2.child1 == null) {
+                combinedAABB2.perimeter + inheritanceCost
             } else {
-                combinedAABB.combine(leafAABB, child2.aabb)
                 val oldArea = child2.aabb.perimeter
-                val newArea = combinedAABB.perimeter
+                val newArea = combinedAABB2.perimeter
                 newArea - oldArea + inheritanceCost
             }
+
             // Descend according to the minimum cost.
             if (cost < cost1 && cost < cost2) {
                 break
             }
+
             // Descend
             index = if (cost1 < cost2) {
                 child1
@@ -483,13 +487,15 @@ class DynamicTree : BroadPhaseStrategy {
                 child2
             }
         }
+
         val sibling = index
         val oldParent = nodes[sibling.id].parent
         val newParent = allocateNode()
         newParent.parent = oldParent
         newParent.userData = null
-        newParent.aabb.combine(leafAABB, sibling.aabb)
+        newParent.aabb = AABB.combine(leafAABB, sibling.aabb)
         newParent.height = sibling.height + 1
+
         if (oldParent != null) {
             // The sibling was not the root.
             if (oldParent.child1 == sibling) {
@@ -497,6 +503,7 @@ class DynamicTree : BroadPhaseStrategy {
             } else {
                 oldParent.child2 = newParent
             }
+
             newParent.child1 = sibling
             newParent.child2 = leaf
             sibling.parent = newParent
@@ -509,16 +516,21 @@ class DynamicTree : BroadPhaseStrategy {
             leaf.parent = newParent
             root = newParent
         }
+
         // Walk back up the tree fixing heights and AABBs
         index = leaf.parent
         while (index != null) {
             index = balance(index)
+
             val child1 = index.child1
             val child2 = index.child2
+
             assert(child1 != null)
             assert(child2 != null)
+
             index.height = 1 + MathUtils.max(child1!!.height, child2!!.height)
-            index.aabb.combine(child1.aabb, child2.aabb)
+            index.aabb = AABB.combine(child1.aabb, child2.aabb)
+
             index = index.parent
         }
         // validate();
@@ -552,7 +564,7 @@ class DynamicTree : BroadPhaseStrategy {
                 index = balance(index)
                 val child1 = index.child1
                 val child2 = index.child2
-                index.aabb.combine(child1!!.aabb, child2!!.aabb)
+                index.aabb = AABB.combine(child1!!.aabb, child2!!.aabb)
                 index.height = 1 + MathUtils.max(child1.height, child2.height)
                 index = index.parent
             }
@@ -604,15 +616,15 @@ class DynamicTree : BroadPhaseStrategy {
                 iC.child2 = iF
                 iA.child2 = iG
                 iG.parent = iA
-                iA.aabb.combine(iB.aabb, iG.aabb)
-                iC.aabb.combine(iA.aabb, iF.aabb)
+                iA.aabb = AABB.combine(iB.aabb, iG.aabb)
+                iC.aabb = AABB.combine(iA.aabb, iF.aabb)
                 iA.height = 1 + MathUtils.max(iB.height, iG.height)
                 iC.height = 1 + MathUtils.max(iA.height, iF.height)
             } else {
                 iA.child2 = iF
                 iF.parent = iA
-                iA.aabb.combine(iB.aabb, iF.aabb)
-                iC.aabb.combine(iA.aabb, iG.aabb)
+                iA.aabb = AABB.combine(iB.aabb, iF.aabb)
+                iC.aabb = AABB.combine(iA.aabb, iG.aabb)
                 iA.height = 1 + MathUtils.max(iB.height, iF.height)
                 iC.height = 1 + MathUtils.max(iA.height, iG.height)
             }
@@ -644,16 +656,16 @@ class DynamicTree : BroadPhaseStrategy {
                 iB.child2 = iD
                 iA.child1 = iE
                 iE.parent = iA
-                iA.aabb.combine(iC.aabb, iE.aabb)
-                iB.aabb.combine(iA.aabb, iD.aabb)
+                iA.aabb = AABB.combine(iC.aabb, iE.aabb)
+                iB.aabb = AABB.combine(iA.aabb, iD.aabb)
                 iA.height = 1 + MathUtils.max(iC.height, iE.height)
                 iB.height = 1 + MathUtils.max(iA.height, iD.height)
             } else {
                 iB.child2 = iE
                 iA.child1 = iD
                 iD.parent = iA
-                iA.aabb.combine(iC.aabb, iD.aabb)
-                iB.aabb.combine(iA.aabb, iE.aabb)
+                iA.aabb = AABB.combine(iC.aabb, iD.aabb)
+                iB.aabb = AABB.combine(iA.aabb, iE.aabb)
                 iA.height = 1 + MathUtils.max(iC.height, iD.height)
                 iB.height = 1 + MathUtils.max(iA.height, iE.height)
             }

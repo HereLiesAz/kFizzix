@@ -63,23 +63,10 @@ data class AABB(
         get() = 2.0f * (upperBound.x - lowerBound.x + upperBound.y - lowerBound.y)
 
     /**
-     * Combine two AABBs into this one.
+     * Combines another aabb with this one, returning a new AABB.
      */
-    fun combine(aabb1: AABB, aabb2: AABB) {
-        lowerBound.x = minOf(aabb1.lowerBound.x, aabb2.lowerBound.x)
-        lowerBound.y = minOf(aabb1.lowerBound.y, aabb2.lowerBound.y)
-        upperBound.x = maxOf(aabb1.upperBound.x, aabb2.upperBound.x)
-        upperBound.y = maxOf(aabb1.upperBound.y, aabb2.upperBound.y)
-    }
-
-    /**
-     * Combines another aabb with this one.
-     */
-    fun combine(aabb: AABB) {
-        lowerBound.x = minOf(lowerBound.x, aabb.lowerBound.x)
-        lowerBound.y = minOf(lowerBound.y, aabb.lowerBound.y)
-        upperBound.x = maxOf(upperBound.x, aabb.upperBound.x)
-        upperBound.y = maxOf(upperBound.y, aabb.upperBound.y)
+    fun combine(aabb: AABB): AABB {
+        return combine(this, aabb)
     }
 
     /**
@@ -193,6 +180,14 @@ data class AABB(
                 return false
             }
             return true
+        }
+
+        fun combine(aabb1: AABB, aabb2: AABB): AABB {
+            val lowerBoundX = minOf(aabb1.lowerBound.x, aabb2.lowerBound.x)
+            val lowerBoundY = minOf(aabb1.lowerBound.y, aabb2.lowerBound.y)
+            val upperBoundX = maxOf(aabb1.upperBound.x, aabb2.upperBound.x)
+            val upperBoundY = maxOf(aabb1.upperBound.y, aabb2.upperBound.y)
+            return AABB(Vec2(lowerBoundX, lowerBoundY), Vec2(upperBoundX, upperBoundY))
         }
     }
 }

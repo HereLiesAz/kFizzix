@@ -49,10 +49,10 @@ package com.hereliesaz.kfizzix.collision
  * Contact ids to facilitate warm starting.
  */
 data class ContactID(
-    var indexA: Byte = 0,
-    var indexB: Byte = 0,
-    var typeA: Byte = 0,
-    var typeB: Byte = 0
+    val indexA: Byte = 0,
+    val indexB: Byte = 0,
+    val typeA: Byte = 0,
+    val typeB: Byte = 0
 ) : Comparable<ContactID> {
     enum class Type {
         VERTEX, FACE

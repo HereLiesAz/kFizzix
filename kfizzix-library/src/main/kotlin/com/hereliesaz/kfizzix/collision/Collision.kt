@@ -1072,7 +1072,7 @@ class Collision(private val pool: WorldPool) {
                     if (primaryAxis.type == EPAxis.Type.EDGE_A) {
                         // cp.localPoint = MulT(xf, clipPoints2[i].v);
                         Transform.mulTransToOutUnsafe(xf, clipPoints2[i].v, cp.localPoint)
-                        cp.id.copy(clipPoints2[i].id)
+                        cp.id = clipPoints2[i].id.copy()
                     } else {
                         cp.localPoint.set(clipPoints2[i].v)
                         cp.id.typeA = clipPoints2[i].id.typeB

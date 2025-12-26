@@ -579,7 +579,7 @@ class Collision(private val pool: WorldPool) {
             manifold.localNormal.setZero()
             manifold.localPoint.set(A)
             // manifold.points[0].id.key = 0;
-            manifold.points[0].id.copy(cf)
+            manifold.points[0].id = cf.copy()
             manifold.points[0].localPoint.set(circleB.p)
             return
         }

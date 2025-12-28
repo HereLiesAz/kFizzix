@@ -35,10 +35,37 @@ import java.io.Serializable
  * @author Daniel Murphy
  * @see [Box2D b2Math.h](https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_math.h#L40-L129)
  */
-data class Vec2(
+class Vec2(
     @JvmField var x: Float = 0f,
     @JvmField var y: Float = 0f
 ) : Serializable {
+
+    operator fun component1() = x
+    operator fun component2() = y
+
+    fun copy(x: Float = this.x, y: Float = this.y) = Vec2(x, y)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Vec2
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x.hashCode()
+        result = 31 * result + y.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "Vec2(x=$x, y=$y)"
+    }
 
     /**
      * Zero out this vector.

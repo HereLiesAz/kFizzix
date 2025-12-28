@@ -35,6 +35,28 @@ import java.io.Serializable
  */
 class Rot(angle: Float? = null) : Serializable {
 
+    fun copy(): Rot {
+        val r = Rot()
+        r.s = s
+        r.c = c
+        return r
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as Rot
+        if (s != other.s) return false
+        if (c != other.c) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = s.hashCode()
+        result = 31 * result + c.hashCode()
+        return result
+    }
+
     /**
      * The sine component of the rotation.
      */

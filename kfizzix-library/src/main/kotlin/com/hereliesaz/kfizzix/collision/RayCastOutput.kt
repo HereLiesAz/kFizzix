@@ -29,7 +29,31 @@ import com.hereliesaz.kfizzix.common.Vec2
  * Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and
  * p2 come from b2RayCastInput.
  */
-data class RayCastOutput(
+class RayCastOutput(
     val normal: Vec2 = Vec2(),
     var fraction: Float = 0f
-)
+) {
+    fun set(other: RayCastOutput) {
+        normal.set(other.normal)
+        fraction = other.fraction
+    }
+
+    override fun toString(): String {
+        return "RayCastOutput(normal=$normal, fraction=$fraction)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as RayCastOutput
+        if (normal != other.normal) return false
+        if (fraction != other.fraction) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = normal.hashCode()
+        result = 31 * result + fraction.hashCode()
+        return result
+    }
+}

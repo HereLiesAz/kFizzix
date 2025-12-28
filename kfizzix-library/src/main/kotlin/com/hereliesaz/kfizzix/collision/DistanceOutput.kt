@@ -28,7 +28,7 @@ import com.hereliesaz.kfizzix.common.Vec2
 /**
  * Output for Distance.
  */
-data class DistanceOutput(
+class DistanceOutput(
     /** Closest point on shapeA */
     val pointA: Vec2 = Vec2(),
     /** Closest point on shapeB */
@@ -36,4 +36,27 @@ data class DistanceOutput(
     var distance: Float = 0f,
     /** number of gjk iterations used */
     var iterations: Int = 0
-)
+) {
+    override fun toString(): String {
+        return "DistanceOutput(pointA=$pointA, pointB=$pointB, distance=$distance, iterations=$iterations)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DistanceOutput
+        if (pointA != other.pointA) return false
+        if (pointB != other.pointB) return false
+        if (distance != other.distance) return false
+        if (iterations != other.iterations) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = pointA.hashCode()
+        result = 31 * result + pointB.hashCode()
+        result = 31 * result + distance.hashCode()
+        result = 31 * result + iterations
+        return result
+    }
+}

@@ -38,12 +38,37 @@ import com.hereliesaz.kfizzix.common.Vec2
  *
  * @author Daniel Murphy
  */
-data class CircleShape(val p: Vec2 = Vec2()) : Shape(ShapeType.CIRCLE) {
+class CircleShape(val p: Vec2 = Vec2()) : Shape(ShapeType.CIRCLE) {
 
-    public override fun clone(): Shape {
+    fun copy(p: Vec2 = this.p): CircleShape {
+        val copy = CircleShape(p.copy())
+        copy.radius = radius
+        return copy
+    }
+
+    override fun clone(): Shape {
         val shape = copy()
         shape.radius = radius
         return shape
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as CircleShape
+        if (p != other.p) return false
+        if (radius != other.radius) return false // Shape properties should be compared?
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = p.hashCode()
+        result = 31 * result + radius.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "CircleShape(p=$p, radius=$radius)"
     }
 
     override val childCount: Int

@@ -35,11 +35,36 @@ import java.io.Serializable
  * @constructor Creates a new vector with the given components.
  * @author Daniel Murphy
  */
-data class Vec3(
+class Vec3(
     @JvmField var x: Float = 0f,
     @JvmField var y: Float = 0f,
     @JvmField var z: Float = 0f
 ) : Serializable {
+
+    fun copy(x: Float = this.x, y: Float = this.y, z: Float = this.z): Vec3 {
+        return Vec3(x, y, z)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as Vec3
+        if (x != other.x) return false
+        if (y != other.y) return false
+        if (z != other.z) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x.hashCode()
+        result = 31 * result + y.hashCode()
+        result = 31 * result + z.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "Vec3(x=$x, y=$y, z=$z)"
+    }
 
     /**
      * Creates a new vector by copying the values from another vector.

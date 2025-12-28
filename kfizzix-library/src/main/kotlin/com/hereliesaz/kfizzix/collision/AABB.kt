@@ -32,7 +32,7 @@ import com.hereliesaz.kfizzix.pooling.normal.DefaultWorldPool
 /**
  * An axis-aligned bounding box.
  */
-data class AABB(
+class AABB(
     /** The bottom left vertex of the bounding box. */
     val lowerBound: Vec2 = Vec2(),
     /** The top right vertex of the bounding box. */
@@ -100,88 +100,113 @@ data class AABB(
         var tMax = Float.MAX_VALUE
 
         val p = input.p1
-        val d = input.p2 - input.p1
-        val absD = d.abs()
+        val d = argPool.popVec2()
+        val absD = argPool.popVec2()
+        val normal = argPool.popVec2()
 
-        val normal = Vec2()
+        d.set(input.p2).subLocal(input.p1)
+        Vec2.absToOut(d, absD)
 
-        // x then y
-        if (absD.x < Settings.EPSILON) {
-            // Parallel.
-            if (p.x < lowerBound.x || upperBound.x < p.x) {
+        try {
+            // x then y
+            if (absD.x < Settings.EPSILON) {
+                // Parallel.
+                if (p.x < lowerBound.x || upperBound.x < p.x) {
+                    return false
+                }
+            } else {
+                val inv_d = 1.0f / d.x
+                var t1 = (lowerBound.x - p.x) * inv_d
+                var t2 = (upperBound.x - p.x) * inv_d
+
+                // Sign of the normal vector.
+                var s = -1.0f
+                if (t1 > t2) {
+                    val temp = t1
+                    t1 = t2
+                    t2 = temp
+                    s = 1.0f
+                }
+
+                // Push the min up
+                if (t1 > tMin) {
+                    normal.set(s, 0.0f)
+                    tMin = t1
+                }
+
+                // Pull the max down
+                tMax = minOf(tMax, t2)
+
+                if (tMin > tMax) {
+                    return false
+                }
+            }
+
+            if (absD.y < Settings.EPSILON) {
+                // Parallel.
+                if (p.y < lowerBound.y || upperBound.y < p.y) {
+                    return false
+                }
+            } else {
+                val inv_d = 1.0f / d.y
+                var t1 = (lowerBound.y - p.y) * inv_d
+                var t2 = (upperBound.y - p.y) * inv_d
+
+                // Sign of the normal vector.
+                var s = -1.0f
+                if (t1 > t2) {
+                    val temp = t1
+                    t1 = t2
+                    t2 = temp
+                    s = 1.0f
+                }
+
+                // Push the min up
+                if (t1 > tMin) {
+                    normal.set(0.0f, s)
+                    tMin = t1
+                }
+
+                // Pull the max down
+                tMax = minOf(tMax, t2)
+
+                if (tMin > tMax) {
+                    return false
+                }
+            }
+
+            // Does the ray start inside the box?
+            // Does the ray intersect beyond the max fraction?
+            if (tMin < 0.0f || input.maxFraction < tMin) {
                 return false
             }
-        } else {
-            val inv_d = 1.0f / d.x
-            var t1 = (lowerBound.x - p.x) * inv_d
-            var t2 = (upperBound.x - p.x) * inv_d
 
-            // Sign of the normal vector.
-            var s = -1.0f
-            if (t1 > t2) {
-                val temp = t1
-                t1 = t2
-                t2 = temp
-                s = 1.0f
-            }
-
-            // Push the min up
-            if (t1 > tMin) {
-                normal.set(s, 0.0f)
-                tMin = t1
-            }
-
-            // Pull the max down
-            tMax = minOf(tMax, t2)
-
-            if (tMin > tMax) {
-                return false
-            }
+            // Intersection.
+            output.fraction = tMin
+            output.normal.set(normal)
+            return true
+        } finally {
+            argPool.pushVec2(3)
         }
+    }
 
-        if (absD.y < Settings.EPSILON) {
-            // Parallel.
-            if (p.y < lowerBound.y || upperBound.y < p.y) {
-                return false
-            }
-        } else {
-            val inv_d = 1.0f / d.y
-            var t1 = (lowerBound.y - p.y) * inv_d
-            var t2 = (upperBound.y - p.y) * inv_d
+    override fun toString(): String {
+        return "AABB(lowerBound=$lowerBound, upperBound=$upperBound)"
+    }
 
-            // Sign of the normal vector.
-            var s = -1.0f
-            if (t1 > t2) {
-                val temp = t1
-                t1 = t2
-                t2 = temp
-                s = 1.0f
-            }
-
-            // Push the min up
-            if (t1 > tMin) {
-                normal.set(0.0f, s)
-                tMin = t1
-            }
-
-            // Pull the max down
-            tMax = minOf(tMax, t2)
-
-            if (tMin > tMax) {
-                return false
-            }
-        }
-
-        // Does the ray start inside the box?
-        // Does the ray intersect beyond the max fraction?
-        if (tMin < 0.0f || input.maxFraction < tMin) {
-            return false
-        }
-
-        // Intersection.
-        output.fraction = tMin
-        output.normal.set(normal)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as AABB
+        if (lowerBound != other.lowerBound) return false
+        if (upperBound != other.upperBound) return false
         return true
+    }
+
+    override fun hashCode(): Int {
+        var result = lowerBound.hashCode()
+        result = 31 * result + upperBound.hashCode()
+        return result
     }
 
     companion object {
@@ -193,6 +218,21 @@ data class AABB(
                 return false
             }
             return true
+        }
+
+        fun combine(aabb1: AABB, aabb2: AABB): AABB {
+            val lowerBoundX = minOf(aabb1.lowerBound.x, aabb2.lowerBound.x)
+            val lowerBoundY = minOf(aabb1.lowerBound.y, aabb2.lowerBound.y)
+            val upperBoundX = maxOf(aabb1.upperBound.x, aabb2.upperBound.x)
+            val upperBoundY = maxOf(aabb1.upperBound.y, aabb2.upperBound.y)
+            return AABB(Vec2(lowerBoundX, lowerBoundY), Vec2(upperBoundX, upperBoundY))
+        }
+
+        fun combine(aabb1: AABB, aabb2: AABB, out: AABB) {
+            out.lowerBound.x = minOf(aabb1.lowerBound.x, aabb2.lowerBound.x)
+            out.lowerBound.y = minOf(aabb1.lowerBound.y, aabb2.lowerBound.y)
+            out.upperBound.x = maxOf(aabb1.upperBound.x, aabb2.upperBound.x)
+            out.upperBound.y = maxOf(aabb1.upperBound.y, aabb2.upperBound.y)
         }
     }
 }

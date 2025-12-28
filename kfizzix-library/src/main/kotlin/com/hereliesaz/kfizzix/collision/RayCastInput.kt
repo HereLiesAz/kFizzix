@@ -28,8 +28,35 @@ import com.hereliesaz.kfizzix.common.Vec2
 /**
  * Ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
  */
-data class RayCastInput(
+class RayCastInput(
     val p1: Vec2 = Vec2(),
     val p2: Vec2 = Vec2(),
     var maxFraction: Float = 0f
-)
+) {
+    fun set(other: RayCastInput) {
+        p1.set(other.p1)
+        p2.set(other.p2)
+        maxFraction = other.maxFraction
+    }
+
+    override fun toString(): String {
+        return "RayCastInput(p1=$p1, p2=$p2, maxFraction=$maxFraction)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as RayCastInput
+        if (p1 != other.p1) return false
+        if (p2 != other.p2) return false
+        if (maxFraction != other.maxFraction) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = p1.hashCode()
+        result = 31 * result + p2.hashCode()
+        result = 31 * result + maxFraction.hashCode()
+        return result
+    }
+}

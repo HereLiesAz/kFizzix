@@ -63,10 +63,23 @@ class AABB(
         get() = 2.0f * (upperBound.x - lowerBound.x + upperBound.y - lowerBound.y)
 
     /**
-     * Combines another aabb with this one, returning a new AABB.
+     * Combine two AABBs into this one.
      */
-    fun combine(aabb: AABB): AABB {
-        return combine(this, aabb)
+    fun combine(aabb1: AABB, aabb2: AABB) {
+        lowerBound.x = minOf(aabb1.lowerBound.x, aabb2.lowerBound.x)
+        lowerBound.y = minOf(aabb1.lowerBound.y, aabb2.lowerBound.y)
+        upperBound.x = maxOf(aabb1.upperBound.x, aabb2.upperBound.x)
+        upperBound.y = maxOf(aabb1.upperBound.y, aabb2.upperBound.y)
+    }
+
+    /**
+     * Combines another aabb with this one.
+     */
+    fun combine(aabb: AABB) {
+        lowerBound.x = minOf(lowerBound.x, aabb.lowerBound.x)
+        lowerBound.y = minOf(lowerBound.y, aabb.lowerBound.y)
+        upperBound.x = maxOf(upperBound.x, aabb.upperBound.x)
+        upperBound.y = maxOf(upperBound.y, aabb.upperBound.y)
     }
 
     /**

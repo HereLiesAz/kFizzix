@@ -50,11 +50,6 @@ class WorldManifold {
      */
     val separations: FloatArray = FloatArray(Settings.maxManifoldPoints)
 
-    private val poolVec1 = Vec2()
-    private val poolVec2 = Vec2()
-    private val poolVec3 = Vec2()
-    private val poolVec4 = Vec2()
-
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/collision/b2_collision.cpp#L26-L90
@@ -66,61 +61,48 @@ class WorldManifold {
         if (manifold.pointCount == 0) {
             return
         }
-
         when (manifold.type) {
             Manifold.ManifoldType.CIRCLES -> {
                 normal.set(1f, 0f)
-                Transform.mulToOut(xfA, manifold.localPoint, poolVec1)
-                Transform.mulToOut(xfB, manifold.points[0].localPoint, poolVec2)
+                val pointA = xfA.mul(manifold.localPoint)
+                val pointB = xfB.mul(manifold.points[0].localPoint)
 
-                if (MathUtils.distanceSquared(poolVec1, poolVec2) > Settings.EPSILON * Settings.EPSILON) {
-                    normal.set(poolVec2).subLocal(poolVec1)
+                if (MathUtils.distanceSquared(pointA, pointB) > Settings.EPSILON * Settings.EPSILON) {
+                    normal.set(pointB).subLocal(pointA)
                     normal.normalize()
                 }
 
-                poolVec3.set(normal).mulLocal(radiusA).addLocal(poolVec1)
-                poolVec4.set(normal).mulLocal(-radiusB).addLocal(poolVec2)
-
-                points[0].set(poolVec3).addLocal(poolVec4).mulLocal(0.5f)
-                poolVec1.set(poolVec4).subLocal(poolVec3)
-                separations[0] = poolVec1.dot(normal)
+                val cA = pointA + normal * radiusA
+                val cB = pointB - normal * radiusB
+                points[0].set(cA).addLocal(cB).mulLocal(0.5f)
+                separations[0] = (cB - cA).dot(normal)
             }
             Manifold.ManifoldType.FACE_A -> {
-                Rot.mulToOut(xfA.q, manifold.localNormal, normal)
-                Transform.mulToOut(xfA, manifold.localPoint, poolVec1)
+                normal.set(xfA.q.mul(manifold.localNormal))
+                val planePoint = xfA.mul(manifold.localPoint)
 
                 for (i in 0 until manifold.pointCount) {
-                    Transform.mulToOut(xfB, manifold.points[i].localPoint, poolVec2)
+                    val clipPoint = xfB.mul(manifold.points[i].localPoint)
+                    val scalar = radiusA - (clipPoint - planePoint).dot(normal)
 
-                    poolVec3.set(poolVec2).subLocal(poolVec1)
-                    val scalar = radiusA - poolVec3.dot(normal)
-
-                    poolVec3.set(normal).mulLocal(scalar).addLocal(poolVec2)
-                    poolVec4.set(normal).mulLocal(-radiusB).addLocal(poolVec2)
-
-                    points[i].set(poolVec3).addLocal(poolVec4).mulLocal(0.5f)
-
-                    poolVec1.set(poolVec4).subLocal(poolVec3)
-                    separations[i] = poolVec1.dot(normal)
+                    val cA = clipPoint + normal * scalar
+                    val cB = clipPoint - normal * radiusB
+                    points[i].set(cA).addLocal(cB).mulLocal(0.5f)
+                    separations[i] = (cB - cA).dot(normal)
                 }
             }
             Manifold.ManifoldType.FACE_B -> {
-                Rot.mulToOut(xfB.q, manifold.localNormal, normal)
-                Transform.mulToOut(xfB, manifold.localPoint, poolVec1)
+                normal.set(xfB.q.mul(manifold.localNormal))
+                val planePoint = xfB.mul(manifold.localPoint)
 
                 for (i in 0 until manifold.pointCount) {
-                    Transform.mulToOut(xfA, manifold.points[i].localPoint, poolVec2)
+                    val clipPoint = xfA.mul(manifold.points[i].localPoint)
+                    val scalar = radiusB - (clipPoint - planePoint).dot(normal)
 
-                    poolVec3.set(poolVec2).subLocal(poolVec1)
-                    val scalar = radiusB - poolVec3.dot(normal)
-
-                    poolVec4.set(normal).mulLocal(scalar).addLocal(poolVec2)
-                    poolVec3.set(normal).mulLocal(-radiusA).addLocal(poolVec2)
-
-                    points[i].set(poolVec3).addLocal(poolVec4).mulLocal(0.5f)
-
-                    poolVec1.set(poolVec3).subLocal(poolVec4)
-                    separations[i] = poolVec1.dot(normal)
+                    val cB = clipPoint + normal * scalar
+                    val cA = clipPoint - normal * radiusA
+                    points[i].set(cA).addLocal(cB).mulLocal(0.5f)
+                    separations[i] = (cA - cB).dot(normal)
                 }
                 // Ensure normal points from A to B.
                 normal.negateLocal()

@@ -38,7 +38,7 @@ import com.hereliesaz.kfizzix.common.Vec2
  * Note: the impulses are used for internal caching and may not provide reliable
  * contact forces, especially for high speed collisions.
  */
-class ManifoldPoint(
+data class ManifoldPoint(
     /** usage depends on manifold type */
     val localPoint: Vec2 = Vec2(),
     /** the non-penetration impulse */
@@ -47,35 +47,4 @@ class ManifoldPoint(
     var tangentImpulse: Float = 0f,
     /** uniquely identifies a contact point between two shapes */
     var id: ContactID = ContactID()
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as ManifoldPoint
-
-        if (localPoint != other.localPoint) return false
-        if (normalImpulse != other.normalImpulse) return false
-        if (tangentImpulse != other.tangentImpulse) return false
-        if (id != other.id) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = localPoint.hashCode()
-        result = 31 * result + normalImpulse.hashCode()
-        result = 31 * result + tangentImpulse.hashCode()
-        result = 31 * result + id.hashCode()
-        return result
-    }
-
-    fun copy(): ManifoldPoint {
-        return ManifoldPoint(
-            localPoint.clone(),
-            normalImpulse,
-            tangentImpulse,
-            id.copy()
-        )
-    }
-}
+)

@@ -33,9 +33,11 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTouchLi
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         if (event?.action == MotionEvent.ACTION_DOWN) {
-            val worldX = event.x / renderThread!!.scale
-            val worldY = (surfaceView.height - event.y) / renderThread!!.scale
-            renderThread?.destroyBlockAt(worldX, worldY)
+            renderThread?.let { thread ->
+                val worldX = event.x / thread.scale
+                val worldY = (surfaceView.height - event.y) / thread.scale
+                thread.destroyBlockAt(worldX, worldY)
+            }
             return true
         }
         return false
@@ -59,12 +61,13 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTouchLi
                 renderThread?.join()
                 retry = false
             } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
                 // try again
             }
         }
     }
 
-    inner class RenderThread(private val surfaceHolder: SurfaceHolder) : Thread() {
+    class RenderThread(private val surfaceHolder: SurfaceHolder) : Thread() {
 
         @Volatile
         private var running = false
@@ -72,6 +75,10 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTouchLi
         private lateinit var particleSystem: ParticleSystem
         private val damBlocks = mutableListOf<Body>()
         private val bodiesToDestroy = mutableListOf<Body>()
+
+        private var groundBody: Body? = null
+        private var leftWallBody: Body? = null
+        private var rightWallBody: Body? = null
 
         var surfaceWidth = 0
         var surfaceHeight = 0
@@ -85,8 +92,13 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTouchLi
         }
 
         fun setSurfaceSize(width: Int, height: Int) {
-            surfaceWidth = width
-            surfaceHeight = height
+            synchronized(surfaceHolder) {
+                surfaceWidth = width
+                surfaceHeight = height
+                if (::world.isInitialized) {
+                    createContainer()
+                }
+            }
         }
 
         fun destroyBlockAt(worldX: Float, worldY: Float) {
@@ -95,21 +107,25 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTouchLi
             aabb.lowerBound.set(worldX - d, worldY - d)
             aabb.upperBound.set(worldX + d, worldY + d)
 
-            world.queryAABB(object : QueryCallback {
-                override fun reportFixture(fixture: Fixture): Boolean {
-                    val body = fixture.body
-                    if (body.type == BodyType.DYNAMIC) {
-                        if (!bodiesToDestroy.contains(body)) {
-                            bodiesToDestroy.add(body)
+            synchronized(surfaceHolder) {
+                world.queryAABB(object : QueryCallback {
+                    override fun reportFixture(fixture: Fixture): Boolean {
+                        val body = fixture.body
+                        if (body.type == BodyType.DYNAMIC) {
+                            if (!bodiesToDestroy.contains(body)) {
+                                bodiesToDestroy.add(body)
+                            }
                         }
+                        return true
                     }
-                    return true
-                }
-            }, aabb)
+                }, aabb)
+            }
         }
 
         override fun run() {
-            initPhysics()
+            synchronized(surfaceHolder) {
+                initPhysics()
+            }
 
             while (running) {
                 val canvas = surfaceHolder.lockCanvas()
@@ -143,23 +159,27 @@ class MainActivity : AppCompatActivity(), SurfaceHolder.Callback, View.OnTouchLi
         }
 
         private fun createContainer() {
+            groundBody?.let { world.destroyBody(it) }
+            leftWallBody?.let { world.destroyBody(it) }
+            rightWallBody?.let { world.destroyBody(it) }
+
             val worldWidth = surfaceWidth / scale
             val worldHeight = surfaceHeight / scale
 
             val groundBodyDef = BodyDef().apply { type = BodyType.STATIC; position.set(worldWidth / 2, 0f) }
-            val groundBody = world.createBody(groundBodyDef)
+            groundBody = world.createBody(groundBodyDef)
             val groundBox = PolygonShape().apply { setAsBox(worldWidth / 2, 0.5f) }
-            groundBody.createFixture(groundBox, 0.0f)
+            groundBody!!.createFixture(groundBox, 0.0f)
 
             val leftWallDef = BodyDef().apply { type = BodyType.STATIC; position.set(0f, worldHeight / 2) }
-            val leftWallBody = world.createBody(leftWallDef)
+            leftWallBody = world.createBody(leftWallDef)
             val leftWallBox = PolygonShape().apply { setAsBox(0.5f, worldHeight / 2) }
-            leftWallBody.createFixture(leftWallBox, 0.0f)
+            leftWallBody!!.createFixture(leftWallBox, 0.0f)
 
             val rightWallDef = BodyDef().apply { type = BodyType.STATIC; position.set(worldWidth, worldHeight / 2) }
-            val rightWallBody = world.createBody(rightWallDef)
+            rightWallBody = world.createBody(rightWallDef)
             val rightWallBox = PolygonShape().apply { setAsBox(0.5f, worldHeight / 2) }
-            rightWallBody.createFixture(rightWallBox, 0.0f)
+            rightWallBody!!.createFixture(rightWallBox, 0.0f)
         }
 
         private fun createWater() {

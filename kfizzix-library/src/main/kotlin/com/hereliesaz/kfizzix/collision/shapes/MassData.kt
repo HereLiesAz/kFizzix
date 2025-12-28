@@ -50,11 +50,32 @@ import com.hereliesaz.kfizzix.common.Vec2
 /**
  * This holds the mass data computed for a shape.
  */
-data class MassData(
+class MassData(
     /** The mass of the shape, usually in kilograms. */
     var mass: Float = 0f,
     /** The position of the shape's centroid relative to the shape's origin. */
     val center: Vec2 = Vec2(),
     /** The rotational inertia of the shape about the local origin. */
     var i: Float = 0f
-)
+) {
+    override fun toString(): String {
+        return "MassData(mass=$mass, center=$center, i=$i)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as MassData
+        if (mass != other.mass) return false
+        if (center != other.center) return false
+        if (i != other.i) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = mass.hashCode()
+        result = 31 * result + center.hashCode()
+        result = 31 * result + i.hashCode()
+        return result
+    }
+}

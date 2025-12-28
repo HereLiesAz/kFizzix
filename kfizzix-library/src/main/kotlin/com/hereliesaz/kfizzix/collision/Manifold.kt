@@ -51,7 +51,7 @@ import com.hereliesaz.kfizzix.common.Vec2
  * must be expressed in one of these types. This structure is stored across time
  * steps, so we keep it small.
  */
-data class Manifold(
+class Manifold(
     /** The points of contact. */
     val points: Array<ManifoldPoint> = Array(Settings.maxManifoldPoints) { ManifoldPoint() },
     /** not use for Type::e_points */
@@ -64,6 +64,10 @@ data class Manifold(
 ) {
     enum class ManifoldType {
         CIRCLES, FACE_A, FACE_B
+    }
+
+    override fun toString(): String {
+        return "Manifold(points=${points.contentToString()}, localNormal=$localNormal, localPoint=$localPoint, type=$type, pointCount=$pointCount)"
     }
 
     override fun equals(other: Any?): Boolean {

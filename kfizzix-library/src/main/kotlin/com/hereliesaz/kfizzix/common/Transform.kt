@@ -34,7 +34,7 @@ import java.io.Serializable
  * @constructor Creates a new transform with the given position and rotation.
  * @author Daniel Murphy
  */
-data class Transform(
+class Transform(
     /**
      * The translation caused by the transform
      */
@@ -45,13 +45,32 @@ data class Transform(
     @JvmField val q: Rot = Rot()
 ) : Serializable {
 
+    fun copy(p: Vec2 = this.p, q: Rot = this.q): Transform {
+        return Transform(p.copy(), q.copy())
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as Transform
+        if (p != other.p) return false
+        if (q != other.q) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = p.hashCode()
+        result = 31 * result + q.hashCode()
+        return result
+    }
+
     /**
      * Initialize using a position vector and a rotation matrix.
      *
      * @param _position the position of the transform
      * @param _R the rotation of the transform
      */
-    constructor(position: Vec2, rotation: Rot) : this(position.clone(), rotation.clone())
+    constructor(position: Vec2, rotation: Rot) : this(position.copy(), rotation.copy())
 
     /**
      * Set this to equal another transform.

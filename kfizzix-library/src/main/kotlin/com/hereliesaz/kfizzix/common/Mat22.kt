@@ -30,10 +30,29 @@ import java.io.Serializable
  *
  * @author Daniel Murphy
  */
-data class Mat22(
+class Mat22(
     @JvmField val ex: Vec2 = Vec2(),
     @JvmField val ey: Vec2 = Vec2()
 ) : Serializable {
+
+    fun copy(ex: Vec2 = this.ex, ey: Vec2 = this.ey): Mat22 {
+        return Mat22(ex.copy(), ey.copy())
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as Mat22
+        if (ex != other.ex) return false
+        if (ey != other.ey) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = ex.hashCode()
+        result = 31 * result + ey.hashCode()
+        return result
+    }
 
     /**
      * Convert the matrix to an improved printable format.

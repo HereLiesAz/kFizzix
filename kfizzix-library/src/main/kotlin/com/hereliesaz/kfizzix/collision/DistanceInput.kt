@@ -30,10 +30,35 @@ import com.hereliesaz.kfizzix.common.Transform
  * Input for Distance. You have to option to use the shape radii in the
  * computation.
  */
-data class DistanceInput(
+class DistanceInput(
     var proxyA: DistanceProxy = DistanceProxy(),
     var proxyB: DistanceProxy = DistanceProxy(),
     var transformA: Transform = Transform(),
     var transformB: Transform = Transform(),
     var useRadii: Boolean = false
-)
+) {
+    override fun toString(): String {
+        return "DistanceInput(proxyA=$proxyA, proxyB=$proxyB, transformA=$transformA, transformB=$transformB, useRadii=$useRadii)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DistanceInput
+        if (proxyA != other.proxyA) return false
+        if (proxyB != other.proxyB) return false
+        if (transformA != other.transformA) return false
+        if (transformB != other.transformB) return false
+        if (useRadii != other.useRadii) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = proxyA.hashCode()
+        result = 31 * result + proxyB.hashCode()
+        result = 31 * result + transformA.hashCode()
+        result = 31 * result + transformB.hashCode()
+        result = 31 * result + useRadii.hashCode()
+        return result
+    }
+}

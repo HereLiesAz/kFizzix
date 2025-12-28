@@ -32,7 +32,7 @@ class DynamicTreeNode(val id: Int) {
     /**
      * The enlarged axis-aligned bounding box.
      */
-    val aabb = AABB()
+    var aabb = AABB()
     var userData: Any? = null
     var parent: DynamicTreeNode? = null
     var child1: DynamicTreeNode? = null

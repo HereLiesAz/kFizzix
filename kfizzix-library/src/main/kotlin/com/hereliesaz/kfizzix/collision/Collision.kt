@@ -353,20 +353,32 @@ class Collision(private val pool: WorldPool) {
         val v1 = vertices2[i1]
         val v2 = vertices2[i2]
 
-        val c0 = c[0]
-        val c1 = c[1]
+        val out = Vec2()
+        out.x = (xf2q.c * v1.x - xf2q.s * v1.y) + xf2.p.x
+        out.y = (xf2q.s * v1.x + xf2q.c * v1.y) + xf2.p.y
+        c[0] = ClipVertex(
+            out,
+            ContactID(
+                indexA = edge1.toByte(),
+                indexB = i1.toByte(),
+                typeA = ContactID.Type.FACE.ordinal.toByte(),
+                typeB = ContactID.Type.VERTEX.ordinal.toByte()
+            )
+        )
 
-        Transform.mulToOutUnsafe(xf2, v1, c0.v)
-        c0.id.indexA = edge1.toByte()
-        c0.id.indexB = i1.toByte()
-        c0.id.typeA = ContactID.Type.FACE.ordinal.toByte()
-        c0.id.typeB = ContactID.Type.VERTEX.ordinal.toByte()
 
-        Transform.mulToOutUnsafe(xf2, v2, c1.v)
-        c1.id.indexA = edge1.toByte()
-        c1.id.indexB = i2.toByte()
-        c1.id.typeA = ContactID.Type.FACE.ordinal.toByte()
-        c1.id.typeB = ContactID.Type.VERTEX.ordinal.toByte()
+        val out1 = Vec2()
+        out1.x = (xf2q.c * v2.x - xf2q.s * v2.y) + xf2.p.x
+        out1.y = (xf2q.s * v2.x + xf2q.c * v2.y) + xf2.p.y
+        c[1] = ClipVertex(
+            out1,
+            ContactID(
+                indexA = edge1.toByte(),
+                indexB = i2.toByte(),
+                typeA = ContactID.Type.FACE.ordinal.toByte(),
+                typeB = ContactID.Type.VERTEX.ordinal.toByte()
+            )
+        )
     }
 
     private val results1 = EdgeResults()
@@ -508,7 +520,7 @@ class Collision(private val pool: WorldPool) {
                 cp.id = clipPoints2[i].id.copy()
                 if (flip) {
                     // Swap features
-                    cp.id = cp.id.flip()
+                    cp.id.flip()
                 }
                 ++pointCount
             }
@@ -566,7 +578,8 @@ class Collision(private val pool: WorldPool) {
             manifold.type = Manifold.ManifoldType.CIRCLES
             manifold.localNormal.setZero()
             manifold.localPoint.set(A)
-            manifold.points[0].id.set(cf)
+            // manifold.points[0].id.key = 0;
+            manifold.points[0].id = cf.copy()
             manifold.points[0].localPoint.set(circleB.p)
             return
         }
@@ -594,7 +607,8 @@ class Collision(private val pool: WorldPool) {
             manifold.type = Manifold.ManifoldType.CIRCLES
             manifold.localNormal.setZero()
             manifold.localPoint.set(B)
-            manifold.points[0].id.set(cf)
+            // manifold.points[0].id.key = 0;
+            manifold.points[0].id = cf.copy()
             manifold.points[0].localPoint.set(circleB.p)
             return
         }
@@ -621,7 +635,8 @@ class Collision(private val pool: WorldPool) {
         manifold.type = Manifold.ManifoldType.FACE_A
         manifold.localNormal.set(n)
         manifold.localPoint.set(A)
-        manifold.points[0].id.set(cf)
+        // manifold.points[0].id.key = 0;
+        manifold.points[0].id = cf.copy()
         manifold.points[0].localPoint.set(circleB.p)
     }
 
@@ -645,18 +660,7 @@ class Collision(private val pool: WorldPool) {
     /**
      * Used for computing contact manifolds.
      */
-    class ClipVertex {
-        val v: Vec2 = Vec2()
-        val id: ContactID = ContactID()
-
-        fun set(other: ClipVertex) {
-            v.set(other.v)
-            id.indexA = other.id.indexA
-            id.indexB = other.id.indexB
-            id.typeA = other.id.typeA
-            id.typeB = other.id.typeB
-        }
-    }
+    data class ClipVertex(val v: Vec2 = Vec2(), val id: ContactID = ContactID())
 
     /**
      * This is used for determining the state of contact points.
@@ -1068,7 +1072,7 @@ class Collision(private val pool: WorldPool) {
                     if (primaryAxis.type == EPAxis.Type.EDGE_A) {
                         // cp.localPoint = MulT(xf, clipPoints2[i].v);
                         Transform.mulTransToOutUnsafe(xf, clipPoints2[i].v, cp.localPoint)
-                        cp.id.set(clipPoints2[i].id)
+                        cp.id = clipPoints2[i].id.copy()
                     } else {
                         cp.localPoint.set(clipPoints2[i].v)
                         cp.id.typeA = clipPoints2[i].id.typeB
@@ -1231,40 +1235,39 @@ class Collision(private val pool: WorldPool) {
             vOut: Array<ClipVertex>, vIn: Array<ClipVertex>,
             normal: Vec2, offset: Float, vertexIndexA: Int
         ): Int {
-
             // Start with no output points
             var numOut = 0
-
+            val vIn0 = vIn[0]
+            val vIn1 = vIn[1]
+            val vIn0v = vIn0.v
+            val vIn1v = vIn1.v
             // Calculate the distance of end points to the line
-            val distance0 = normal.dot(vIn[0].v) - offset
-            val distance1 = normal.dot(vIn[1].v) - offset
-
+            val distance0 = Vec2.dot(normal, vIn0v) - offset
+            val distance1 = Vec2.dot(normal, vIn1v) - offset
             // If the points are behind the plane
             if (distance0 <= 0.0f) {
-                vOut[numOut++].set(vIn[0])
+                vOut[numOut++] = vIn0
             }
             if (distance1 <= 0.0f) {
-                vOut[numOut++].set(vIn[1])
+                vOut[numOut++] = vIn1
             }
-
             // If the points are on different sides of the plane
             if (distance0 * distance1 < 0.0f) {
                 // Find intersection point of edge and plane
                 val interp = distance0 / (distance0 - distance1)
-                val v = vOut[numOut].v
-                val vIn0v = vIn[0].v
-                val vIn1v = vIn[1].v
-                v.x = vIn0v.x + interp * (vIn1v.x - vIn0v.x)
-                v.y = vIn0v.y + interp * (vIn1v.y - vIn0v.y)
+                val v = Vec2(vIn0v).addLocal(interp * (vIn1v - vIn0v))
 
-                val id = vOut[numOut].id
-                id.indexA = vertexIndexA.toByte()
-                id.indexB = vIn[0].id.indexB
-                id.typeA = ContactID.Type.VERTEX.ordinal.toByte()
-                id.typeB = ContactID.Type.FACE.ordinal.toByte()
+                vOut[numOut] = ClipVertex(
+                    v = v,
+                    id = ContactID(
+                        indexA = vertexIndexA.toByte(),
+                        indexB = vIn0.id.indexB,
+                        typeA = ContactID.Type.VERTEX.ordinal.toByte(),
+                        typeB = ContactID.Type.FACE.ordinal.toByte()
+                    )
+                )
                 ++numOut
             }
-
             return numOut
         }
 

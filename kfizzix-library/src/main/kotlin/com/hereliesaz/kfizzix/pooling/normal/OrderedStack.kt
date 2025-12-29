@@ -21,59 +21,49 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.normal;
+package com.hereliesaz.kfizzix.pooling.normal
+
+import com.hereliesaz.kfizzix.pooling.OrderedStack as OrderedStackInterface
 
 /**
  * @author Daniel Murphy
  */
-public abstract class OrderedStack<E>
-{
-    private final Object[] pool;
+abstract class OrderedStack<E>(argStackSize: Int, argContainerSize: Int) : OrderedStackInterface<E> {
+    private val pool: Array<Any?>
+    private var index: Int
+    private val size: Int
+    private val container: Array<Any?>
 
-    private int index;
-
-    private final int size;
-
-    private final Object[] container;
-
-    public OrderedStack(int argStackSize, int argContainerSize)
-    {
-        size = argStackSize;
-        pool = new Object[argStackSize];
-        for (int i = 0; i < argStackSize; i++)
-        {
-            pool[i] = newInstance();
+    init {
+        size = argStackSize
+        pool = arrayOfNulls(argStackSize)
+        for (i in 0 until argStackSize) {
+            pool[i] = newInstance()
         }
-        index = 0;
-        container = new Object[argContainerSize];
+        index = 0
+        container = arrayOfNulls(argContainerSize)
     }
 
-    @SuppressWarnings("unchecked")
-    public final E pop()
-    {
-        assert (index < size)
-                : "End of stack reached, there is probably a leak somewhere";
-        return (E) pool[index++];
+    @Suppress("UNCHECKED_CAST")
+    override fun pop(): E {
+        assert(index < size) { "End of stack reached, there is probably a leak somewhere" }
+        return pool[index++] as E
     }
 
-    @SuppressWarnings("unchecked")
-    public final E[] pop(int argNum)
-    {
-        assert (index + argNum < size)
-                : "End of stack reached, there is probably a leak somewhere";
-        assert (argNum <= container.length) : "Container array is too small";
-        System.arraycopy(pool, index, container, 0, argNum);
-        index += argNum;
-        return (E[]) container;
+    @Suppress("UNCHECKED_CAST")
+    override fun pop(argNum: Int): Array<E> {
+        assert(index + argNum < size) { "End of stack reached, there is probably a leak somewhere" }
+        assert(argNum <= container.size) { "Container array is too small" }
+        System.arraycopy(pool, index, container, 0, argNum)
+        index += argNum
+        return container as Array<E>
     }
 
-    public final void push(int argNum)
-    {
-        index -= argNum;
-        assert (index >= 0)
-                : "Beginning of stack reached, push/pops are unmatched";
+    override fun push(argNum: Int) {
+        index -= argNum
+        assert(index >= 0) { "Beginning of stack reached, push/pops are unmatched" }
     }
 
-    /** Creates a new instance of the object contained by this stack. */
-    protected abstract E newInstance();
+    /** Creates a new instance of the object contained by this stack.  */
+    protected abstract fun newInstance(): E
 }

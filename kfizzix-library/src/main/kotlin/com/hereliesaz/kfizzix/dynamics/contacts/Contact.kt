@@ -21,19 +21,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts
 
-import com.hereliesaz.kfizzix.callbacks.ContactListener;
-import com.hereliesaz.kfizzix.collision.ContactID;
-import com.hereliesaz.kfizzix.collision.Manifold;
-import com.hereliesaz.kfizzix.collision.ManifoldPoint;
-import com.hereliesaz.kfizzix.collision.WorldManifold;
-import com.hereliesaz.kfizzix.collision.shapes.Shape;
-import com.hereliesaz.kfizzix.common.MathUtils;
-import com.hereliesaz.kfizzix.common.Transform;
-import com.hereliesaz.kfizzix.dynamics.Body;
-import com.hereliesaz.kfizzix.dynamics.Fixture;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.callbacks.ContactListener
+import com.hereliesaz.kfizzix.collision.Manifold
+import com.hereliesaz.kfizzix.collision.WorldManifold
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Transform
+import com.hereliesaz.kfizzix.dynamics.Fixture
+import com.hereliesaz.kfizzix.pooling.WorldPool
+import kotlin.math.max
 
 /**
  * The class manages contact between two shapes. A contact exists for each
@@ -42,356 +39,220 @@ import com.hereliesaz.kfizzix.pooling.WorldPool;
  *
  * @author Daniel Murphy
  */
-public abstract class Contact
-{
-    /**
-     * Flags stored in flags Used when crawling contact graph when forming
-     * islands.
-     */
-    public static final int ISLAND_FLAG = 0x0001;
+abstract class Contact(protected val pool: WorldPool) {
+    var flags: Int = 0
 
-    /**
-     * Set when the shapes are touching.
-     */
-    public static final int TOUCHING_FLAG = 0x0002;
+    // World pool and list pointers.
+    var prev: Contact? = null
+    var next: Contact? = null
 
-    /**
-     * This contact can be disabled (by user)
-     */
-    public static final int ENABLED_FLAG = 0x0004;
+    // Nodes for connecting bodies.
+    var nodeA: ContactEdge = ContactEdge()
+    var nodeB: ContactEdge = ContactEdge()
 
-    /**
-     * This contact needs filtering because a fixture filter was changed.
-     */
-    public static final int FILTER_FLAG = 0x0008;
+    var fixtureA: Fixture? = null
+    var fixtureB: Fixture? = null
 
-    /**
-     * This bullet contact had a TOI event
-     */
-    public static final int BULLET_HIT_FLAG = 0x0010;
+    var indexA: Int = 0
+    var indexB: Int = 0
 
-    public static final int TOI_FLAG = 0x0020;
+    val manifold: Manifold = Manifold()
 
-    public int flags;
+    var toiCount: Float = 0f
+    var toi: Float = 0f
 
-    //
-    /**
-     * World pool and list pointers.
-     */
-    public Contact prev;
-
-    public Contact next;
-
-    /**
-     * Nodes for connecting bodies.
-     */
-    public ContactEdge nodeA;
-
-    public ContactEdge nodeB;
-
-    public Fixture fixtureA;
-
-    public Fixture fixtureB;
-
-    public int indexA;
-
-    public int indexB;
-
-    public final Manifold manifold;
-
-    public float toiCount;
-
-    public float toi;
-
-    public float friction;
-
-    public float restitution;
-
-    public float tangentSpeed;
-
-    protected final WorldPool pool;
-
-    protected Contact(WorldPool argPool)
-    {
-        fixtureA = null;
-        fixtureB = null;
-        nodeA = new ContactEdge();
-        nodeB = new ContactEdge();
-        manifold = new Manifold();
-        pool = argPool;
-    }
+    var friction: Float = 0f
+    var restitution: Float = 0f
+    var tangentSpeed: Float = 0f
 
     /**
      * initialization for pooling
      */
-    public void init(Fixture fA, int indexA, Fixture fB, int indexB)
-    {
-        flags = ENABLED_FLAG;
-        fixtureA = fA;
-        fixtureB = fB;
-        this.indexA = indexA;
-        this.indexB = indexB;
-        manifold.pointCount = 0;
-        prev = null;
-        next = null;
-        nodeA.contact = null;
-        nodeA.prev = null;
-        nodeA.next = null;
-        nodeA.other = null;
-        nodeB.contact = null;
-        nodeB.prev = null;
-        nodeB.next = null;
-        nodeB.other = null;
-        toiCount = 0;
-        friction = Contact.mixFriction(fA.friction, fB.friction);
-        restitution = Contact.mixRestitution(fA.restitution, fB.restitution);
-        tangentSpeed = 0;
-    }
-
-    /**
-     * Get the contact manifold. Do not set the point count to zero. Instead,
-     * call Disable.
-     */
-    public Manifold getManifold()
-    {
-        return manifold;
+    open fun init(fA: Fixture, indexA: Int, fB: Fixture, indexB: Int) {
+        flags = ENABLED_FLAG
+        fixtureA = fA
+        fixtureB = fB
+        this.indexA = indexA
+        this.indexB = indexB
+        manifold.pointCount = 0
+        prev = null
+        next = null
+        nodeA.contact = null
+        nodeA.prev = null
+        nodeA.next = null
+        nodeA.other = null
+        nodeB.contact = null
+        nodeB.prev = null
+        nodeB.next = null
+        nodeB.other = null
+        toiCount = 0f
+        friction = mixFriction(fA.friction, fB.friction)
+        restitution = mixRestitution(fA.restitution, fB.restitution)
+        tangentSpeed = 0f
     }
 
     /**
      * Get the world manifold.
      */
-    public void getWorldManifold(WorldManifold worldManifold)
-    {
-        final Body bodyA = fixtureA.getBody();
-        final Body bodyB = fixtureB.getBody();
-        final Shape shapeA = fixtureA.getShape();
-        final Shape shapeB = fixtureB.getShape();
-        worldManifold.initialize(manifold, bodyA.getTransform(), shapeA.radius,
-                bodyB.getTransform(), shapeB.radius);
+    fun getWorldManifold(worldManifold: WorldManifold) {
+        val bodyA = fixtureA!!.body
+        val bodyB = fixtureB!!.body
+        val shapeA = fixtureA!!.shape
+        val shapeB = fixtureB!!.shape
+        worldManifold.initialize(manifold, bodyA!!.transform, shapeA!!.radius,
+            bodyB!!.transform, shapeB!!.radius)
     }
 
     /**
      * Is this contact touching
-     *
      */
-    public boolean isTouching()
-    {
-        return (flags & TOUCHING_FLAG) == TOUCHING_FLAG;
-    }
+    val isTouching: Boolean
+        get() = (flags and TOUCHING_FLAG) == TOUCHING_FLAG
 
     /**
      * Enable/disable this contact. This can be used inside the pre-solve
      * contact listener. The contact is only disabled for the current time step
      * (or sub-step in continuous collisions).
      */
-    public void setEnabled(boolean flag)
-    {
-        if (flag)
-        {
-            flags |= ENABLED_FLAG;
+    var isEnabled: Boolean
+        get() = (flags and ENABLED_FLAG) == ENABLED_FLAG
+        set(flag) {
+            if (flag) {
+                flags = flags or ENABLED_FLAG
+            } else {
+                flags = flags and ENABLED_FLAG.inv()
+            }
         }
-        else
-        {
-            flags &= ~ENABLED_FLAG;
-        }
+
+    // Mix methods
+    fun resetFriction() {
+        friction = mixFriction(fixtureA!!.friction, fixtureB!!.friction)
     }
 
-    /**
-     * Has this contact been disabled?
-     *
-     */
-    public boolean isEnabled()
-    {
-        return (flags & ENABLED_FLAG) == ENABLED_FLAG;
+    fun resetRestitution() {
+        restitution = mixRestitution(fixtureA!!.restitution, fixtureB!!.restitution)
     }
 
-    /**
-     * Get the next contact in the world's contact list.
-     *
-     */
-    public Contact getNext()
-    {
-        return next;
-    }
-
-    /**
-     * Get the first fixture in this contact.
-     *
-     */
-    public Fixture getFixtureA()
-    {
-        return fixtureA;
-    }
-
-    public int getChildIndexA()
-    {
-        return indexA;
-    }
-
-    /**
-     * Get the second fixture in this contact.
-     *
-     */
-    public Fixture getFixtureB()
-    {
-        return fixtureB;
-    }
-
-    public int getChildIndexB()
-    {
-        return indexB;
-    }
-
-    public void setFriction(float friction)
-    {
-        this.friction = friction;
-    }
-
-    public float getFriction()
-    {
-        return friction;
-    }
-
-    public void resetFriction()
-    {
-        friction = Contact.mixFriction(fixtureA.friction, fixtureB.friction);
-    }
-
-    public void setRestitution(float restitution)
-    {
-        this.restitution = restitution;
-    }
-
-    public float getRestitution()
-    {
-        return restitution;
-    }
-
-    public void resetRestitution()
-    {
-        restitution = Contact.mixRestitution(fixtureA.restitution,
-                fixtureB.restitution);
-    }
-
-    public void setTangentSpeed(float speed)
-    {
-        tangentSpeed = speed;
-    }
-
-    public float getTangentSpeed()
-    {
-        return tangentSpeed;
-    }
-
-    public abstract void evaluate(Manifold manifold, Transform xfA,
-            Transform xfB);
+    abstract fun evaluate(manifold: Manifold, xfA: Transform, xfB: Transform)
 
     /**
      * Flag this contact for filtering. Filtering will occur the next time step.
      */
-    public void flagForFiltering()
-    {
-        flags |= FILTER_FLAG;
+    fun flagForFiltering() {
+        flags = flags or FILTER_FLAG
     }
 
     // djm pooling
-    private final Manifold oldManifold = new Manifold();
+    private val oldManifold = Manifold()
 
-    public void update(ContactListener listener)
-    {
-        oldManifold.set(manifold);
+    fun update(listener: ContactListener?) {
+        oldManifold.set(manifold)
         // Re-enable this contact.
-        flags |= ENABLED_FLAG;
-        boolean touching;
-        boolean wasTouching = (flags & TOUCHING_FLAG) == TOUCHING_FLAG;
-        boolean sensorA = fixtureA.isSensor();
-        boolean sensorB = fixtureB.isSensor();
-        boolean sensor = sensorA || sensorB;
-        Body bodyA = fixtureA.getBody();
-        Body bodyB = fixtureB.getBody();
-        Transform xfA = bodyA.getTransform();
-        Transform xfB = bodyB.getTransform();
-        // log.debug("TransformA: "+xfA);
-        // log.debug("TransformB: "+xfB);
-        if (sensor)
-        {
-            Shape shapeA = fixtureA.getShape();
-            Shape shapeB = fixtureB.getShape();
+        flags = flags or ENABLED_FLAG
+        var touching = false
+        val wasTouching = (flags and TOUCHING_FLAG) == TOUCHING_FLAG
+        val sensorA = fixtureA!!.isSensor
+        val sensorB = fixtureB!!.isSensor
+        val sensor = sensorA || sensorB
+        val bodyA = fixtureA!!.body
+        val bodyB = fixtureB!!.body
+        val xfA = bodyA!!.transform
+        val xfB = bodyB!!.transform
+
+        if (sensor) {
+            val shapeA = fixtureA!!.shape
+            val shapeB = fixtureB!!.shape
             touching = pool.getCollision().testOverlap(shapeA, indexA, shapeB,
-                    indexB, xfA, xfB);
+                indexB, xfA!!, xfB!!)
             // Sensors don't generate manifolds.
-            manifold.pointCount = 0;
-        }
-        else
-        {
-            evaluate(manifold, xfA, xfB);
-            touching = manifold.pointCount > 0;
+            manifold.pointCount = 0
+        } else {
+            evaluate(manifold, xfA!!, xfB!!)
+            touching = manifold.pointCount > 0
             // Match old contact ids to new contact ids and copy the
             // stored impulses to warm start the solver.
-            for (int i = 0; i < manifold.pointCount; ++i)
-            {
-                ManifoldPoint mp2 = manifold.points[i];
-                mp2.normalImpulse = 0.0f;
-                mp2.tangentImpulse = 0.0f;
+            for (i in 0 until manifold.pointCount) {
+                val mp2 = manifold.points[i]
+                mp2.normalImpulse = 0.0f
+                mp2.tangentImpulse = 0.0f
                 val id2 = mp2.id
-                for (int j = 0; j < oldManifold.pointCount; ++j)
-                {
-                    ManifoldPoint mp1 = oldManifold.points[j];
-                    if (mp1.id.isEqual(id2))
-                    {
-                        mp2.normalImpulse = mp1.normalImpulse;
-                        mp2.tangentImpulse = mp1.tangentImpulse;
-                        break;
+                for (j in 0 until oldManifold.pointCount) {
+                    val mp1 = oldManifold.points[j]
+                    if (mp1.id.isEqual(id2)) {
+                        mp2.normalImpulse = mp1.normalImpulse
+                        mp2.tangentImpulse = mp1.tangentImpulse
+                        break
                     }
                 }
             }
-            if (touching != wasTouching)
-            {
-                bodyA.setAwake(true);
-                bodyB.setAwake(true);
+            if (touching != wasTouching) {
+                bodyA.isAwake = true
+                bodyB.isAwake = true
             }
         }
-        if (touching)
-        {
-            flags |= TOUCHING_FLAG;
+        if (touching) {
+            flags = flags or TOUCHING_FLAG
+        } else {
+            flags = flags and TOUCHING_FLAG.inv()
         }
-        else
-        {
-            flags &= ~TOUCHING_FLAG;
+        if (listener == null) {
+            return
         }
-        if (listener == null)
-        {
-            return;
+        if (!wasTouching && touching) {
+            listener.beginContact(this)
         }
-        if (!wasTouching && touching)
-        {
-            listener.beginContact(this);
+        if (wasTouching && !touching) {
+            listener.endContact(this)
         }
-        if (wasTouching && !touching)
-        {
-            listener.endContact(this);
-        }
-        if (!sensor && touching)
-        {
-            listener.preSolve(this, oldManifold);
+        if (!sensor && touching) {
+            listener.preSolve(this, oldManifold)
         }
     }
 
-    /**
-     * Friction mixing law. The idea is to allow either fixture to drive the
-     * restitution to zero. For example, anything slides on ice.
-     */
-    public static float mixFriction(float friction1, float friction2)
-    {
-        return MathUtils.sqrt(friction1 * friction2);
-    }
+    companion object {
+        /**
+         * Flags stored in flags Used when crawling contact graph when forming
+         * islands.
+         */
+        const val ISLAND_FLAG = 0x0001
 
-    /**
-     * Restitution mixing law. The idea is allowed for anything to bounce off an
-     * inelastic surface. For example, a superball bounces on anything.
-     */
-    public static float mixRestitution(float restitution1, float restitution2)
-    {
-        return Math.max(restitution1, restitution2);
+        /**
+         * Set when the shapes are touching.
+         */
+        const val TOUCHING_FLAG = 0x0002
+
+        /**
+         * This contact can be disabled (by user)
+         */
+        const val ENABLED_FLAG = 0x0004
+
+        /**
+         * This contact needs filtering because a fixture filter was changed.
+         */
+        const val FILTER_FLAG = 0x0008
+
+        /**
+         * This bullet contact had a TOI event
+         */
+        const val BULLET_HIT_FLAG = 0x0010
+        const val TOI_FLAG = 0x0020
+
+        /**
+         * Friction mixing law. The idea is to allow either fixture to drive the
+         * restitution to zero. For example, anything slides on ice.
+         */
+        @JvmStatic
+        fun mixFriction(friction1: Float, friction2: Float): Float {
+            return MathUtils.sqrt(friction1 * friction2)
+        }
+
+        /**
+         * Restitution mixing law. The idea is allowed for anything to bounce off an
+         * inelastic surface. For example, a superball bounces on anything.
+         */
+        @JvmStatic
+        fun mixRestitution(restitution1: Float, restitution2: Float): Float {
+            return max(restitution1, restitution2)
+        }
     }
 }

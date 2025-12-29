@@ -21,7 +21,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling;
+package com.hereliesaz.kfizzix.pooling
 
 /**
  * Same functionality of a regular java.util stack. Object return order does not
@@ -31,15 +31,14 @@ package com.hereliesaz.kfizzix.pooling;
  *
  * @param <E>
  */
-public interface DynamicStack<E>
-{
+interface DynamicStack<E> {
     /**
      * Pops an item off the stack
      */
-    E pop();
+    fun pop(): E
 
     /**
      * Pushes an item back on the stack
      */
-    void push(E argObject);
+    fun push(argObject: E)
 }

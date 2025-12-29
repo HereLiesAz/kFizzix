@@ -21,7 +21,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling;
+package com.hereliesaz.kfizzix.pooling
 
 /**
  * This stack assumes that when you push 'n' items back, you're pushing back the
@@ -29,23 +29,22 @@ package com.hereliesaz.kfizzix.pooling;
  *
  * @author Daniel Murphy
  */
-public interface OrderedStack<E>
-{
+interface OrderedStack<E> {
     /**
      * Returns the next object in the pool
      */
-    E pop();
+    fun pop(): E
 
     /**
      * Returns the next 'argNum' objects in the pool in an array
      *
      * @return an array containing the next pool objects in items 0-argNum.
-     *     Array length and uniqueness not guaranteed.
+     * Array length and uniqueness not guaranteed.
      */
-    E[] pop(int argNum);
+    fun pop(argNum: Int): Array<E>
 
     /**
      * Tells the stack to take back the last 'argNum' items
      */
-    void push(int argNum);
+    fun push(argNum: Int)
 }

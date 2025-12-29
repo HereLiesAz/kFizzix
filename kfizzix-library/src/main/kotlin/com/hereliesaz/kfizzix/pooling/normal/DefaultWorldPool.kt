@@ -21,30 +21,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.normal;
+package com.hereliesaz.kfizzix.pooling.normal
 
-import java.util.HashMap;
-
-import com.hereliesaz.kfizzix.collision.AABB;
-import com.hereliesaz.kfizzix.collision.Collision;
-import com.hereliesaz.kfizzix.collision.Distance;
-import com.hereliesaz.kfizzix.collision.TimeOfImpact;
-import com.hereliesaz.kfizzix.common.Mat22;
-import com.hereliesaz.kfizzix.common.Mat33;
-import com.hereliesaz.kfizzix.common.Rot;
-import com.hereliesaz.kfizzix.common.Settings;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.common.Vec3;
-import com.hereliesaz.kfizzix.dynamics.contacts.ChainAndCircleContact;
-import com.hereliesaz.kfizzix.dynamics.contacts.ChainAndPolygonContact;
-import com.hereliesaz.kfizzix.dynamics.contacts.CircleContact;
-import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
-import com.hereliesaz.kfizzix.dynamics.contacts.EdgeAndCircleContact;
-import com.hereliesaz.kfizzix.dynamics.contacts.EdgeAndPolygonContact;
-import com.hereliesaz.kfizzix.dynamics.contacts.PolygonAndCircleContact;
-import com.hereliesaz.kfizzix.dynamics.contacts.PolygonContact;
-import com.hereliesaz.kfizzix.pooling.DynamicStack;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.collision.AABB
+import com.hereliesaz.kfizzix.collision.Collision
+import com.hereliesaz.kfizzix.collision.Distance
+import com.hereliesaz.kfizzix.collision.TimeOfImpact
+import com.hereliesaz.kfizzix.common.Mat22
+import com.hereliesaz.kfizzix.common.Mat33
+import com.hereliesaz.kfizzix.common.Rot
+import com.hereliesaz.kfizzix.common.Settings
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.common.Vec3
+import com.hereliesaz.kfizzix.dynamics.contacts.ChainAndCircleContact
+import com.hereliesaz.kfizzix.dynamics.contacts.ChainAndPolygonContact
+import com.hereliesaz.kfizzix.dynamics.contacts.CircleContact
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact
+import com.hereliesaz.kfizzix.dynamics.contacts.EdgeAndCircleContact
+import com.hereliesaz.kfizzix.dynamics.contacts.EdgeAndPolygonContact
+import com.hereliesaz.kfizzix.dynamics.contacts.PolygonAndCircleContact
+import com.hereliesaz.kfizzix.dynamics.contacts.PolygonContact
+import com.hereliesaz.kfizzix.pooling.DynamicStack
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * Provides object pooling for all objects used in the engine. Objects retrieved
@@ -53,350 +51,235 @@ import com.hereliesaz.kfizzix.pooling.WorldPool;
  *
  * @author Daniel Murphy
  */
-public class DefaultWorldPool implements WorldPool
-{
-    private final OrderedStack<Vec2> vecs;
+class DefaultWorldPool(argSize: Int, argContainerSize: Int) : WorldPool {
+    private val vecs: OrderedStack<Vec2>
+    private val vec3s: OrderedStack<Vec3>
+    private val mats: OrderedStack<Mat22>
+    private val mat33s: OrderedStack<Mat33>
+    private val aabbs: OrderedStack<AABB>
+    private val rots: OrderedStack<Rot>
+    private val afloats = HashMap<Int, FloatArray>()
+    private val aints = HashMap<Int, IntArray>()
+    private val avecs = HashMap<Int, Array<Vec2>>()
+    private val world: WorldPool = this
 
-    private final OrderedStack<Vec3> vec3s;
-
-    private final OrderedStack<Mat22> mats;
-
-    private final OrderedStack<Mat33> mat33s;
-
-    private final OrderedStack<AABB> aabbs;
-
-    private final OrderedStack<Rot> rots;
-
-    private final HashMap<Integer, float[]> afloats = new HashMap<>();
-
-    private final HashMap<Integer, int[]> aints = new HashMap<>();
-
-    private final HashMap<Integer, Vec2[]> avecs = new HashMap<>();
-
-    private final WorldPool world = this;
-
-    private final MutableStack<Contact> pcstack = new MutableStack<>(
-            Settings.CONTACT_STACK_INIT_SIZE)
-    {
-        protected Contact newInstance()
-        {
-            return new PolygonContact(world);
+    private val pcstack = object : MutableStack<Contact>(Settings.CONTACT_STACK_INIT_SIZE) {
+        override fun newInstance(): Contact {
+            return PolygonContact(world)
         }
-
-        protected Contact[] newArray(int size)
-        {
-            return new PolygonContact[size];
+        override fun newArray(size: Int): Array<Contact> {
+            return arrayOfNulls<Contact>(size) as Array<Contact>
         }
-    };
+    }
 
-    private final MutableStack<Contact> ccstack = new MutableStack<>(
-            Settings.CONTACT_STACK_INIT_SIZE)
-    {
-        protected Contact newInstance()
-        {
-            return new CircleContact(world);
+    private val ccstack = object : MutableStack<Contact>(Settings.CONTACT_STACK_INIT_SIZE) {
+        override fun newInstance(): Contact {
+            return CircleContact(world)
         }
-
-        protected Contact[] newArray(int size)
-        {
-            return new CircleContact[size];
+        override fun newArray(size: Int): Array<Contact> {
+            return arrayOfNulls<Contact>(size) as Array<Contact>
         }
-    };
+    }
 
-    private final MutableStack<Contact> cpstack = new MutableStack<>(
-            Settings.CONTACT_STACK_INIT_SIZE)
-    {
-        protected Contact newInstance()
-        {
-            return new PolygonAndCircleContact(world);
+    private val cpstack = object : MutableStack<Contact>(Settings.CONTACT_STACK_INIT_SIZE) {
+        override fun newInstance(): Contact {
+            return PolygonAndCircleContact(world)
         }
-
-        protected Contact[] newArray(int size)
-        {
-            return new PolygonAndCircleContact[size];
+        override fun newArray(size: Int): Array<Contact> {
+            return arrayOfNulls<Contact>(size) as Array<Contact>
         }
-    };
+    }
 
-    private final MutableStack<Contact> ecstack = new MutableStack<>(
-            Settings.CONTACT_STACK_INIT_SIZE)
-    {
-        protected Contact newInstance()
-        {
-            return new EdgeAndCircleContact(world);
+    private val ecstack = object : MutableStack<Contact>(Settings.CONTACT_STACK_INIT_SIZE) {
+        override fun newInstance(): Contact {
+            return EdgeAndCircleContact(world)
         }
-
-        protected Contact[] newArray(int size)
-        {
-            return new EdgeAndCircleContact[size];
+        override fun newArray(size: Int): Array<Contact> {
+            return arrayOfNulls<Contact>(size) as Array<Contact>
         }
-    };
+    }
 
-    private final MutableStack<Contact> epstack = new MutableStack<>(
-            Settings.CONTACT_STACK_INIT_SIZE)
-    {
-        protected Contact newInstance()
-        {
-            return new EdgeAndPolygonContact(world);
+    private val epstack = object : MutableStack<Contact>(Settings.CONTACT_STACK_INIT_SIZE) {
+        override fun newInstance(): Contact {
+            return EdgeAndPolygonContact(world)
         }
-
-        protected Contact[] newArray(int size)
-        {
-            return new EdgeAndPolygonContact[size];
+        override fun newArray(size: Int): Array<Contact> {
+            return arrayOfNulls<Contact>(size) as Array<Contact>
         }
-    };
+    }
 
-    private final MutableStack<Contact> chcstack = new MutableStack<>(
-            Settings.CONTACT_STACK_INIT_SIZE)
-    {
-        protected Contact newInstance()
-        {
-            return new ChainAndCircleContact(world);
+    private val chcstack = object : MutableStack<Contact>(Settings.CONTACT_STACK_INIT_SIZE) {
+        override fun newInstance(): Contact {
+            return ChainAndCircleContact(world)
         }
-
-        protected Contact[] newArray(int size)
-        {
-            return new ChainAndCircleContact[size];
+        override fun newArray(size: Int): Array<Contact> {
+            return arrayOfNulls<Contact>(size) as Array<Contact>
         }
-    };
+    }
 
-    private final MutableStack<Contact> chpstack = new MutableStack<>(
-            Settings.CONTACT_STACK_INIT_SIZE)
-    {
-        protected Contact newInstance()
-        {
-            return new ChainAndPolygonContact(world);
+    private val chpstack = object : MutableStack<Contact>(Settings.CONTACT_STACK_INIT_SIZE) {
+        override fun newInstance(): Contact {
+            return ChainAndPolygonContact(world)
         }
-
-        protected Contact[] newArray(int size)
-        {
-            return new ChainAndPolygonContact[size];
+        override fun newArray(size: Int): Array<Contact> {
+            return arrayOfNulls<Contact>(size) as Array<Contact>
         }
-    };
+    }
 
-    private final Collision collision;
+    override val collision: Collision
+    override val timeOfImpact: TimeOfImpact
+    override val distance: Distance
 
-    private final TimeOfImpact toi;
-
-    private final Distance dist;
-
-    public DefaultWorldPool(int argSize, int argContainerSize)
-    {
-        vecs = new OrderedStack<>(argSize, argContainerSize)
-        {
-            protected Vec2 newInstance()
-            {
-                return new Vec2();
+    init {
+        vecs = object : OrderedStack<Vec2>(argSize, argContainerSize) {
+            override fun newInstance(): Vec2 {
+                return Vec2()
             }
-        };
-        vec3s = new OrderedStack<>(argSize, argContainerSize)
-        {
-            protected Vec3 newInstance()
-            {
-                return new Vec3();
-            }
-        };
-        mats = new OrderedStack<>(argSize, argContainerSize)
-        {
-            protected Mat22 newInstance()
-            {
-                return new Mat22();
-            }
-        };
-        aabbs = new OrderedStack<>(argSize, argContainerSize)
-        {
-            protected AABB newInstance()
-            {
-                return new AABB();
-            }
-        };
-        rots = new OrderedStack<>(argSize, argContainerSize)
-        {
-            protected Rot newInstance()
-            {
-                return new Rot();
-            }
-        };
-        mat33s = new OrderedStack<>(argSize, argContainerSize)
-        {
-            protected Mat33 newInstance()
-            {
-                return new Mat33();
-            }
-        };
-        dist = new Distance();
-        collision = new Collision(this);
-        toi = new TimeOfImpact(this);
-    }
-
-    public final DynamicStack<Contact> getPolyContactStack()
-    {
-        return pcstack;
-    }
-
-    public final DynamicStack<Contact> getCircleContactStack()
-    {
-        return ccstack;
-    }
-
-    public final DynamicStack<Contact> getPolyCircleContactStack()
-    {
-        return cpstack;
-    }
-
-    @Override
-    public DynamicStack<Contact> getEdgeCircleContactStack()
-    {
-        return ecstack;
-    }
-
-    @Override
-    public DynamicStack<Contact> getEdgePolyContactStack()
-    {
-        return epstack;
-    }
-
-    @Override
-    public DynamicStack<Contact> getChainCircleContactStack()
-    {
-        return chcstack;
-    }
-
-    @Override
-    public DynamicStack<Contact> getChainPolyContactStack()
-    {
-        return chpstack;
-    }
-
-    public final Vec2 popVec2()
-    {
-        return vecs.pop();
-    }
-
-    public final Vec2[] popVec2(int argNum)
-    {
-        return vecs.pop(argNum);
-    }
-
-    public final void pushVec2(int argNum)
-    {
-        vecs.push(argNum);
-    }
-
-    public final Vec3 popVec3()
-    {
-        return vec3s.pop();
-    }
-
-    public final Vec3[] popVec3(int argNum)
-    {
-        return vec3s.pop(argNum);
-    }
-
-    public final void pushVec3(int argNum)
-    {
-        vec3s.push(argNum);
-    }
-
-    public final Mat22 popMat22()
-    {
-        return mats.pop();
-    }
-
-    public final Mat22[] popMat22(int argNum)
-    {
-        return mats.pop(argNum);
-    }
-
-    public final void pushMat22(int argNum)
-    {
-        mats.push(argNum);
-    }
-
-    public final Mat33 popMat33()
-    {
-        return mat33s.pop();
-    }
-
-    public final void pushMat33(int argNum)
-    {
-        mat33s.push(argNum);
-    }
-
-    public final AABB popAABB()
-    {
-        return aabbs.pop();
-    }
-
-    public final AABB[] popAABB(int argNum)
-    {
-        return aabbs.pop(argNum);
-    }
-
-    public final void pushAABB(int argNum)
-    {
-        aabbs.push(argNum);
-    }
-
-    public final Rot popRot()
-    {
-        return rots.pop();
-    }
-
-    public final void pushRot(int num)
-    {
-        rots.push(num);
-    }
-
-    public final Collision getCollision()
-    {
-        return collision;
-    }
-
-    public final TimeOfImpact getTimeOfImpact()
-    {
-        return toi;
-    }
-
-    public final Distance getDistance()
-    {
-        return dist;
-    }
-
-    public final float[] getFloatArray(int argLength)
-    {
-        if (!afloats.containsKey(argLength))
-        {
-            afloats.put(argLength, new float[argLength]);
         }
-        assert (afloats.get(argLength).length == argLength)
-                : "Array not built with correct length";
-        return afloats.get(argLength);
-    }
-
-    public final int[] getIntArray(int argLength)
-    {
-        if (!aints.containsKey(argLength))
-        {
-            aints.put(argLength, new int[argLength]);
-        }
-        assert (aints.get(argLength).length == argLength)
-                : "Array not built with correct length";
-        return aints.get(argLength);
-    }
-
-    public final Vec2[] getVec2Array(int argLength)
-    {
-        if (!avecs.containsKey(argLength))
-        {
-            Vec2[] ray = new Vec2[argLength];
-            for (int i = 0; i < argLength; i++)
-            {
-                ray[i] = new Vec2();
+        vec3s = object : OrderedStack<Vec3>(argSize, argContainerSize) {
+            override fun newInstance(): Vec3 {
+                return Vec3()
             }
-            avecs.put(argLength, ray);
         }
-        assert (avecs.get(argLength).length == argLength)
-                : "Array not built with correct length";
-        return avecs.get(argLength);
+        mats = object : OrderedStack<Mat22>(argSize, argContainerSize) {
+            override fun newInstance(): Mat22 {
+                return Mat22()
+            }
+        }
+        aabbs = object : OrderedStack<AABB>(argSize, argContainerSize) {
+            override fun newInstance(): AABB {
+                return AABB()
+            }
+        }
+        rots = object : OrderedStack<Rot>(argSize, argContainerSize) {
+            override fun newInstance(): Rot {
+                return Rot()
+            }
+        }
+        mat33s = object : OrderedStack<Mat33>(argSize, argContainerSize) {
+            override fun newInstance(): Mat33 {
+                return Mat33()
+            }
+        }
+        distance = Distance()
+        collision = Collision(this)
+        timeOfImpact = TimeOfImpact(this)
+    }
+
+    override fun getPolyContactStack(): DynamicStack<Contact> {
+        return pcstack
+    }
+
+    override fun getCircleContactStack(): DynamicStack<Contact> {
+        return ccstack
+    }
+
+    override fun getPolyCircleContactStack(): DynamicStack<Contact> {
+        return cpstack
+    }
+
+    override fun getEdgeCircleContactStack(): DynamicStack<Contact> {
+        return ecstack
+    }
+
+    override fun getEdgePolyContactStack(): DynamicStack<Contact> {
+        return epstack
+    }
+
+    override fun getChainCircleContactStack(): DynamicStack<Contact> {
+        return chcstack
+    }
+
+    override fun getChainPolyContactStack(): DynamicStack<Contact> {
+        return chpstack
+    }
+
+    override fun popVec2(): Vec2 {
+        return vecs.pop()
+    }
+
+    override fun popVec2(argNum: Int): Array<Vec2> {
+        return vecs.pop(argNum)
+    }
+
+    override fun pushVec2(argNum: Int) {
+        vecs.push(argNum)
+    }
+
+    override fun popVec3(): Vec3 {
+        return vec3s.pop()
+    }
+
+    override fun popVec3(argNum: Int): Array<Vec3> {
+        return vec3s.pop(argNum)
+    }
+
+    override fun pushVec3(argNum: Int) {
+        vec3s.push(argNum)
+    }
+
+    override fun popMat22(): Mat22 {
+        return mats.pop()
+    }
+
+    override fun popMat22(argNum: Int): Array<Mat22> {
+        return mats.pop(argNum)
+    }
+
+    override fun pushMat22(argNum: Int) {
+        mats.push(argNum)
+    }
+
+    override fun popMat33(): Mat33 {
+        return mat33s.pop()
+    }
+
+    override fun pushMat33(argNum: Int) {
+        mat33s.push(argNum)
+    }
+
+    override fun popAABB(): AABB {
+        return aabbs.pop()
+    }
+
+    override fun popAABB(argNum: Int): Array<AABB> {
+        return aabbs.pop(argNum)
+    }
+
+    override fun pushAABB(argNum: Int) {
+        aabbs.push(argNum)
+    }
+
+    override fun popRot(): Rot {
+        return rots.pop()
+    }
+
+    override fun pushRot(num: Int) {
+        rots.push(num)
+    }
+
+    override fun getFloatArray(argLength: Int): FloatArray {
+        if (!afloats.containsKey(argLength)) {
+            afloats[argLength] = FloatArray(argLength)
+        }
+        assert(afloats[argLength]!!.size == argLength) { "Array not built with correct length" }
+        return afloats[argLength]!!
+    }
+
+    override fun getIntArray(argLength: Int): IntArray {
+        if (!aints.containsKey(argLength)) {
+            aints[argLength] = IntArray(argLength)
+        }
+        assert(aints[argLength]!!.size == argLength) { "Array not built with correct length" }
+        return aints[argLength]!!
+    }
+
+    override fun getVec2Array(argLength: Int): Array<Vec2> {
+        if (!avecs.containsKey(argLength)) {
+            val ray = Array(argLength) { Vec2() }
+            avecs[argLength] = ray
+        }
+        assert(avecs[argLength]!!.size == argLength) { "Array not built with correct length" }
+        return avecs[argLength]!!
     }
 }

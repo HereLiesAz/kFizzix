@@ -21,67 +21,54 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.normal;
+package com.hereliesaz.kfizzix.pooling.normal
 
-import com.hereliesaz.kfizzix.pooling.OrderedStack;
+import com.hereliesaz.kfizzix.pooling.OrderedStack
 
-public abstract class CircleStack<E> implements OrderedStack<E>
-{
-    private final Object[] pool;
+abstract class CircleStack<E>(argStackSize: Int, argContainerSize: Int) : OrderedStack<E> {
+    private val pool: Array<Any?>
+    private var index: Int
+    private val size: Int
+    private val container: Array<Any?>
 
-    private int index;
-
-    private final int size;
-
-    private final Object[] container;
-
-    public CircleStack(int argStackSize, int argContainerSize)
-    {
-        size = argStackSize;
-        pool = new Object[argStackSize];
-        for (int i = 0; i < argStackSize; i++)
-        {
-            pool[i] = newInstance();
+    init {
+        size = argStackSize
+        pool = arrayOfNulls(argStackSize)
+        for (i in 0 until argStackSize) {
+            pool[i] = newInstance()
         }
-        index = 0;
-        container = new Object[argContainerSize];
+        index = 0
+        container = arrayOfNulls(argContainerSize)
     }
 
-    @SuppressWarnings("unchecked")
-    public final E pop()
-    {
-        index++;
-        if (index >= size)
-        {
-            index = 0;
+    @Suppress("UNCHECKED_CAST")
+    override fun pop(): E {
+        index++
+        if (index >= size) {
+            index = 0
         }
-        return (E) pool[index];
+        return pool[index] as E
     }
 
-    @SuppressWarnings("unchecked")
-    public final E[] pop(int argNum)
-    {
-        assert (argNum <= container.length) : "Container array is too small";
-        if (index + argNum < size)
-        {
-            System.arraycopy(pool, index, container, 0, argNum);
-            index += argNum;
+    @Suppress("UNCHECKED_CAST")
+    override fun pop(argNum: Int): Array<E> {
+        assert(argNum <= container.size) { "Container array is too small" }
+        if (index + argNum < size) {
+            System.arraycopy(pool, index, container, 0, argNum)
+            index += argNum
+        } else {
+            val overlap = index + argNum - size
+            System.arraycopy(pool, index, container, 0, argNum - overlap)
+            System.arraycopy(pool, 0, container, argNum - overlap, overlap)
+            index = overlap
         }
-        else
-        {
-            int overlap = (index + argNum) - size;
-            System.arraycopy(pool, index, container, 0, argNum - overlap);
-            System.arraycopy(pool, 0, container, argNum - overlap, overlap);
-            index = overlap;
-        }
-        return (E[]) container;
+        return container as Array<E>
     }
 
-    @Override
-    public void push(int argNum)
-    {
+    override fun push(argNum: Int) {
+        // No-op for circle stack?
     }
 
-    /** Creates a new instance of the object contained by this stack. */
-    protected abstract E newInstance();
+    /** Creates a new instance of the object contained by this stack.  */
+    protected abstract fun newInstance(): E
 }

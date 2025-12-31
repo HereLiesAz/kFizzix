@@ -21,33 +21,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.arrays;
+package com.hereliesaz.kfizzix.collision
 
-import java.util.HashMap;
+import com.hereliesaz.kfizzix.common.Vec2
 
 /**
- * Not thread safe int[] pooling
- *
- * @author Daniel Murphy
+ * Ray-cast output data.
  */
-public class IntArray
-{
-    private final HashMap<Integer, int[]> map = new HashMap<>();
-
-    public int[] get(int argLength)
-    {
-        assert (argLength > 0);
-        if (!map.containsKey(argLength))
-        {
-            map.put(argLength, getInitializedArray(argLength));
-        }
-        assert (map.get(argLength).length == argLength)
-                : "Array not built of correct length";
-        return map.get(argLength);
-    }
-
-    protected int[] getInitializedArray(int argLength)
-    {
-        return new int[argLength];
-    }
+class RayCastOutput {
+    val normal = Vec2()
+    var fraction: Float = 0f
 }

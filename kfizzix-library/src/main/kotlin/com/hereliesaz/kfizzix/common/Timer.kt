@@ -21,29 +21,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.common;
+package com.hereliesaz.kfizzix.common
 
 /**
  * Timer for profiling
  *
  * @author Daniel Murphy
  */
-public class Timer
-{
-    private long resetNanos;
+class Timer {
+    private var resetNanos: Long = 0
 
-    public Timer()
-    {
-        reset();
+    init {
+        reset()
     }
 
-    public void reset()
-    {
-        resetNanos = System.nanoTime();
+    fun reset() {
+        resetNanos = System.nanoTime()
     }
 
-    public float getMilliseconds()
-    {
-        return (float) (System.nanoTime() - resetNanos) / 1000 / 1000;
-    }
+    val milliseconds: Float
+        get() = (System.nanoTime() - resetNanos) / 1000f / 1000f
 }

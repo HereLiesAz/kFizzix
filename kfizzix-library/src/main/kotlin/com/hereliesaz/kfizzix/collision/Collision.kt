@@ -660,7 +660,7 @@ class Collision(private val pool: WorldPool) {
     /**
      * Used for computing contact manifolds.
      */
-    data class ClipVertex(val v: Vec2 = Vec2(), val id: ContactID = ContactID())
+    data class ClipVertex(val v: Vec2 = Vec2(), var id: ContactID = ContactID())
 
     /**
      * This is used for determining the state of contact points.

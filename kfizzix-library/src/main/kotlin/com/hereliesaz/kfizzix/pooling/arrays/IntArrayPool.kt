@@ -18,24 +18,23 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.callbacks
+package com.hereliesaz.kfizzix.pooling.arrays
 
-import com.hereliesaz.kfizzix.dynamics.World
+import java.util.HashMap
 
 /**
- * Callback class for AABB queries. See
- * [World.queryAABB].
+ * Not thread safe int[] pooling
  *
  * @author Daniel Murphy
  */
-interface ParticleQueryCallback {
-    /**
-     * Called for each particle found in the query AABB.
-     *
-     * @return false to terminate the query.
-     */
-    fun reportParticle(index: Int): Boolean
+class IntArrayPool {
+    private val map = HashMap<Int, IntArray>()
+
+    fun get(argLength: Int): IntArray {
+        assert(argLength > 0)
+        return map.getOrPut(argLength) { IntArray(argLength) }
+    }
 }

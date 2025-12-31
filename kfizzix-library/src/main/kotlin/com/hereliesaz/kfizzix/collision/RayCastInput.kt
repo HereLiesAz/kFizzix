@@ -18,25 +18,25 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.callbacks
+package com.hereliesaz.kfizzix.collision
 
-import com.hereliesaz.kfizzix.dynamics.Fixture
-import com.hereliesaz.kfizzix.dynamics.World
+import com.hereliesaz.kfizzix.common.Vec2
 
 /**
- * Callback class for AABB queries. See
- * [World.queryAABB].
- *
- * @author Daniel Murphy
+ * Ray-cast input data.
+ * The ray extends from p1 to p1 + maxFraction * (p2 - p1).
  */
-interface QueryCallback {
-    /**
-     * Called for each fixture found in the query AABB.
-     *
-     * @return false to terminate the query.
-     */
-    fun reportFixture(fixture: Fixture): Boolean
+class RayCastInput {
+    val p1 = Vec2()
+    val p2 = Vec2()
+    var maxFraction: Float = 0f
+
+    fun set(rc: RayCastInput) {
+        p1.set(rc.p1)
+        p2.set(rc.p2)
+        maxFraction = rc.maxFraction
+    }
 }

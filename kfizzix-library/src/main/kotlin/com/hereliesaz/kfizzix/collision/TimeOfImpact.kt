@@ -47,10 +47,10 @@ class TimeOfImpact(private val pool: WorldPool) {
      * @author Daniel Murphy
      */
     data class TOIInput(
-        val proxyA: DistanceProxy = DistanceProxy(),
-        val proxyB: DistanceProxy = DistanceProxy(),
-        val sweepA: Sweep = Sweep(),
-        val sweepB: Sweep = Sweep(),
+        var proxyA: DistanceProxy = DistanceProxy(),
+        var proxyB: DistanceProxy = DistanceProxy(),
+        var sweepA: Sweep = Sweep(),
+        var sweepB: Sweep = Sweep(),
         /**
          * defines sweep interval [0, tMax]
          */

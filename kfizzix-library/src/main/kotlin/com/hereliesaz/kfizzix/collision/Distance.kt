@@ -28,6 +28,7 @@ import com.hereliesaz.kfizzix.collision.shapes.CircleShape
 import com.hereliesaz.kfizzix.collision.shapes.EdgeShape
 import com.hereliesaz.kfizzix.collision.shapes.PolygonShape
 import com.hereliesaz.kfizzix.collision.shapes.Shape
+import com.hereliesaz.kfizzix.collision.shapes.ShapeType
 import com.hereliesaz.kfizzix.common.MathUtils
 import com.hereliesaz.kfizzix.common.Rot
 import com.hereliesaz.kfizzix.common.Settings
@@ -471,13 +472,13 @@ class Distance {
          */
         fun set(shape: Shape, index: Int) {
             when (shape.type) {
-                Shape.Type.CIRCLE -> {
+                ShapeType.CIRCLE -> {
                     val circle = shape as CircleShape
                     vertices[0].set(circle.p)
                     count = 1
                     radius = circle.radius
                 }
-                Shape.Type.POLYGON -> {
+                ShapeType.POLYGON -> {
                     val poly = shape as PolygonShape
                     count = poly.count
                     radius = poly.radius
@@ -485,7 +486,7 @@ class Distance {
                         vertices[i].set(poly.vertices[i])
                     }
                 }
-                Shape.Type.CHAIN -> {
+                ShapeType.CHAIN -> {
                     val chain = shape as ChainShape
                     assert(0 <= index && index < chain.count)
                     buffer[0] = chain.vertices[index]
@@ -499,7 +500,7 @@ class Distance {
                     count = 2
                     radius = chain.radius
                 }
-                Shape.Type.EDGE -> {
+                ShapeType.EDGE -> {
                     val edge = shape as EdgeShape
                     vertices[0].set(edge.vertex1)
                     vertices[1].set(edge.vertex2)

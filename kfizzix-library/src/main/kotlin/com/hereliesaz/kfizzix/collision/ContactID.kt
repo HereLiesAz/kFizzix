@@ -18,42 +18,70 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
 package com.hereliesaz.kfizzix.collision
 
-import com.hereliesaz.kfizzix.common.Vec2
-
 /**
- * Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and
- * p2 come from b2RayCastInput.
+ * Contact ids to facilitate warm starting.
+ * @author Daniel Murphy
  */
-class RayCastOutput(
-    val normal: Vec2 = Vec2(),
-    var fraction: Float = 0f
-) {
-    fun set(other: RayCastOutput) {
-        normal.set(other.normal)
-        fraction = other.fraction
+class ContactID : Comparable<ContactID> {
+    var indexA: Byte = 0
+    var indexB: Byte = 0
+    var typeA: Byte = 0
+    var typeB: Byte = 0
+
+    fun set(c: ContactID) {
+        indexA = c.indexA
+        indexB = c.indexB
+        typeA = c.typeA
+        typeB = c.typeB
     }
 
-    override fun toString(): String {
-        return "RayCastOutput(normal=$normal, fraction=$fraction)"
+    fun flip() {
+        val tempIndex = indexA
+        indexA = indexB
+        indexB = tempIndex
+        val tempType = typeA
+        typeA = typeB
+        typeB = tempType
+    }
+
+    fun copy(): ContactID {
+        val c = ContactID()
+        c.set(this)
+        return c
+    }
+
+    fun isEqual(other: ContactID): Boolean {
+        return indexA == other.indexA && indexB == other.indexB && typeA == other.typeA && typeB == other.typeB
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as RayCastOutput
-        if (normal != other.normal) return false
-        if (fraction != other.fraction) return false
-        return true
+        other as ContactID
+        return isEqual(other)
     }
 
     override fun hashCode(): Int {
-        var result = normal.hashCode()
-        result = 31 * result + fraction.hashCode()
+        var result = indexA.toInt()
+        result = 31 * result + indexB.toInt()
+        result = 31 * result + typeA.toInt()
+        result = 31 * result + typeB.toInt()
         return result
+    }
+
+    override fun toString(): String {
+        return "ContactID(indexA=$indexA, indexB=$indexB, typeA=$typeA, typeB=$typeB)"
+    }
+
+    override fun compareTo(other: ContactID): Int {
+        if (indexA != other.indexA) return indexA - other.indexA
+        if (indexB != other.indexB) return indexB - other.indexB
+        if (typeA != other.typeA) return typeA - other.typeA
+        return typeB - other.typeB
     }
 }

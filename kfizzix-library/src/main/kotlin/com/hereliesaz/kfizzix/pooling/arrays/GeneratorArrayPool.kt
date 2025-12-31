@@ -21,35 +21,20 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.arrays;
+package com.hereliesaz.kfizzix.pooling.arrays
 
-import java.util.HashMap;
+import com.hereliesaz.kfizzix.particle.VoronoiDiagram
+import java.util.HashMap
 
-import com.hereliesaz.kfizzix.particle.VoronoiDiagram;
+class GeneratorArrayPool {
+    private val map = HashMap<Int, Array<VoronoiDiagram.Generator>>()
 
-public class GeneratorArray
-{
-    private final HashMap<Integer, VoronoiDiagram.Generator[]> map = new HashMap<>();
-
-    public VoronoiDiagram.Generator[] get(int length)
-    {
-        assert (length > 0);
-        if (!map.containsKey(length))
-        {
-            map.put(length, getInitializedArray(length));
-        }
-        assert (map.get(length).length == length)
-                : "Array not built of correct length";
-        return map.get(length);
+    fun get(length: Int): Array<VoronoiDiagram.Generator> {
+        assert(length > 0)
+        return map.getOrPut(length) { getInitializedArray(length) }
     }
 
-    protected VoronoiDiagram.Generator[] getInitializedArray(int length)
-    {
-        final VoronoiDiagram.Generator[] ray = new VoronoiDiagram.Generator[length];
-        for (int i = 0; i < ray.length; i++)
-        {
-            ray[i] = new VoronoiDiagram.Generator();
-        }
-        return ray;
+    protected fun getInitializedArray(length: Int): Array<VoronoiDiagram.Generator> {
+        return Array(length) { VoronoiDiagram.Generator() }
     }
 }

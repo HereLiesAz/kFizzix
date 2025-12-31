@@ -18,38 +18,11 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.particle
+package com.hereliesaz.kfizzix.collision.shapes
 
-import com.hereliesaz.kfizzix.common.Vec2
-
-class ParticleDef {
-    /**
-     * Specifies the type of particle. A particle may be more than one type.
-     * Logical sums chain multiple types, for example: `pd.flags =
-     * ParticleType.b2_elasticParticle | ParticleType.b2_viscousParticle`.
-     */
-    var flags = 0
-
-    /**
-     * The world position of the particle.
-     */
-    val position = Vec2()
-
-    /**
-     * The linear velocity of the particle in the world co-ordinates.
-     */
-    val velocity = Vec2()
-
-    /**
-     * The color of the particle.
-     */
-    var color: ParticleColor? = null
-
-    /**
-     * Use this to store application-specific body data.
-     */
-    var userData: Any? = null
+enum class ShapeType {
+    CIRCLE, EDGE, POLYGON, CHAIN
 }

@@ -29,24 +29,34 @@ import java.io.Serializable
  * A transform contains translation and rotation. It is used to represent the
  * position and orientation of rigid frames.
  *
- * @param position the position of the transform
- * @param rotation the rotation of the transform
- * @constructor Creates a new transform with the given position and rotation.
  * @author Daniel Murphy
  */
-class Transform(
+class Transform : Serializable {
     /**
      * The translation caused by the transform
      */
-    @JvmField val p: Vec2 = Vec2(),
+    @JvmField val p = Vec2()
+
     /**
      * A matrix representing a rotation
      */
-    @JvmField val q: Rot = Rot()
-) : Serializable {
+    @JvmField val q = Rot()
 
-    fun copy(p: Vec2 = this.p, q: Rot = this.q): Transform {
-        return Transform(p.copy(), q.copy())
+    constructor()
+
+    /**
+     * Initialize using a position vector and a rotation matrix.
+     *
+     * @param position the position of the transform
+     * @param rotation the rotation of the transform
+     */
+    constructor(position: Vec2, rotation: Rot) {
+        p.set(position)
+        q.set(rotation)
+    }
+
+    fun copy(): Transform {
+        return Transform(p, q)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -63,14 +73,6 @@ class Transform(
         result = 31 * result + q.hashCode()
         return result
     }
-
-    /**
-     * Initialize using a position vector and a rotation matrix.
-     *
-     * @param _position the position of the transform
-     * @param _R the rotation of the transform
-     */
-    constructor(position: Vec2, rotation: Rot) : this(position.copy(), rotation.copy())
 
     /**
      * Set this to equal another transform.
@@ -99,6 +101,16 @@ class Transform(
     fun setIdentity() {
         p.setZero()
         q.setIdentity()
+    }
+
+    fun mul(v: Vec2): Vec2 {
+        return Vec2((q.c * v.x - q.s * v.y) + p.x, (q.s * v.x + q.c * v.y) + p.y)
+    }
+
+    fun mulTrans(v: Vec2): Vec2 {
+        val px = v.x - p.x
+        val py = v.y - p.y
+        return Vec2((q.c * px + q.s * py), (-q.s * px + q.c * py))
     }
 
     override fun toString(): String {

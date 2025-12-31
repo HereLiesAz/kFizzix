@@ -21,33 +21,35 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.arrays;
+package com.hereliesaz.kfizzix.particle
 
-import java.util.HashMap;
+import com.hereliesaz.kfizzix.common.Vec2
 
-/**
- * Not thread safe float[] pooling.
- *
- * @author Daniel Murphy
- */
-public class FloatArray
-{
-    private final HashMap<Integer, float[]> map = new HashMap<>();
+class ParticleDef {
+    /**
+     * Specifies the type of particle. A particle may be more than one type.
+     * Logical sums chain multiple types, for example: `pd.flags =
+     * ParticleType.b2_elasticParticle | ParticleType.b2_viscousParticle`.
+     */
+    var flags = 0
 
-    public float[] get(int argLength)
-    {
-        assert (argLength > 0);
-        if (!map.containsKey(argLength))
-        {
-            map.put(argLength, getInitializedArray(argLength));
-        }
-        assert (map.get(argLength).length == argLength)
-                : "Array not built of correct length";
-        return map.get(argLength);
-    }
+    /**
+     * The world position of the particle.
+     */
+    val position = Vec2()
 
-    protected float[] getInitializedArray(int argLength)
-    {
-        return new float[argLength];
-    }
+    /**
+     * The linear velocity of the particle in the world co-ordinates.
+     */
+    val velocity = Vec2()
+
+    /**
+     * The color of the particle.
+     */
+    var color: ParticleColor? = null
+
+    /**
+     * Use this to store application-specific body data.
+     */
+    var userData: Any? = null
 }

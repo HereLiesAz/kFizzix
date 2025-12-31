@@ -21,21 +21,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.common;
+package com.hereliesaz.kfizzix.common
 
 /**
  * @author Daniel Murphy
  */
-public class RaycastResult
-{
-    public float lambda = 0.0f;
+class RaycastResult {
+    var lambda: Float = 0.0f
+    val normal: Vec2 = Vec2()
 
-    public final Vec2 normal = new Vec2();
-
-    public RaycastResult set(RaycastResult argOther)
-    {
-        lambda = argOther.lambda;
-        normal.set(argOther.normal);
-        return this;
+    fun set(argOther: RaycastResult): RaycastResult {
+        lambda = argOther.lambda
+        normal.set(argOther.normal)
+        return this
     }
 }

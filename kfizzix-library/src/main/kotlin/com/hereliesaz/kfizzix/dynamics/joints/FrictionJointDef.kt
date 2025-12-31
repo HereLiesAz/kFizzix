@@ -21,56 +21,45 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * Friction joint definition.
  *
  * @author Daniel Murphy
  */
-public class FrictionJointDef extends JointDef
-{
+class FrictionJointDef : JointDef(JointType.FRICTION) {
     /**
      * The local anchor point relative to bodyA's origin.
      */
-    public final Vec2 localAnchorA;
+    val localAnchorA: Vec2 = Vec2()
 
     /**
      * The local anchor point relative to bodyB's origin.
      */
-    public final Vec2 localAnchorB;
+    val localAnchorB: Vec2 = Vec2()
 
     /**
      * The maximum friction force in N.
      */
-    public float maxForce;
+    var maxForce: Float = 0f
 
     /**
      * The maximum friction torque in N-m.
      */
-    public float maxTorque;
-
-    public FrictionJointDef()
-    {
-        super(JointType.FRICTION);
-        localAnchorA = new Vec2();
-        localAnchorB = new Vec2();
-        maxForce = 0f;
-        maxTorque = 0f;
-    }
+    var maxTorque: Float = 0f
 
     /**
      * Initialize the bodies, anchors, axis, and reference angle using the world
      * anchor and world axis.
      */
-    public void initialize(Body bA, Body bB, Vec2 anchor)
-    {
-        bodyA = bA;
-        bodyB = bB;
-        bA.getLocalPointToOut(anchor, localAnchorA);
-        bB.getLocalPointToOut(anchor, localAnchorB);
+    fun initialize(bA: Body, bB: Body, anchor: Vec2) {
+        bodyA = bA
+        bodyB = bB
+        bA.getLocalPointToOut(anchor, localAnchorA)
+        bB.getLocalPointToOut(anchor, localAnchorB)
     }
 }

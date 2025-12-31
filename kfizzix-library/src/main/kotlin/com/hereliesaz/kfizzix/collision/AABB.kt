@@ -56,6 +56,11 @@ class AABB(
     val extents: Vec2
         get() = (upperBound - lowerBound) * 0.5f
 
+    fun getCenterToOut(out: Vec2) {
+        out.x = (lowerBound.x + upperBound.x) * 0.5f
+        out.y = (lowerBound.y + upperBound.y) * 0.5f
+    }
+
     /**
      * Gets the perimeter length.
      */

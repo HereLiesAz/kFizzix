@@ -21,15 +21,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.MathUtils;
-import com.hereliesaz.kfizzix.common.Rot;
-import com.hereliesaz.kfizzix.common.Settings;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
-import com.hereliesaz.kfizzix.dynamics.SolverData;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Rot
+import com.hereliesaz.kfizzix.common.Settings
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
+import com.hereliesaz.kfizzix.dynamics.SolverData
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * A wheel joint. This joint provides two degrees of freedom: translation along
@@ -47,522 +47,412 @@ import com.hereliesaz.kfizzix.pooling.WorldPool;
  *
  * @author Daniel Murphy
  */
-public class WheelJoint extends Joint
-{
-
+class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     /**
      * The local anchor point relative to body1's origin.
      */
-    private final Vec2 localAnchorA = new Vec2();
+    val localAnchorA: Vec2 = Vec2(def.localAnchorA)
 
     /**
      * The local anchor point relative to body2's origin.
      */
-    private final Vec2 localAnchorB = new Vec2();
+    val localAnchorB: Vec2 = Vec2(def.localAnchorB)
 
     /**
      * The local translation axis in body1.
      */
-    private final Vec2 localXAxisA = new Vec2();
+    val localXAxisA: Vec2 = Vec2(def.localAxisA)
 
     /**
      * Enable/disable the joint motor.
      */
-    private boolean enableMotor;
+    private var enableMotor: Boolean
 
     /**
      * The maximum motor torque, usually in N-m.
      */
-    private float maxMotorTorque;
+    var maxMotorTorque: Float
 
     /**
      * The desired motor speed in radians per second.
      */
-    private float motorSpeed;
+    var motorSpeed: Float
 
     /**
      * Suspension frequency, zero indicates no suspension
      */
-    private float frequencyHz;
+    var springFrequencyHz: Float
 
     /**
      * Suspension damping ratio, one indicates critical damping
      */
-    private float dampingRatio;
+    var springDampingRatio: Float
 
-    private final Vec2 localCenterA = new Vec2();
-
-    private final Vec2 localCenterB = new Vec2();
-
-    private final Vec2 localYAxisA = new Vec2();
-
-    private float impulse;
-
-    private float motorImpulse;
-
-    private float springImpulse;
+    private val localCenterA = Vec2()
+    private val localCenterB = Vec2()
+    private val localYAxisA = Vec2()
+    private var impulse: Float = 0.0f
+    private var motorImpulse: Float
+    private var springImpulse: Float = 0.0f
 
     // Solver temp
-    private int indexA;
+    private var indexA: Int = 0
+    private var indexB: Int = 0
+    private var invMassA: Float = 0.0f
+    private var invMassB: Float = 0.0f
+    private var invIA: Float = 0.0f
+    private var invIB: Float = 0.0f
+    private val ax = Vec2()
+    private val ay = Vec2()
+    private var sAx: Float = 0.0f
+    private var sBx: Float = 0.0f
+    private var sAy: Float = 0.0f
+    private var sBy: Float = 0.0f
+    private var mass: Float = 0.0f
+    private var motorMass: Float
+    private var springMass: Float = 0.0f
+    private var bias: Float = 0.0f
+    private var gamma: Float = 0.0f
 
-    private int indexB;
+    // pooling
+    private val rA = Vec2()
+    private val rB = Vec2()
+    private val d = Vec2()
 
-    private float invMassA;
-
-    private float invMassB;
-
-    private float invIA;
-
-    private float invIB;
-
-    private final Vec2 ax = new Vec2();
-
-    private final Vec2 ay = new Vec2();
-
-    private float sAx, sBx;
-
-    private float sAy, sBy;
-
-    private float mass;
-
-    private float motorMass;
-
-    private float springMass;
-
-    private float bias;
-
-    private float gamma;
-
-    /**
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L44-L87
-     */
-    protected WheelJoint(WorldPool argPool, WheelJointDef def)
-    {
-        super(argPool, def);
-        localAnchorA.set(def.localAnchorA);
-        localAnchorB.set(def.localAnchorB);
-        localXAxisA.set(def.localAxisA);
-        Vec2.crossToOutUnsafe(1.0f, localXAxisA, localYAxisA);
-        motorMass = 0.0f;
-        motorImpulse = 0.0f;
-        maxMotorTorque = def.maxMotorTorque;
-        motorSpeed = def.motorSpeed;
-        enableMotor = def.enableMotor;
-        frequencyHz = def.frequencyHz;
-        dampingRatio = def.dampingRatio;
-    }
-
-    public Vec2 getLocalAnchorA()
-    {
-        return localAnchorA;
-    }
-
-    public Vec2 getLocalAnchorB()
-    {
-        return localAnchorB;
+    init {
+        Vec2.crossToOutUnsafe(1.0f, localXAxisA, localYAxisA)
+        motorMass = 0.0f
+        motorImpulse = 0.0f
+        maxMotorTorque = def.maxMotorTorque
+        motorSpeed = def.motorSpeed
+        enableMotor = def.enableMotor
+        springFrequencyHz = def.frequencyHz
+        springDampingRatio = def.dampingRatio
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L446-L449
      */
-    @Override
-    public void getAnchorA(Vec2 argOut)
-    {
-        bodyA.getWorldPointToOut(localAnchorA, argOut);
+    override fun getAnchorA(argOut: Vec2) {
+        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L451-L454
      */
-    @Override
-    public void getAnchorB(Vec2 argOut)
-    {
-        bodyB.getWorldPointToOut(localAnchorB, argOut);
+    override fun getAnchorB(argOut: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L456-L459
      */
-    @Override
-    public void getReactionForce(float invDt, Vec2 argOut)
-    {
-        final Vec2 temp = pool.popVec2();
-        temp.set(ay).mulLocal(impulse);
-        argOut.set(ax).mulLocal(springImpulse).addLocal(temp).mulLocal(invDt);
-        pool.pushVec2(1);
+    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+        val temp = pool.popVec2()
+        temp.set(ay).mulLocal(impulse)
+        argOut.set(ax).mulLocal(springImpulse).addLocal(temp).mulLocal(invDt)
+        pool.pushVec2(1)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L461-L464
      */
-    @Override
-    public float getReactionTorque(float invDt)
-    {
-        return invDt * motorImpulse;
+    override fun getReactionTorque(invDt: Float): Float {
+        return invDt * motorImpulse
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L466-L478
      */
-    public float getJointTranslation()
-    {
-        Body b1 = bodyA;
-        Body b2 = bodyB;
-        Vec2 p1 = pool.popVec2();
-        Vec2 p2 = pool.popVec2();
-        Vec2 axis = pool.popVec2();
-        b1.getWorldPointToOut(localAnchorA, p1);
-        b2.getWorldPointToOut(localAnchorA, p2);
-        p2.subLocal(p1);
-        b1.getWorldVectorToOut(localXAxisA, axis);
-        float translation = Vec2.dot(p2, axis);
-        pool.pushVec2(3);
-        return translation;
+    fun getJointTranslation(): Float {
+        val b1 = bodyA!!
+        val b2 = bodyB!!
+        val p1 = pool.popVec2()
+        val p2 = pool.popVec2()
+        val axis = pool.popVec2()
+        b1.getWorldPointToOut(localAnchorA, p1)
+        b2.getWorldPointToOut(localAnchorA, p2)
+        p2.subLocal(p1)
+        b1.getWorldVectorToOut(localXAxisA, axis)
+        val translation = Vec2.dot(p2, axis)
+        pool.pushVec2(3)
+        return translation
     }
 
     /**
      * For serialization
      */
-    public Vec2 getLocalAxisA()
-    {
-        return localXAxisA;
+    fun getLocalAxisA(): Vec2 {
+        return localXAxisA
     }
 
-    public float getJointSpeed()
-    {
-        return bodyA.angularVelocity - bodyB.angularVelocity;
+    fun getJointSpeed(): Float {
+        return bodyA!!.angularVelocity - bodyB!!.angularVelocity
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L556-L559
      */
-    public boolean isMotorEnabled()
-    {
-        return enableMotor;
+    fun isMotorEnabled(): Boolean {
+        return enableMotor
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L561-L569
      */
-    public void enableMotor(boolean flag)
-    {
-        bodyA.setAwake(true);
-        bodyB.setAwake(true);
-        enableMotor = flag;
+    fun enableMotor(flag: Boolean) {
+        bodyA!!.isAwake = true
+        bodyB!!.isAwake = true
+        enableMotor = flag
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L571-L579
      */
-    public void setMotorSpeed(float speed)
-    {
-        bodyA.setAwake(true);
-        bodyB.setAwake(true);
-        motorSpeed = speed;
-    }
-
-    public float getMotorSpeed()
-    {
-        return motorSpeed;
-    }
-
-    public float getMaxMotorTorque()
-    {
-        return maxMotorTorque;
+    fun setMotorSpeed(speed: Float) {
+        bodyA!!.isAwake = true
+        bodyB!!.isAwake = true
+        motorSpeed = speed
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L581-L589
      */
-    public void setMaxMotorTorque(float torque)
-    {
-        bodyA.setAwake(true);
-        bodyB.setAwake(true);
-        maxMotorTorque = torque;
+    fun setMaxMotorTorque(torque: Float) {
+        bodyA!!.isAwake = true
+        bodyB!!.isAwake = true
+        maxMotorTorque = torque
     }
 
-    public float getMotorTorque(float inv_dt)
-    {
-        return motorImpulse * inv_dt;
+    fun getMotorTorque(inv_dt: Float): Float {
+        return motorImpulse * inv_dt
     }
-
-    public void setSpringFrequencyHz(float hz)
-    {
-        frequencyHz = hz;
-    }
-
-    public float getSpringFrequencyHz()
-    {
-        return frequencyHz;
-    }
-
-    public void setSpringDampingRatio(float ratio)
-    {
-        dampingRatio = ratio;
-    }
-
-    public float getSpringDampingRatio()
-    {
-        return dampingRatio;
-    }
-
-    // pooling
-    private final Vec2 rA = new Vec2();
-
-    private final Vec2 rB = new Vec2();
-
-    private final Vec2 d = new Vec2();
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L89-L235
      */
-    @Override
-    public void initVelocityConstraints(SolverData data)
-    {
-        indexA = bodyA.islandIndex;
-        indexB = bodyB.islandIndex;
-        localCenterA.set(bodyA.sweep.localCenter);
-        localCenterB.set(bodyB.sweep.localCenter);
-        invMassA = bodyA.invMass;
-        invMassB = bodyB.invMass;
-        invIA = bodyA.invI;
-        invIB = bodyB.invI;
-        float mA = invMassA, mB = invMassB;
-        float iA = invIA, iB = invIB;
-        Vec2 cA = data.positions[indexA].c;
-        float aA = data.positions[indexA].a;
-        Vec2 vA = data.velocities[indexA].v;
-        float wA = data.velocities[indexA].w;
-        Vec2 cB = data.positions[indexB].c;
-        float aB = data.positions[indexB].a;
-        Vec2 vB = data.velocities[indexB].v;
-        float wB = data.velocities[indexB].w;
-        final Rot qA = pool.popRot();
-        final Rot qB = pool.popRot();
-        final Vec2 temp = pool.popVec2();
-        qA.set(aA);
-        qB.set(aB);
+    override fun initVelocityConstraints(data: SolverData) {
+        indexA = bodyA!!.islandIndex
+        indexB = bodyB!!.islandIndex
+        localCenterA.set(bodyA!!.sweep.localCenter)
+        localCenterB.set(bodyB!!.sweep.localCenter)
+        invMassA = bodyA!!.invMass
+        invMassB = bodyB!!.invMass
+        invIA = bodyA!!.invI
+        invIB = bodyB!!.invI
+        val mA = invMassA
+        val mB = invMassB
+        val iA = invIA
+        val iB = invIB
+        val cA = data.positions[indexA].c
+        val aA = data.positions[indexA].a
+        val vA = data.velocities[indexA].v
+        var wA = data.velocities[indexA].w
+        val cB = data.positions[indexB].c
+        val aB = data.positions[indexB].a
+        val vB = data.velocities[indexB].v
+        var wB = data.velocities[indexB].w
+        val qA = pool.popRot()
+        val qB = pool.popRot()
+        val temp = pool.popVec2()
+        qA.set(aA)
+        qB.set(aB)
         // Compute the effective masses.
-        Rot.mulToOutUnsafe(qA, temp.set(localAnchorA).subLocal(localCenterA),
-                rA);
-        Rot.mulToOutUnsafe(qB, temp.set(localAnchorB).subLocal(localCenterB),
-                rB);
-        d.set(cB).addLocal(rB).subLocal(cA).subLocal(rA);
+        Rot.mulToOutUnsafe(qA, temp.set(localAnchorA).subLocal(localCenterA), rA)
+        Rot.mulToOutUnsafe(qB, temp.set(localAnchorB).subLocal(localCenterB), rB)
+        d.set(cB).addLocal(rB).subLocal(cA).subLocal(rA)
         // Point to line constraint
-        {
-            Rot.mulToOut(qA, localYAxisA, ay);
-            sAy = Vec2.cross(temp.set(d).addLocal(rA), ay);
-            sBy = Vec2.cross(rB, ay);
-            mass = mA + mB + iA * sAy * sAy + iB * sBy * sBy;
-            if (mass > 0.0f)
-            {
-                mass = 1.0f / mass;
+        run {
+            Rot.mulToOut(qA, localYAxisA, ay)
+            sAy = Vec2.cross(temp.set(d).addLocal(rA), ay)
+            sBy = Vec2.cross(rB, ay)
+            mass = mA + mB + iA * sAy * sAy + iB * sBy * sBy
+            if (mass > 0.0f) {
+                mass = 1.0f / mass
             }
         }
         // Spring constraint
-        springMass = 0.0f;
-        bias = 0.0f;
-        gamma = 0.0f;
-        if (frequencyHz > 0.0f)
-        {
-            Rot.mulToOut(qA, localXAxisA, ax);
-            sAx = Vec2.cross(temp.set(d).addLocal(rA), ax);
-            sBx = Vec2.cross(rB, ax);
-            float invMass = mA + mB + iA * sAx * sAx + iB * sBx * sBx;
-            if (invMass > 0.0f)
-            {
-                springMass = 1.0f / invMass;
-                float C = Vec2.dot(d, ax);
+        springMass = 0.0f
+        bias = 0.0f
+        gamma = 0.0f
+        if (springFrequencyHz > 0.0f) {
+            Rot.mulToOut(qA, localXAxisA, ax)
+            sAx = Vec2.cross(temp.set(d).addLocal(rA), ax)
+            sBx = Vec2.cross(rB, ax)
+            val invMass = mA + mB + iA * sAx * sAx + iB * sBx * sBx
+            if (invMass > 0.0f) {
+                springMass = 1.0f / invMass
+                val C = Vec2.dot(d, ax)
                 // Frequency
-                float omega = 2.0f * MathUtils.PI * frequencyHz;
+                val omega = 2.0f * MathUtils.PI * springFrequencyHz
                 // Damping coefficient
-                float d = 2.0f * springMass * dampingRatio * omega;
+                val d = 2.0f * springMass * springDampingRatio * omega
                 // Spring stiffness
-                float k = springMass * omega * omega;
+                val k = springMass * omega * omega
                 // magic formulas
-                float h = data.step.dt;
-                gamma = h * (d + h * k);
-                if (gamma > 0.0f)
-                {
-                    gamma = 1.0f / gamma;
+                val h = data.step.dt
+                gamma = h * (d + h * k)
+                if (gamma > 0.0f) {
+                    gamma = 1.0f / gamma
                 }
-                bias = C * h * k * gamma;
-                springMass = invMass + gamma;
-                if (springMass > 0.0f)
-                {
-                    springMass = 1.0f / springMass;
+                bias = C * h * k * gamma
+                springMass = invMass + gamma
+                if (springMass > 0.0f) {
+                    springMass = 1.0f / springMass
                 }
             }
-        }
-        else
-        {
-            springImpulse = 0.0f;
+        } else {
+            springImpulse = 0.0f
         }
         // Rotational motor
-        if (enableMotor)
-        {
-            motorMass = iA + iB;
-            if (motorMass > 0.0f)
-            {
-                motorMass = 1.0f / motorMass;
+        if (enableMotor) {
+            motorMass = iA + iB
+            if (motorMass > 0.0f) {
+                motorMass = 1.0f / motorMass
             }
+        } else {
+            motorMass = 0.0f
+            motorImpulse = 0.0f
         }
-        else
-        {
-            motorMass = 0.0f;
-            motorImpulse = 0.0f;
-        }
-        if (data.step.warmStarting)
-        {
-            final Vec2 P = pool.popVec2();
+        if (data.step.warmStarting) {
+            val P = pool.popVec2()
             // Account for variable time step.
-            impulse *= data.step.dtRatio;
-            springImpulse *= data.step.dtRatio;
-            motorImpulse *= data.step.dtRatio;
-            P.x = impulse * ay.x + springImpulse * ax.x;
-            P.y = impulse * ay.y + springImpulse * ax.y;
-            float LA = impulse * sAy + springImpulse * sAx + motorImpulse;
-            float LB = impulse * sBy + springImpulse * sBx + motorImpulse;
-            vA.x -= invMassA * P.x;
-            vA.y -= invMassA * P.y;
-            wA -= invIA * LA;
-            vB.x += invMassB * P.x;
-            vB.y += invMassB * P.y;
-            wB += invIB * LB;
-            pool.pushVec2(1);
+            impulse *= data.step.dtRatio
+            springImpulse *= data.step.dtRatio
+            motorImpulse *= data.step.dtRatio
+            P.x = impulse * ay.x + springImpulse * ax.x
+            P.y = impulse * ay.y + springImpulse * ax.y
+            val LA = impulse * sAy + springImpulse * sAx + motorImpulse
+            val LB = impulse * sBy + springImpulse * sBx + motorImpulse
+            vA.x -= invMassA * P.x
+            vA.y -= invMassA * P.y
+            wA -= invIA * LA
+            vB.x += invMassB * P.x
+            vB.y += invMassB * P.y
+            wB += invIB * LB
+            pool.pushVec2(1)
+        } else {
+            impulse = 0.0f
+            springImpulse = 0.0f
+            motorImpulse = 0.0f
         }
-        else
-        {
-            impulse = 0.0f;
-            springImpulse = 0.0f;
-            motorImpulse = 0.0f;
-        }
-        pool.pushRot(2);
-        pool.pushVec2(1);
+        pool.pushRot(2)
+        pool.pushVec2(1)
         // data.velocities[indexA].v = vA;
-        data.velocities[indexA].w = wA;
+        data.velocities[indexA].w = wA
         // data.velocities[indexB].v = vB;
-        data.velocities[indexB].w = wB;
+        data.velocities[indexB].w = wB
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L237-L342
      */
-    @Override
-    public void solveVelocityConstraints(SolverData data)
-    {
-        float mA = invMassA, mB = invMassB;
-        float iA = invIA, iB = invIB;
-        Vec2 vA = data.velocities[indexA].v;
-        float wA = data.velocities[indexA].w;
-        Vec2 vB = data.velocities[indexB].v;
-        float wB = data.velocities[indexB].w;
-        final Vec2 temp = pool.popVec2();
-        final Vec2 P = pool.popVec2();
+    override fun solveVelocityConstraints(data: SolverData) {
+        val mA = invMassA
+        val mB = invMassB
+        val iA = invIA
+        val iB = invIB
+        val vA = data.velocities[indexA].v
+        var wA = data.velocities[indexA].w
+        val vB = data.velocities[indexB].v
+        var wB = data.velocities[indexB].w
+        val temp = pool.popVec2()
+        val P = pool.popVec2()
         // Solve spring constraint
-        {
-            float Cdot = Vec2.dot(ax, temp.set(vB).subLocal(vA)) + sBx * wB
-                    - sAx * wA;
-            float impulse = -springMass * (Cdot + bias + gamma * springImpulse);
-            springImpulse += impulse;
-            P.x = impulse * ax.x;
-            P.y = impulse * ax.y;
-            float LA = impulse * sAx;
-            float LB = impulse * sBx;
-            vA.x -= mA * P.x;
-            vA.y -= mA * P.y;
-            wA -= iA * LA;
-            vB.x += mB * P.x;
-            vB.y += mB * P.y;
-            wB += iB * LB;
+        run {
+            val Cdot = Vec2.dot(ax, temp.set(vB).subLocal(vA)) + sBx * wB - sAx * wA
+            val impulse = -springMass * (Cdot + bias + gamma * springImpulse)
+            springImpulse = springImpulse + impulse
+            P.x = impulse * ax.x
+            P.y = impulse * ax.y
+            val LA = impulse * sAx
+            val LB = impulse * sBx
+            vA.x -= mA * P.x
+            vA.y -= mA * P.y
+            wA -= iA * LA
+            vB.x += mB * P.x
+            vB.y += mB * P.y
+            wB += iB * LB
         }
         // Solve rotational motor constraint
-        {
-            float Cdot = wB - wA - motorSpeed;
-            float impulse = -motorMass * Cdot;
-            float oldImpulse = motorImpulse;
-            float maxImpulse = data.step.dt * maxMotorTorque;
-            motorImpulse = MathUtils.clamp(motorImpulse + impulse, -maxImpulse,
-                    maxImpulse);
-            impulse = motorImpulse - oldImpulse;
-            wA -= iA * impulse;
-            wB += iB * impulse;
+        run {
+            val Cdot = wB - wA - motorSpeed
+            val impulse = -motorMass * Cdot
+            val oldImpulse = motorImpulse
+            val maxImpulse = data.step.dt * maxMotorTorque
+            motorImpulse = MathUtils.clamp(motorImpulse + impulse, -maxImpulse, maxImpulse)
+            val incImpulse = motorImpulse - oldImpulse
+            wA -= iA * incImpulse
+            wB += iB * incImpulse
         }
         // Solve point to line constraint
-        {
-            float Cdot = Vec2.dot(ay, temp.set(vB).subLocal(vA)) + sBy * wB
-                    - sAy * wA;
-            float impulse = -mass * Cdot;
-            this.impulse += impulse;
-            P.x = impulse * ay.x;
-            P.y = impulse * ay.y;
-            float LA = impulse * sAy;
-            float LB = impulse * sBy;
-            vA.x -= mA * P.x;
-            vA.y -= mA * P.y;
-            wA -= iA * LA;
-            vB.x += mB * P.x;
-            vB.y += mB * P.y;
-            wB += iB * LB;
+        run {
+            val Cdot = Vec2.dot(ay, temp.set(vB).subLocal(vA)) + sBy * wB - sAy * wA
+            val impulse = -mass * Cdot
+            this.impulse = this.impulse + impulse
+            P.x = impulse * ay.x
+            P.y = impulse * ay.y
+            val LA = impulse * sAy
+            val LB = impulse * sBy
+            vA.x -= mA * P.x
+            vA.y -= mA * P.y
+            wA -= iA * LA
+            vB.x += mB * P.x
+            vB.y += mB * P.y
+            wB += iB * LB
         }
-        pool.pushVec2(2);
+        pool.pushVec2(2)
         // data.velocities[indexA].v = vA;
-        data.velocities[indexA].w = wA;
+        data.velocities[indexA].w = wA
         // data.velocities[indexB].v = vB;
-        data.velocities[indexB].w = wB;
+        data.velocities[indexB].w = wB
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L344-L444
      */
-    @Override
-    public boolean solvePositionConstraints(SolverData data)
-    {
-        Vec2 cA = data.positions[indexA].c;
-        float aA = data.positions[indexA].a;
-        Vec2 cB = data.positions[indexB].c;
-        float aB = data.positions[indexB].a;
-        final Rot qA = pool.popRot();
-        final Rot qB = pool.popRot();
-        final Vec2 temp = pool.popVec2();
-        qA.set(aA);
-        qB.set(aB);
-        Rot.mulToOut(qA, temp.set(localAnchorA).subLocal(localCenterA), rA);
-        Rot.mulToOut(qB, temp.set(localAnchorB).subLocal(localCenterB), rB);
-        d.set(cB).subLocal(cA).addLocal(rB).subLocal(rA);
-        Vec2 ay = pool.popVec2();
-        Rot.mulToOut(qA, localYAxisA, ay);
-        float sAy = Vec2.cross(temp.set(d).addLocal(rA), ay);
-        float sBy = Vec2.cross(rB, ay);
-        float C = Vec2.dot(d, ay);
-        float k = invMassA + invMassB + invIA * this.sAy * this.sAy
-                + invIB * this.sBy * this.sBy;
-        float impulse;
-        if (k != 0.0f)
-        {
-            impulse = -C / k;
+    override fun solvePositionConstraints(data: SolverData): Boolean {
+        val cA = data.positions!![indexA].c
+        var aA = data.positions!![indexA].a
+        val cB = data.positions!![indexB].c
+        var aB = data.positions!![indexB].a
+        val qA = pool.popRot()
+        val qB = pool.popRot()
+        val temp = pool.popVec2()
+        qA.set(aA)
+        qB.set(aB)
+        Rot.mulToOut(qA, temp.set(localAnchorA).subLocal(localCenterA), rA)
+        Rot.mulToOut(qB, temp.set(localAnchorB).subLocal(localCenterB), rB)
+        d.set(cB).subLocal(cA).addLocal(rB).subLocal(rA)
+        val ay = pool.popVec2()
+        Rot.mulToOut(qA, localYAxisA, ay)
+        val sAy = Vec2.cross(temp.set(d).addLocal(rA), ay)
+        val sBy = Vec2.cross(rB, ay)
+        val C = Vec2.dot(d, ay)
+        val k = invMassA + invMassB + invIA * this.sAy * this.sAy + invIB * this.sBy * this.sBy
+        val impulse: Float
+        if (k != 0.0f) {
+            impulse = -C / k
+        } else {
+            impulse = 0.0f
         }
-        else
-        {
-            impulse = 0.0f;
-        }
-        final Vec2 P = pool.popVec2();
-        P.x = impulse * ay.x;
-        P.y = impulse * ay.y;
-        float LA = impulse * sAy;
-        float LB = impulse * sBy;
-        cA.x -= invMassA * P.x;
-        cA.y -= invMassA * P.y;
-        aA -= invIA * LA;
-        cB.x += invMassB * P.x;
-        cB.y += invMassB * P.y;
-        aB += invIB * LB;
-        pool.pushVec2(3);
-        pool.pushRot(2);
+        val P = pool.popVec2()
+        P.x = impulse * ay.x
+        P.y = impulse * ay.y
+        val LA = impulse * sAy
+        val LB = impulse * sBy
+        cA.x -= invMassA * P.x
+        cA.y -= invMassA * P.y
+        aA -= invIA * LA
+        cB.x += invMassB * P.x
+        cB.y += invMassB * P.y
+        aB += invIB * LB
+        pool.pushVec2(3)
+        pool.pushRot(2)
         // data.positions[indexA].c = cA;
-        data.positions[indexA].a = aA;
+        data.positions!![indexA].a = aA
         // data.positions[indexB].c = cB;
-        data.positions[indexB].a = aB;
-        return MathUtils.abs(C) <= Settings.linearSlop;
+        data.positions!![indexB].a = aB
+        return MathUtils.abs(C) <= Settings.linearSlop
     }
 }

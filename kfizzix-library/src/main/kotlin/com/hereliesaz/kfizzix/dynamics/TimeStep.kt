@@ -21,33 +21,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
 /**
  * This is an internal structure.
  *
  * @author Daniel Murphy
  */
-public class TimeStep
-{
+class TimeStep {
     /**
      * The time step.
      */
-    public float dt;
+    var dt = 0f
 
     /**
      * The inverse time step (0 if dt == 0).
      */
-    public float inverseDt;
+    var inverseDt = 0f
 
     /**
-     * {@code dt * inverseDt}
+     * `dt * inverseDt`
      */
-    public float dtRatio;
-
-    public int velocityIterations;
-
-    public int positionIterations;
-
-    public boolean warmStarting;
+    var dtRatio = 0f
+    var velocityIterations = 0
+    var positionIterations = 0
+    var warmStarting = false
 }

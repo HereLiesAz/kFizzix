@@ -21,44 +21,35 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
 /**
  * This holds contact filtering data.
  *
  * @author Daniel Murphy
  */
-public class Filter
-{
+class Filter {
     /**
      * The collision category bits. Normally you would just set one bit.
      */
-    public int categoryBits;
+    var categoryBits = 0x0001
 
     /**
      * The collision mask bits. This states the categories that this shape would
      * accept for collision.
      */
-    public int maskBits;
+    var maskBits = 0xFFFF
 
     /**
      * Collision groups allow a certain group of objects to never collide
      * (negative) or always collide (positive). Zero means no collision group.
      * Non-zero group filtering always wins against the mask bits.
      */
-    public int groupIndex;
+    var groupIndex = 0
 
-    public Filter()
-    {
-        categoryBits = 0x0001;
-        maskBits = 0xFFFF;
-        groupIndex = 0;
-    }
-
-    public void set(Filter argOther)
-    {
-        categoryBits = argOther.categoryBits;
-        maskBits = argOther.maskBits;
-        groupIndex = argOther.groupIndex;
+    fun set(argOther: Filter) {
+        categoryBits = argOther.categoryBits
+        maskBits = argOther.maskBits
+        groupIndex = argOther.groupIndex
     }
 }

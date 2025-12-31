@@ -21,41 +21,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.arrays;
+package com.hereliesaz.kfizzix.pooling.arrays
 
-import java.util.HashMap;
-
-import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.common.Vec2
 
 /**
  * not thread safe Vec2[] pool
  *
  * @author Daniel Murphy
- *
  */
-public class Vec2Array
-{
-    private final HashMap<Integer, Vec2[]> map = new HashMap<>();
+class Vec2Array {
+    private val map = HashMap<Int, Array<Vec2>>()
 
-    public Vec2[] get(int argLength)
-    {
-        assert (argLength > 0);
-        if (!map.containsKey(argLength))
-        {
-            map.put(argLength, getInitializedArray(argLength));
+    operator fun get(argLength: Int): Array<Vec2> {
+        assert(argLength > 0)
+        if (!map.containsKey(argLength)) {
+            map[argLength] = getInitializedArray(argLength)
         }
-        assert (map.get(argLength).length == argLength)
-                : "Array not built of correct length";
-        return map.get(argLength);
+        assert(map[argLength]!!.size == argLength) { "Array not built of correct length" }
+        return map[argLength]!!
     }
 
-    protected Vec2[] getInitializedArray(int argLength)
-    {
-        final Vec2[] ray = new Vec2[argLength];
-        for (int i = 0; i < ray.length; i++)
-        {
-            ray[i] = new Vec2();
-        }
-        return ray;
+    protected fun getInitializedArray(argLength: Int): Array<Vec2> {
+        return Array(argLength) { Vec2() }
     }
 }

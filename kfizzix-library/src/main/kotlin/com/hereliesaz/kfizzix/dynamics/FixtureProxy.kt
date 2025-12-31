@@ -21,22 +21,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
-import com.hereliesaz.kfizzix.collision.AABB;
+import com.hereliesaz.kfizzix.collision.AABB
 
 /**
  * This proxy is used internally to connect fixtures to the broad-phase.
  *
  * @author Daniel Murphy
  */
-public class FixtureProxy
-{
-    final AABB aabb = new AABB();
-
-    Fixture fixture;
-
-    int childIndex;
-
-    int proxyId;
+class FixtureProxy {
+    val aabb: AABB = AABB()
+    var fixture: Fixture? = null
+    var childIndex = 0
+    var proxyId = 0
 }

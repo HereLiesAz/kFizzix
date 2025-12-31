@@ -21,18 +21,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.common.Vec2
 
 /**
  * @author Daniel Murphy
  */
-public class Jacobian
-{
-    public final Vec2 linearA = new Vec2();
-
-    public float angularA;
-
-    public float angularB;
+class Jacobian {
+    val linearA = Vec2()
+    var angularA = 0f
+    var angularB = 0f
 }

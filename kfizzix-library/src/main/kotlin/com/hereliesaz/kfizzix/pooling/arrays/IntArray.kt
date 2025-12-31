@@ -21,33 +21,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.arrays;
+package com.hereliesaz.kfizzix.pooling.arrays
 
-import java.util.HashMap;
+import java.util.HashMap
 
 /**
  * Not thread safe int[] pooling
  *
  * @author Daniel Murphy
  */
-public class IntArray
-{
-    private final HashMap<Integer, int[]> map = new HashMap<>();
+class IntArray {
+    private val map = HashMap<Int, kotlin.IntArray>()
 
-    public int[] get(int argLength)
-    {
-        assert (argLength > 0);
-        if (!map.containsKey(argLength))
-        {
-            map.put(argLength, getInitializedArray(argLength));
+    operator fun get(argLength: Int): kotlin.IntArray {
+        assert(argLength > 0)
+        if (!map.containsKey(argLength)) {
+            map[argLength] = getInitializedArray(argLength)
         }
-        assert (map.get(argLength).length == argLength)
-                : "Array not built of correct length";
-        return map.get(argLength);
+        val array = map[argLength]!!
+        assert(array.size == argLength) { "Array not built of correct length" }
+        return array
     }
 
-    protected int[] getInitializedArray(int argLength)
-    {
-        return new int[argLength];
+    protected fun getInitializedArray(argLength: Int): kotlin.IntArray {
+        return kotlin.IntArray(argLength)
     }
 }

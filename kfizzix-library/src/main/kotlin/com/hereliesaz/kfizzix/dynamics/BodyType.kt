@@ -21,7 +21,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
 /**
  * The body type. static: zero mass, zero velocity, may be manually moved
@@ -30,7 +30,6 @@ package com.hereliesaz.kfizzix.dynamics;
  *
  * @author Daniel Murphy
  */
-public enum BodyType
-{
+enum class BodyType {
     STATIC, KINEMATIC, DYNAMIC
 }

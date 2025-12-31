@@ -21,7 +21,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
 /**
  * Gear joint definition. This definition requires two existing revolute or
@@ -30,29 +30,21 @@ package com.hereliesaz.kfizzix.dynamics.joints;
  *
  * @author Daniel Murphy
  */
-public class GearJointDef extends JointDef
-{
+class GearJointDef : JointDef(JointType.GEAR) {
     /**
      * The first revolute/prismatic joint attached to the gear joint.
      */
-    public Joint joint1;
+    var joint1: Joint? = null
 
     /**
      * The second revolute/prismatic joint attached to the gear joint.
      */
-    public Joint joint2;
+    var joint2: Joint? = null
 
     /**
      * Gear ratio.
      *
      * @see GearJoint
      */
-    public float ratio;
-
-    public GearJointDef()
-    {
-        super(JointType.GEAR);
-        joint1 = null;
-        joint2 = null;
-    }
+    var ratio: Float = 0f
 }

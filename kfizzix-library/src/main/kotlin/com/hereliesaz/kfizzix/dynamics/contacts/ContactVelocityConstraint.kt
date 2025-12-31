@@ -21,65 +21,57 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts
 
-import com.hereliesaz.kfizzix.common.Mat22;
-import com.hereliesaz.kfizzix.common.Settings;
-import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.common.Mat22
+import com.hereliesaz.kfizzix.common.Settings
+import com.hereliesaz.kfizzix.common.Vec2
 
 /**
  * @author Daniel Murphy
  */
-public class ContactVelocityConstraint
-{
-    public VelocityConstraintPoint[] points = new VelocityConstraintPoint[Settings.maxManifoldPoints];
+class ContactVelocityConstraint {
+    var points: Array<VelocityConstraintPoint> = Array(Settings.maxManifoldPoints) { VelocityConstraintPoint() }
 
-    public final Vec2 normal = new Vec2();
+    val normal: Vec2 = Vec2()
 
-    public final Mat22 normalMass = new Mat22();
+    val normalMass: Mat22 = Mat22()
 
-    public final Mat22 K = new Mat22();
+    val K: Mat22 = Mat22()
 
-    public int indexA;
+    var indexA: Int = 0
 
-    public int indexB;
+    var indexB: Int = 0
 
-    public float invMassA, invMassB;
+    var invMassA: Float = 0f
+    var invMassB: Float = 0f
 
-    public float invIA, invIB;
+    var invIA: Float = 0f
+    var invIB: Float = 0f
 
-    public float friction;
+    var friction: Float = 0f
 
-    public float restitution;
+    var restitution: Float = 0f
 
-    public float tangentSpeed;
+    var tangentSpeed: Float = 0f
 
-    public int pointCount;
+    var pointCount: Int = 0
 
-    public int contactIndex;
+    var contactIndex: Int = 0
 
-    public ContactVelocityConstraint()
-    {
-        for (int i = 0; i < points.length; i++)
-        {
-            points[i] = new VelocityConstraintPoint();
-        }
-    }
+    class VelocityConstraintPoint {
+        val rA: Vec2 = Vec2()
 
-    public static class VelocityConstraintPoint
-    {
-        public final Vec2 rA = new Vec2();
+        val rB: Vec2 = Vec2()
 
-        public final Vec2 rB = new Vec2();
+        var normalImpulse: Float = 0f
 
-        public float normalImpulse;
+        var tangentImpulse: Float = 0f
 
-        public float tangentImpulse;
+        var normalMass: Float = 0f
 
-        public float normalMass;
+        var tangentMass: Float = 0f
 
-        public float tangentMass;
-
-        public float velocityBias;
+        var velocityBias: Float = 0f
     }
 }

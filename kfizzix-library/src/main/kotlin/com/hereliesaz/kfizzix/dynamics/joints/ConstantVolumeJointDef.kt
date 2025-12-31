@@ -21,51 +21,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import java.util.ArrayList;
-
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
- * Definition for a {@link ConstantVolumeJoint}, which connects a group a
+ * Definition for a [ConstantVolumeJoint], which connects a group a
  * bodies, so they maintain a constant volume within them.
  *
  * @author Daniel Murphy
  */
-public class ConstantVolumeJointDef extends JointDef
-{
-    public float frequencyHz;
+class ConstantVolumeJointDef : JointDef(JointType.CONSTANT_VOLUME) {
+    var frequencyHz: Float = 0.0f
+    var dampingRatio: Float = 0.0f
+    val bodies: ArrayList<Body> = ArrayList()
+    var joints: ArrayList<DistanceJoint>? = null
 
-    public float dampingRatio;
-
-    ArrayList<Body> bodies;
-
-    ArrayList<DistanceJoint> joints;
-
-    public ConstantVolumeJointDef()
-    {
-        super(JointType.CONSTANT_VOLUME);
-        bodies = new ArrayList<>();
-        joints = null;
-        collideConnected = false;
-        frequencyHz = 0.0f;
-        dampingRatio = 0.0f;
+    init {
+        collideConnected = false
     }
 
     /**
      * Adds a body to the group
      */
-    public void addBody(Body argBody)
-    {
-        bodies.add(argBody);
-        if (bodies.size() == 1)
-        {
-            bodyA = argBody;
+    fun addBody(argBody: Body) {
+        bodies.add(argBody)
+        if (bodies.size == 1) {
+            bodyA = argBody
         }
-        if (bodies.size() == 2)
-        {
-            bodyB = argBody;
+        if (bodies.size == 2) {
+            bodyB = argBody
         }
     }
 
@@ -73,13 +58,11 @@ public class ConstantVolumeJointDef extends JointDef
      * Adds a body and the pre-made distance joint. Should only be used for
      * deserialization.
      */
-    public void addBodyAndJoint(Body argBody, DistanceJoint argJoint)
-    {
-        addBody(argBody);
-        if (joints == null)
-        {
-            joints = new ArrayList<>();
+    fun addBodyAndJoint(argBody: Body, argJoint: DistanceJoint) {
+        addBody(argBody)
+        if (joints == null) {
+            joints = ArrayList()
         }
-        joints.add(argJoint);
+        joints?.add(argJoint)
     }
 }

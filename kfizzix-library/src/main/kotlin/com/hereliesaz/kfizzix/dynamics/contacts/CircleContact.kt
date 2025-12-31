@@ -21,37 +21,30 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts
 
-import com.hereliesaz.kfizzix.collision.Manifold;
-import com.hereliesaz.kfizzix.collision.shapes.CircleShape;
-import com.hereliesaz.kfizzix.collision.shapes.ShapeType;
-import com.hereliesaz.kfizzix.common.Transform;
-import com.hereliesaz.kfizzix.dynamics.Fixture;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.collision.Manifold
+import com.hereliesaz.kfizzix.collision.shapes.CircleShape
+import com.hereliesaz.kfizzix.collision.shapes.ShapeType
+import com.hereliesaz.kfizzix.common.Transform
+import com.hereliesaz.kfizzix.dynamics.Fixture
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * @author Daniel Murphy
  */
-public class CircleContact extends Contact
-{
-    public CircleContact(WorldPool argPool)
-    {
-        super(argPool);
+class CircleContact(argPool: WorldPool) : Contact(argPool) {
+    fun init(fixtureA: Fixture?, fixtureB: Fixture?) {
+        super.init(fixtureA!!, 0, fixtureB!!, 0)
+        assert(this.fixtureA!!.type == ShapeType.CIRCLE)
+        assert(this.fixtureB!!.type == ShapeType.CIRCLE)
     }
 
-    public void init(Fixture fixtureA, Fixture fixtureB)
-    {
-        super.init(fixtureA, 0, fixtureB, 0);
-        assert (this.fixtureA.getType() == ShapeType.CIRCLE);
-        assert (this.fixtureB.getType() == ShapeType.CIRCLE);
-    }
-
-    @Override
-    public void evaluate(Manifold manifold, Transform xfA, Transform xfB)
-    {
-        pool.getCollision().collideCircles(manifold,
-                (CircleShape) fixtureA.getShape(), xfA,
-                (CircleShape) fixtureB.getShape(), xfB);
+    override fun evaluate(manifold: Manifold, xfA: Transform, xfB: Transform) {
+        pool.getCollision().collideCircles(
+            manifold,
+            fixtureA!!.shape as CircleShape, xfA,
+            fixtureB!!.shape as CircleShape, xfB
+        )
     }
 }

@@ -21,57 +21,48 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.normal;
+package com.hereliesaz.kfizzix.pooling.normal
 
-import com.hereliesaz.kfizzix.pooling.DynamicStack;
+import com.hereliesaz.kfizzix.pooling.DynamicStack
 
-public abstract class MutableStack<E> implements DynamicStack<E>
-{
-    private E[] stack;
+abstract class MutableStack<E>(argInitSize: Int) : DynamicStack<E> {
+    private var stack: Array<E>? = null
+    private var index: Int = 0
+    private var size: Int = 0
 
-    private int index;
-
-    private int size;
-
-    public MutableStack(int argInitSize)
-    {
-        stack = null;
-        index = 0;
-        extendStack(argInitSize);
+    init {
+        index = 0
+        extendStack(argInitSize)
     }
 
-    private void extendStack(int argSize)
-    {
-        E[] newStack = newArray(argSize);
-        if (stack != null)
-        {
-            System.arraycopy(stack, 0, newStack, 0, size);
+    private fun extendStack(argSize: Int) {
+        val newStack = newArray(argSize)
+        if (stack != null) {
+            System.arraycopy(stack!!, 0, newStack, 0, size)
         }
-        for (int i = 0; i < newStack.length; i++)
-        {
-            newStack[i] = newInstance();
+        for (i in newStack.indices) {
+            if (newStack[i] == null) {
+                newStack[i] = newInstance()
+            }
         }
-        stack = newStack;
-        size = newStack.length;
+        stack = newStack
+        size = newStack.size
     }
 
-    public final E pop()
-    {
-        if (index >= size)
-        {
-            extendStack(size * 2);
+    override fun pop(): E {
+        if (index >= size) {
+            extendStack(size * 2)
         }
-        return stack[index++];
+        return stack!![index++]
     }
 
-    public final void push(E argObject)
-    {
-        assert (index > 0);
-        stack[--index] = argObject;
+    override fun push(argObject: E) {
+        assert(index > 0)
+        stack!![--index] = argObject
     }
 
-    /** Creates a new instance of the object contained by this stack. */
-    protected abstract E newInstance();
+    /** Creates a new instance of the object contained by this stack.  */
+    protected abstract fun newInstance(): E
 
-    protected abstract E[] newArray(int size);
+    protected abstract fun newArray(size: Int): Array<E>
 }

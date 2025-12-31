@@ -18,7 +18,7 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT of THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
@@ -49,10 +49,10 @@ package com.hereliesaz.kfizzix.collision
  * Contact ids to facilitate warm starting.
  */
 data class ContactID(
-    val indexA: Byte = 0,
-    val indexB: Byte = 0,
-    val typeA: Byte = 0,
-    val typeB: Byte = 0
+    var indexA: Byte = 0,
+    var indexB: Byte = 0,
+    var typeA: Byte = 0,
+    var typeB: Byte = 0
 ) : Comparable<ContactID> {
     enum class Type {
         VERTEX, FACE
@@ -61,9 +61,24 @@ data class ContactID(
     val key: Int
         get() = (indexA.toInt() shl 24) or (indexB.toInt() shl 16) or (typeA.toInt() shl 8) or typeB.toInt()
 
+    fun isEqual(other: ContactID): Boolean {
+        return key == other.key
+    }
+
+    fun set(other: ContactID) {
+        indexA = other.indexA
+        indexB = other.indexB
+        typeA = other.typeA
+        typeB = other.typeB
+    }
+
     fun flip() {
-        indexA = indexB.also { indexB = indexA }
-        typeA = typeB.also { typeB = typeA }
+        val tempIndex = indexA
+        indexA = indexB
+        indexB = tempIndex
+        val tempType = typeA
+        typeA = typeB
+        typeB = tempType
     }
 
     override fun compareTo(other: ContactID): Int {

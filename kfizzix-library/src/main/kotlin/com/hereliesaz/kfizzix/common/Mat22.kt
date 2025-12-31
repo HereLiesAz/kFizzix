@@ -18,7 +18,7 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
 package com.hereliesaz.kfizzix.common
@@ -60,14 +60,6 @@ class Mat22(
     override fun toString(): String {
         return "[(${ex.x}, ${ey.x}), (${ex.y}, ${ey.y})]"
     }
-
-    /**
-     * Creates a matrix with given vectors as columns.
-     *
-     * @param c1 Column 1 of matrix
-     * @param c2 Column 2 of matrix
-     */
-    constructor(c1: Vec2, c2: Vec2) : this(c1.copy(), c2.copy())
 
     /**
      * Create a matrix from four floats.
@@ -616,7 +608,7 @@ class Mat22(
             assert(B !== out)
             out.ex.x = A.ex.x * B.ex.x + A.ex.y * B.ex.y
             out.ex.y = A.ey.x * B.ex.x + A.ey.y * B.ex.y
-            out.ey.x = A.ex.x * B.ey.x + A.ex.y * B.ey.y
+            out.ey.x = A.ex.x * B.ey.x + A.ey.x * B.ey.y
             out.ey.y = A.ey.x * B.ey.x + A.ey.y * B.ey.y
         }
 

@@ -21,28 +21,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * Joint definitions are used to construct joints.
  *
- * <p>
- * Each joint type has a definition that derives from {@link JointDef}. All
+ *
+ * Each joint type has a definition that derives from [JointDef]. All
  * joints are connected between two different bodies. One body may static.
  * Joints between static and/or kinematic bodies are allowed, but have no effect
  * and use some processing time.
- * </p>
  *
- * <p>
+ *
+ *
  * You can specify user data for any joint type and you can provide a flag to
  * prevent the attached bodies from colliding with each other. This is actually
- * the default behavior and you must set the {@link JointDef#collideConnected}
+ * the default behavior and you must set the [JointDef.collideConnected]
  * Boolean to allow collision between to connected bodies.
- * </p>
  *
- * <p>
+ *
+ *
  * Many joint definitions require that you provide some geometric data. Often a
  * joint will be defined by anchor points. These are points fixed in the
  * attached bodies. jbox2d requires these points to be specified in local
@@ -51,57 +51,47 @@ import com.hereliesaz.kfizzix.dynamics.Body;
  * saved and reloaded. Additionally, some joint definitions need to know the
  * default relative angle between the bodies. This is necessary to constrain
  * rotation correctly.
- * </p>
  *
- * <p>
+ *
+ *
  * Initializing the geometric data can be tedious, so many joints have
  * initialization functions that use the current body transforms to remove much
  * of the work. However, these initialization functions should usually only be
  * used for prototyping. Production code should define the geometry directly.
  * This will make joint behavior more robust.
- * </p>
  *
- * <p>
+ *
+ *
  * The rest of the joint definition data depends on the joint type.
- * </p>
+ *
  *
  * https://box2d.org/documentation/md__d_1__git_hub_box2d_docs_dynamics.html#autotoc_md82
  *
  * @author Daniel Murphy
  */
-public class JointDef
-{
-    public JointDef(JointType type)
-    {
-        this.type = type;
-        userData = null;
-        bodyA = null;
-        bodyB = null;
-        collideConnected = false;
-    }
-
+open class JointDef(
     /**
      * The joint type is set automatically for concrete joint types.
      */
-    public JointType type;
-
+    var type: JointType
+) {
     /**
      * Use this to attach application specific data to your joints.
      */
-    public Object userData;
+    var userData: Any? = null
 
     /**
      * The first attached body.
      */
-    public Body bodyA;
+    var bodyA: Body? = null
 
     /**
      * The second attached body.
      */
-    public Body bodyB;
+    var bodyB: Body? = null
 
     /**
      * Set this flag to true if the attached bodies should collide.
      */
-    public boolean collideConnected;
+    var collideConnected = false
 }

@@ -21,13 +21,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
 /**
  * @author Daniel Murphy
  */
-public enum JointType
-{
-    UNKNOWN, REVOLUTE, PRISMATIC, DISTANCE, PULLEY, MOUSE, GEAR, WHEEL, WELD,
-    FRICTION, ROPE, CONSTANT_VOLUME, MOTOR
+enum class JointType {
+    UNKNOWN, REVOLUTE, PRISMATIC, DISTANCE, PULLEY, MOUSE, GEAR, WHEEL, WELD, FRICTION, ROPE, CONSTANT_VOLUME, MOTOR
 }

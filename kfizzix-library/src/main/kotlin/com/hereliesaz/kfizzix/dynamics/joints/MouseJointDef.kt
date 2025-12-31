@@ -21,9 +21,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.common.Vec2
 
 /**
  * Mouse joint definition. This requires a world target point, tuning
@@ -31,37 +31,31 @@ import com.hereliesaz.kfizzix.common.Vec2;
  *
  * @author Daniel Murphy
  */
-public class MouseJointDef extends JointDef
-{
+class MouseJointDef : JointDef(JointType.MOUSE) {
     /**
      * The initial world target point. This is assumed to coincide with the body
      * anchor initially.
      */
-    public final Vec2 target = new Vec2();
+    val target = Vec2()
 
     /**
      * The maximum constraint force that can be exerted to move the candidate
      * body. Usually you will express as some multiple of the weight (multiplier
      * * mass * gravity).
      */
-    public float maxForce;
+    var maxForce = 0f
 
     /**
      * The response speed.
      */
-    public float frequencyHz;
+    var frequencyHz = 5f
 
     /**
      * The damping ratio. 0 = no damping, 1 = critical damping.
      */
-    public float dampingRatio;
+    var dampingRatio = .7f
 
-    public MouseJointDef()
-    {
-        super(JointType.MOUSE);
-        target.set(0, 0);
-        maxForce = 0;
-        frequencyHz = 5;
-        dampingRatio = .7f;
+    init {
+        target.set(0f, 0f)
     }
 }

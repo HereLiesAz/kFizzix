@@ -21,14 +21,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.MathUtils;
-import com.hereliesaz.kfizzix.common.Rot;
-import com.hereliesaz.kfizzix.common.Settings;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.SolverData;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Rot
+import com.hereliesaz.kfizzix.common.Settings
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.SolverData
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * A distance joint constrains two points on two bodies to remain at a fixed
@@ -87,277 +87,227 @@ import com.hereliesaz.kfizzix.pooling.WorldPool;
  *
  * @author Daniel Murphy
  */
-public class DistanceJoint extends Joint
-{
+class DistanceJoint(argWorld: WorldPool, def: DistanceJointDef) : Joint(argWorld, def) {
     /**
      * The local anchor point relative to bodyA's origin.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_distance_joint.h#L52-L53
      */
-    private final Vec2 localAnchorA;
+    val localAnchorA: Vec2 = def.localAnchorA.clone()
 
     /**
      * The local anchor point relative to bodyB's origin.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_distance_joint.h#L55-L56
      */
-    private final Vec2 localAnchorB;
+    val localAnchorB: Vec2 = def.localAnchorB.clone()
 
     /**
      * The equilibrium length between the anchor points.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_distance_joint.h#L58-L59
      */
-    private float length;
+    var length: Float = def.length
 
     /**
      * The mass-spring-damper frequency in Hertz.
      */
-    private float frequencyHz;
+    var frequency: Float = def.frequencyHz
 
     /**
      * The damping ratio. 0 = no damping, 1 = critical damping.
      */
-    private float dampingRatio;
+    var dampingRatio: Float = def.dampingRatio
 
-    private float bias;
-
-    private float gamma;
-
-    private float impulse;
+    private var bias: Float = 0.0f
+    private var gamma: Float = 0.0f
+    private var impulse: Float = 0.0f
 
     // Solver temp
-    private int indexA;
-
-    private int indexB;
-
-    private final Vec2 u = new Vec2();
-
-    private final Vec2 rA = new Vec2();
-
-    private final Vec2 rB = new Vec2();
-
-    private final Vec2 localCenterA = new Vec2();
-
-    private final Vec2 localCenterB = new Vec2();
-
-    private float invMassA;
-
-    private float invMassB;
-
-    private float invIA;
-
-    private float invIB;
-
-    private float mass;
-
-    /**
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L44-L74
-     */
-    protected DistanceJoint(WorldPool argWorld, final DistanceJointDef def)
-    {
-        super(argWorld, def);
-        localAnchorA = def.localAnchorA.clone();
-        localAnchorB = def.localAnchorB.clone();
-        length = def.length;
-        impulse = 0.0f;
-        frequencyHz = def.frequencyHz;
-        dampingRatio = def.dampingRatio;
-        gamma = 0.0f;
-        bias = 0.0f;
-    }
+    private var indexA: Int = 0
+    private var indexB: Int = 0
+    private val u = Vec2()
+    private val rA = Vec2()
+    private val rB = Vec2()
+    private val localCenterA = Vec2()
+    private val localCenterB = Vec2()
+    private var invMassA: Float = 0.0f
+    private var invMassB: Float = 0.0f
+    private var invIA: Float = 0.0f
+    private var invIB: Float = 0.0f
+    private var mass: Float = 0.0f
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L76-L173
      */
-    @Override
-    public void initVelocityConstraints(final SolverData data)
-    {
-        indexA = bodyA.islandIndex;
-        indexB = bodyB.islandIndex;
-        localCenterA.set(bodyA.sweep.localCenter);
-        localCenterB.set(bodyB.sweep.localCenter);
-        invMassA = bodyA.invMass;
-        invMassB = bodyB.invMass;
-        invIA = bodyA.invI;
-        invIB = bodyB.invI;
-        Vec2 cA = data.positions[indexA].c;
-        float aA = data.positions[indexA].a;
-        Vec2 vA = data.velocities[indexA].v;
-        float wA = data.velocities[indexA].w;
-        Vec2 cB = data.positions[indexB].c;
-        float aB = data.positions[indexB].a;
-        Vec2 vB = data.velocities[indexB].v;
-        float wB = data.velocities[indexB].w;
-        final Rot qA = pool.popRot();
-        final Rot qB = pool.popRot();
-        qA.set(aA);
-        qB.set(aB);
+    override fun initVelocityConstraints(data: SolverData) {
+        indexA = bodyA!!.islandIndex
+        indexB = bodyB!!.islandIndex
+        localCenterA.set(bodyA!!.sweep.localCenter)
+        localCenterB.set(bodyB!!.sweep.localCenter)
+        invMassA = bodyA!!.invMass
+        invMassB = bodyB!!.invMass
+        invIA = bodyA!!.invI
+        invIB = bodyB!!.invI
+        val cA = data.positions[indexA].c
+        val aA = data.positions[indexA].a
+        val vA = data.velocities[indexA].v
+        var wA = data.velocities[indexA].w
+        val cB = data.positions[indexB].c
+        val aB = data.positions[indexB].a
+        val vB = data.velocities[indexB].v
+        var wB = data.velocities[indexB].w
+
+        val qA = pool.popRot()
+        val qB = pool.popRot()
+        qA.set(aA)
+        qB.set(aB)
         // use u as temporary variable
-        Rot.mulToOutUnsafe(qA, u.set(localAnchorA).subLocal(localCenterA), rA);
-        Rot.mulToOutUnsafe(qB, u.set(localAnchorB).subLocal(localCenterB), rB);
-        u.set(cB).addLocal(rB).subLocal(cA).subLocal(rA);
-        pool.pushRot(2);
+        Rot.mulToOutUnsafe(qA, u.set(localAnchorA).subLocal(localCenterA), rA)
+        Rot.mulToOutUnsafe(qB, u.set(localAnchorB).subLocal(localCenterB), rB)
+        u.set(cB).addLocal(rB).subLocal(cA).subLocal(rA)
+        pool.pushRot(2)
         // Handle singularity.
-        float length = u.length();
-        if (length > Settings.linearSlop)
-        {
-            u.x *= 1.0f / length;
-            u.y *= 1.0f / length;
+        val length = u.length()
+        if (length > Settings.linearSlop) {
+            u.x *= 1.0f / length
+            u.y *= 1.0f / length
+        } else {
+            u.set(0.0f, 0.0f)
         }
-        else
-        {
-            u.set(0.0f, 0.0f);
-        }
-        float crAu = Vec2.cross(rA, u);
-        float crBu = Vec2.cross(rB, u);
-        float invMass = invMassA + invIA * crAu * crAu + invMassB
-                + invIB * crBu * crBu;
+        val crAu = Vec2.cross(rA, u)
+        val crBu = Vec2.cross(rB, u)
+        var invMass = invMassA + invIA * crAu * crAu + invMassB + invIB * crBu * crBu
         // Compute the effective mass matrix.
-        mass = invMass != 0.0f ? 1.0f / invMass : 0.0f;
-        if (frequencyHz > 0.0f)
-        {
-            float C = length - this.length;
+        mass = if (invMass != 0.0f) 1.0f / invMass else 0.0f
+        if (frequency > 0.0f) {
+            val C = length - this.length
             // Frequency
-            float omega = 2.0f * MathUtils.PI * frequencyHz;
+            val omega = 2.0f * MathUtils.PI * frequency
             // Damping coefficient
-            float d = 2.0f * mass * dampingRatio * omega;
+            val d = 2.0f * mass * dampingRatio * omega
             // Spring stiffness
-            float k = mass * omega * omega;
+            val k = mass * omega * omega
             // magic formulas
-            float h = data.step.dt;
-            gamma = h * (d + h * k);
-            gamma = gamma != 0.0f ? 1.0f / gamma : 0.0f;
-            bias = C * h * k * gamma;
-            invMass += gamma;
-            mass = invMass != 0.0f ? 1.0f / invMass : 0.0f;
+            val h = data.step.dt
+            gamma = h * (d + h * k)
+            gamma = if (gamma != 0.0f) 1.0f / gamma else 0.0f
+            bias = C * h * k * gamma
+            invMass += gamma
+            mass = if (invMass != 0.0f) 1.0f / invMass else 0.0f
+        } else {
+            gamma = 0.0f
+            bias = 0.0f
         }
-        else
-        {
-            gamma = 0.0f;
-            bias = 0.0f;
-        }
-        if (data.step.warmStarting)
-        {
+        if (data.step.warmStarting) {
             // Scale the impulse to support a variable time step.
-            impulse *= data.step.dtRatio;
-            Vec2 P = pool.popVec2();
-            P.set(u).mulLocal(impulse);
-            vA.x -= invMassA * P.x;
-            vA.y -= invMassA * P.y;
-            wA -= invIA * Vec2.cross(rA, P);
-            vB.x += invMassB * P.x;
-            vB.y += invMassB * P.y;
-            wB += invIB * Vec2.cross(rB, P);
-            pool.pushVec2(1);
-        }
-        else
-        {
-            impulse = 0.0f;
+            impulse *= data.step.dtRatio
+            val P = pool.popVec2()
+            P.set(u).mulLocal(impulse)
+            vA.x -= invMassA * P.x
+            vA.y -= invMassA * P.y
+            wA -= invIA * Vec2.cross(rA, P)
+            vB.x += invMassB * P.x
+            vB.y += invMassB * P.y
+            wB += invIB * Vec2.cross(rB, P)
+            pool.pushVec2(1)
+        } else {
+            impulse = 0.0f
         }
         // data.velocities[indexA].v.set(vA);
-        data.velocities[indexA].w = wA;
+        data.velocities[indexA].w = wA
         // data.velocities[indexB].v.set(vB);
-        data.velocities[indexB].w = wB;
+        data.velocities[indexB].w = wB
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L237-L342
      */
-    @Override
-    public void solveVelocityConstraints(final SolverData data)
-    {
-        Vec2 vA = data.velocities[indexA].v;
-        float wA = data.velocities[indexA].w;
-        Vec2 vB = data.velocities[indexB].v;
-        float wB = data.velocities[indexB].w;
-        final Vec2 vpA = pool.popVec2();
-        final Vec2 vpB = pool.popVec2();
+    override fun solveVelocityConstraints(data: SolverData) {
+        val vA = data.velocities[indexA].v
+        var wA = data.velocities[indexA].w
+        val vB = data.velocities[indexB].v
+        var wB = data.velocities[indexB].w
+        val vpA = pool.popVec2()
+        val vpB = pool.popVec2()
         // Cdot = dot(u, v + cross(w, r))
-        Vec2.crossToOutUnsafe(wA, rA, vpA);
-        vpA.addLocal(vA);
-        Vec2.crossToOutUnsafe(wB, rB, vpB);
-        vpB.addLocal(vB);
-        float Cdot = Vec2.dot(u, vpB.subLocal(vpA));
-        float impulse = -mass * (Cdot + bias + gamma * this.impulse);
-        this.impulse += impulse;
-        float Px = impulse * u.x;
-        float Py = impulse * u.y;
-        vA.x -= invMassA * Px;
-        vA.y -= invMassA * Py;
-        wA -= invIA * (rA.x * Py - rA.y * Px);
-        vB.x += invMassB * Px;
-        vB.y += invMassB * Py;
-        wB += invIB * (rB.x * Py - rB.y * Px);
+        Vec2.crossToOutUnsafe(wA, rA, vpA)
+        vpA.addLocal(vA)
+        Vec2.crossToOutUnsafe(wB, rB, vpB)
+        vpB.addLocal(vB)
+        val Cdot = Vec2.dot(u, vpB.subLocal(vpA))
+        val impulse = -mass * (Cdot + bias + gamma * this.impulse)
+        this.impulse += impulse
+        val Px = impulse * u.x
+        val Py = impulse * u.y
+        vA.x -= invMassA * Px
+        vA.y -= invMassA * Py
+        wA -= invIA * (rA.x * Py - rA.y * Px)
+        vB.x += invMassB * Px
+        vB.y += invMassB * Py
+        wB += invIB * (rB.x * Py - rB.y * Px)
         // data.velocities[indexA].v.set(vA);
-        data.velocities[indexA].w = wA;
+        data.velocities[indexA].w = wA
         // data.velocities[indexB].v.set(vB);
-        data.velocities[indexB].w = wB;
-        pool.pushVec2(2);
+        data.velocities[indexB].w = wB
+        pool.pushVec2(2)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L268-L314
      */
-    @Override
-    public boolean solvePositionConstraints(final SolverData data)
-    {
-        if (frequencyHz > 0.0f)
-        {
-            return true;
+    override fun solvePositionConstraints(data: SolverData): Boolean {
+        if (frequency > 0.0f) {
+            return true
         }
-        final Rot qA = pool.popRot();
-        final Rot qB = pool.popRot();
-        final Vec2 rA = pool.popVec2();
-        final Vec2 rB = pool.popVec2();
-        final Vec2 u = pool.popVec2();
-        Vec2 cA = data.positions[indexA].c;
-        float aA = data.positions[indexA].a;
-        Vec2 cB = data.positions[indexB].c;
-        float aB = data.positions[indexB].a;
-        qA.set(aA);
-        qB.set(aB);
-        Rot.mulToOutUnsafe(qA, u.set(localAnchorA).subLocal(localCenterA), rA);
-        Rot.mulToOutUnsafe(qB, u.set(localAnchorB).subLocal(localCenterB), rB);
-        u.set(cB).addLocal(rB).subLocal(cA).subLocal(rA);
-        float length = u.normalize();
-        float C = length - this.length;
+        val qA = pool.popRot()
+        val qB = pool.popRot()
+        val rA = pool.popVec2()
+        val rB = pool.popVec2()
+        val u = pool.popVec2()
+        val cA = data.positions[indexA].c
+        var aA = data.positions[indexA].a
+        val cB = data.positions[indexB].c
+        var aB = data.positions[indexB].a
+        qA.set(aA)
+        qB.set(aB)
+        Rot.mulToOutUnsafe(qA, u.set(localAnchorA).subLocal(localCenterA), rA)
+        Rot.mulToOutUnsafe(qB, u.set(localAnchorB).subLocal(localCenterB), rB)
+        u.set(cB).addLocal(rB).subLocal(cA).subLocal(rA)
+        val length = u.normalize()
+        var C = length - this.length
         C = MathUtils.clamp(C, -Settings.maxLinearCorrection,
-                Settings.maxLinearCorrection);
-        float impulse = -mass * C;
-        float Px = impulse * u.x;
-        float Py = impulse * u.y;
-        cA.x -= invMassA * Px;
-        cA.y -= invMassA * Py;
-        aA -= invIA * (rA.x * Py - rA.y * Px);
-        cB.x += invMassB * Px;
-        cB.y += invMassB * Py;
-        aB += invIB * (rB.x * Py - rB.y * Px);
+            Settings.maxLinearCorrection)
+        val impulse = -mass * C
+        val Px = impulse * u.x
+        val Py = impulse * u.y
+        cA.x -= invMassA * Px
+        cA.y -= invMassA * Py
+        aA -= invIA * (rA.x * Py - rA.y * Px)
+        cB.x += invMassB * Px
+        cB.y += invMassB * Py
+        aB += invIB * (rB.x * Py - rB.y * Px)
         // data.positions[indexA].c.set(cA);
-        data.positions[indexA].a = aA;
+        data.positions[indexA].a = aA
         // data.positions[indexB].c.set(cB);
-        data.positions[indexB].a = aB;
-        pool.pushVec2(3);
-        pool.pushRot(2);
-        return MathUtils.abs(C) < Settings.linearSlop;
+        data.positions[indexB].a = aB
+        pool.pushVec2(3)
+        pool.pushRot(2)
+        return MathUtils.abs(C) < Settings.linearSlop
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L316-L319
      */
-    @Override
-    public void getAnchorA(Vec2 argOut)
-    {
-        bodyA.getWorldPointToOut(localAnchorA, argOut);
+    override fun getAnchorA(argOut: Vec2) {
+        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L321-L324
      */
-    @Override
-    public void getAnchorB(Vec2 argOut)
-    {
-        bodyB.getWorldPointToOut(localAnchorB, argOut);
+    override fun getAnchorB(argOut: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
     }
 
     /**
@@ -365,11 +315,9 @@ public class DistanceJoint extends Joint
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L326-L330
      */
-    @Override
-    public void getReactionForce(float invDt, Vec2 argOut)
-    {
-        argOut.x = impulse * u.x * invDt;
-        argOut.y = impulse * u.y * invDt;
+    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+        argOut.x = impulse * u.x * invDt
+        argOut.y = impulse * u.y * invDt
     }
 
     /**
@@ -378,76 +326,7 @@ public class DistanceJoint extends Joint
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L332-L336
      */
-    @Override
-    public float getReactionTorque(float invDt)
-    {
-        return 0.0f;
+    override fun getReactionTorque(invDt: Float): Float {
+        return 0.0f
     }
-
-    /**
-     * Get the rest length.
-     *
-     * @return The rest length.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_distance_joint.h#L97-L98
-     */
-    public float getLength()
-    {
-        return length;
-    }
-
-    /**
-     * Set the rest length.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L338-L343
-     */
-    public void setLength(float length)
-    {
-        this.length = length;
-    }
-
-    public void setFrequency(float hz)
-    {
-        frequencyHz = hz;
-    }
-
-    public float getFrequency()
-    {
-        return frequencyHz;
-    }
-
-    public void setDampingRatio(float damp)
-    {
-        dampingRatio = damp;
-    }
-
-    public float getDampingRatio()
-    {
-        return dampingRatio;
-    }
-
-    /**
-     * Get the local anchor point relative to bodyA's origin.
-     *
-     * @return The local anchor point relative to bodyA's origin.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_distance_joint.h#L91-L92
-     */
-    public Vec2 getLocalAnchorA()
-    {
-        return localAnchorA;
-    }
-
-    /**
-     * Get the local anchor point relative to bodyB's origin.
-     *
-     * @return The local anchor point relative to bodyB's origin.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_distance_joint.h#L94-L95
-     */
-    public Vec2 getLocalAnchorB()
-    {
-        return localAnchorB;
-    }
-
 }

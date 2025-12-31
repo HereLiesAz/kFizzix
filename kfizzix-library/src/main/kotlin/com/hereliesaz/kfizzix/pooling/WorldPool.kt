@@ -21,81 +21,80 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling;
+package com.hereliesaz.kfizzix.pooling
 
-import com.hereliesaz.kfizzix.collision.AABB;
-import com.hereliesaz.kfizzix.collision.Collision;
-import com.hereliesaz.kfizzix.collision.Distance;
-import com.hereliesaz.kfizzix.collision.TimeOfImpact;
-import com.hereliesaz.kfizzix.common.Mat22;
-import com.hereliesaz.kfizzix.common.Mat33;
-import com.hereliesaz.kfizzix.common.Rot;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.common.Vec3;
-import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
+import com.hereliesaz.kfizzix.collision.AABB
+import com.hereliesaz.kfizzix.collision.Collision
+import com.hereliesaz.kfizzix.collision.Distance
+import com.hereliesaz.kfizzix.collision.TimeOfImpact
+import com.hereliesaz.kfizzix.common.Mat22
+import com.hereliesaz.kfizzix.common.Mat33
+import com.hereliesaz.kfizzix.common.Rot
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.common.Vec3
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact
 
 /**
  * World pool interface
  *
  * @author Daniel Murphy
  */
-public interface WorldPool
-{
-    DynamicStack<Contact> getPolyContactStack();
+interface WorldPool {
+    fun getPolyContactStack(): DynamicStack<Contact>
 
-    DynamicStack<Contact> getCircleContactStack();
+    fun getCircleContactStack(): DynamicStack<Contact>
 
-    DynamicStack<Contact> getPolyCircleContactStack();
+    fun getPolyCircleContactStack(): DynamicStack<Contact>
 
-    DynamicStack<Contact> getEdgeCircleContactStack();
+    fun getEdgeCircleContactStack(): DynamicStack<Contact>
 
-    DynamicStack<Contact> getEdgePolyContactStack();
+    fun getEdgePolyContactStack(): DynamicStack<Contact>
 
-    DynamicStack<Contact> getChainCircleContactStack();
+    fun getChainCircleContactStack(): DynamicStack<Contact>
 
-    DynamicStack<Contact> getChainPolyContactStack();
+    fun getChainPolyContactStack(): DynamicStack<Contact>
 
-    Vec2 popVec2();
+    fun popVec2(): Vec2
 
-    Vec2[] popVec2(int num);
+    fun popVec2(num: Int): Array<Vec2>
 
-    void pushVec2(int num);
+    fun pushVec2(num: Int)
 
-    Vec3 popVec3();
+    fun popVec3(): Vec3
 
-    Vec3[] popVec3(int num);
+    fun popVec3(num: Int): Array<Vec3>
 
-    void pushVec3(int num);
+    fun pushVec3(num: Int)
 
-    Mat22 popMat22();
+    fun popMat22(): Mat22
 
-    Mat22[] popMat22(int num);
+    fun popMat22(num: Int): Array<Mat22>
 
-    void pushMat22(int num);
+    fun pushMat22(num: Int)
 
-    Mat33 popMat33();
+    fun popMat33(): Mat33
 
-    void pushMat33(int num);
+    fun pushMat33(num: Int)
 
-    AABB popAABB();
+    fun popAABB(): AABB
 
-    AABB[] popAABB(int num);
+    fun popAABB(num: Int): Array<AABB>
 
-    void pushAABB(int num);
+    fun pushAABB(num: Int)
 
-    Rot popRot();
+    fun popRot(): Rot
 
-    void pushRot(int num);
+    fun pushRot(num: Int)
 
-    Collision getCollision();
+    fun getCollision(): Collision
 
-    TimeOfImpact getTimeOfImpact();
+    fun getTimeOfImpact(): TimeOfImpact
 
-    Distance getDistance();
+    fun getDistance(): Distance
 
-    float[] getFloatArray(int argLength);
+    fun getFloatArray(argLength: Int): FloatArray
 
-    int[] getIntArray(int argLength);
+    fun getIntArray(argLength: Int): IntArray
 
-    Vec2[] getVec2Array(int argLength);
+    fun getVec2Array(argLength: Int): Array<Vec2>
 }

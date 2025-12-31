@@ -21,43 +21,35 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts
 
-import com.hereliesaz.kfizzix.collision.Manifold;
-import com.hereliesaz.kfizzix.collision.shapes.ChainShape;
-import com.hereliesaz.kfizzix.collision.shapes.EdgeShape;
-import com.hereliesaz.kfizzix.collision.shapes.PolygonShape;
-import com.hereliesaz.kfizzix.collision.shapes.ShapeType;
-import com.hereliesaz.kfizzix.common.Transform;
-import com.hereliesaz.kfizzix.dynamics.Fixture;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.collision.Manifold
+import com.hereliesaz.kfizzix.collision.shapes.ChainShape
+import com.hereliesaz.kfizzix.collision.shapes.EdgeShape
+import com.hereliesaz.kfizzix.collision.shapes.PolygonShape
+import com.hereliesaz.kfizzix.collision.shapes.ShapeType
+import com.hereliesaz.kfizzix.common.Transform
+import com.hereliesaz.kfizzix.dynamics.Fixture
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * @author Daniel Murphy
  */
-public class ChainAndPolygonContact extends Contact
-{
-    public ChainAndPolygonContact(WorldPool argPool)
-    {
-        super(argPool);
+class ChainAndPolygonContact(argPool: WorldPool) : Contact(argPool) {
+    override fun init(fA: Fixture, indexA: Int, fB: Fixture, indexB: Int) {
+        super.init(fA, indexA, fB, indexB)
+        assert(fixtureA!!.type == ShapeType.CHAIN)
+        assert(fixtureB!!.type == ShapeType.POLYGON)
     }
 
-    @Override
-    public void init(Fixture fA, int indexA, Fixture fB, int indexB)
-    {
-        super.init(fA, indexA, fB, indexB);
-        assert (fixtureA.getType() == ShapeType.CHAIN);
-        assert (fixtureB.getType() == ShapeType.POLYGON);
-    }
+    private val edge = EdgeShape()
 
-    private final EdgeShape edge = new EdgeShape();
-
-    @Override
-    public void evaluate(Manifold manifold, Transform xfA, Transform xfB)
-    {
-        ChainShape chain = (ChainShape) fixtureA.getShape();
-        chain.getChildEdge(edge, indexA);
-        pool.getCollision().collideEdgeAndPolygon(manifold, edge, xfA,
-                (PolygonShape) fixtureB.getShape(), xfB);
+    override fun evaluate(manifold: Manifold, xfA: Transform, xfB: Transform) {
+        val chain = fixtureA!!.shape as ChainShape
+        chain.getChildEdge(edge, indexA)
+        pool.getCollision().collideEdgeAndPolygon(
+            manifold, edge, xfA,
+            fixtureB!!.shape as PolygonShape, xfB
+        )
     }
 }

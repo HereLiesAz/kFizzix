@@ -21,61 +21,50 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * Motor joint definition.
  *
  * @author Daniel Murphy
  */
-public class MotorJointDef extends JointDef
-{
+class MotorJointDef : JointDef(JointType.MOTOR) {
     /**
      * Position of bodyB minus the position of bodyA, in bodyA's frame, in
      * meters.
      */
-    public final Vec2 linearOffset = new Vec2();
+    val linearOffset: Vec2 = Vec2()
 
     /**
      * The bodyB angle minus bodyA angle in radians.
      */
-    public float angularOffset;
+    var angularOffset: Float = 0f
 
     /**
      * The maximum motor force in N.
      */
-    public float maxForce;
+    var maxForce: Float = 1f
 
     /**
      * The maximum motor torque in N-m.
      */
-    public float maxTorque;
+    var maxTorque: Float = 1f
 
     /**
      * Position correction factor in the range [0,1].
      */
-    public float correctionFactor;
+    var correctionFactor: Float = 0.3f
 
-    public MotorJointDef()
-    {
-        super(JointType.MOTOR);
-        angularOffset = 0;
-        maxForce = 1;
-        maxTorque = 1;
-        correctionFactor = 0.3f;
-    }
-
-    public void initialize(Body bA, Body bB)
-    {
-        bodyA = bA;
-        bodyB = bB;
-        Vec2 xB = bodyB.getPosition();
-        bodyA.getLocalPointToOut(xB, linearOffset);
-        float angleA = bodyA.getAngle();
-        float angleB = bodyB.getAngle();
-        angularOffset = angleB - angleA;
+    fun initialize(bA: Body, bB: Body) {
+        bodyA = bA
+        bodyB = bB
+        val xB = bB.position
+        bA.getLocalPointToOut(xB, linearOffset)
+        val angleA = bA.angle
+        val angleB = bB.angle
+        angularOffset = angleB - angleA
     }
 }

@@ -21,14 +21,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Mat22;
-import com.hereliesaz.kfizzix.common.MathUtils;
-import com.hereliesaz.kfizzix.common.Rot;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.SolverData;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.common.Mat22
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Rot
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.SolverData
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * A motor joint is used to control the relative motion between two bodies. A
@@ -39,224 +39,132 @@ import com.hereliesaz.kfizzix.pooling.WorldPool;
  *
  * @author Daniel Murphy
  */
-public class MotorJoint extends Joint
-{
+class MotorJoint(pool: WorldPool, def: MotorJointDef) : Joint(pool, def) {
     /**
      * Position of bodyB minus the position of bodyA, in bodyA's frame, in
      * meters.
      */
-    private final Vec2 linearOffset = new Vec2();
+    private val linearOffset = Vec2()
 
     /**
      * The bodyB angle minus bodyA angle in radians.
      */
-    private float angularOffset;
+    var angularOffset: Float
 
     /**
      * The maximum motor force in N.
      */
-    private float maxForce;
+    var maxForce: Float
 
     /**
      * The maximum motor torque in N-m.
      */
-    private float maxTorque;
+    var maxTorque: Float
 
     /**
      * Position correction factor in the range [0,1].
      */
-    private float correctionFactor;
+    var correctionFactor: Float
 
-    private final Vec2 linearImpulse = new Vec2();
-
-    private float angularImpulse;
+    private val linearImpulse = Vec2()
+    private var angularImpulse: Float = 0.0f
 
     // Solver temp
-    private int indexA;
+    private var indexA: Int = 0
+    private var indexB: Int = 0
+    private val rA = Vec2()
+    private val rB = Vec2()
+    private val localCenterA = Vec2()
+    private val localCenterB = Vec2()
+    private val linearError = Vec2()
+    private var angularError: Float = 0.0f
+    private var invMassA: Float = 0.0f
+    private var invMassB: Float = 0.0f
+    private var invIA: Float = 0.0f
+    private var invIB: Float = 0.0f
+    private val linearMass = Mat22()
+    private var angularMass: Float = 0.0f
 
-    private int indexB;
-
-    private final Vec2 rA = new Vec2();
-
-    private final Vec2 rB = new Vec2();
-
-    private final Vec2 localCenterA = new Vec2();
-
-    private final Vec2 localCenterB = new Vec2();
-
-    private final Vec2 linearError = new Vec2();
-
-    private float angularError;
-
-    private float invMassA;
-
-    private float invMassB;
-
-    private float invIA;
-
-    private float invIB;
-
-    private final Mat22 linearMass = new Mat22();
-
-    private float angularMass;
-
-    public MotorJoint(WorldPool pool, MotorJointDef def)
-    {
-        super(pool, def);
-        linearOffset.set(def.linearOffset);
-        angularOffset = def.angularOffset;
-        angularImpulse = 0.0f;
-        maxForce = def.maxForce;
-        maxTorque = def.maxTorque;
-        correctionFactor = def.correctionFactor;
+    init {
+        linearOffset.set(def.linearOffset)
+        angularOffset = def.angularOffset
+        angularImpulse = 0.0f
+        maxForce = def.maxForce
+        maxTorque = def.maxTorque
+        correctionFactor = def.correctionFactor
     }
 
-    @Override
-    public void getAnchorA(Vec2 out)
-    {
-        out.set(bodyA.getPosition());
+    override fun getAnchorA(argOut: Vec2) {
+        argOut.set(bodyA!!.position)
     }
 
-    @Override
-    public void getAnchorB(Vec2 out)
-    {
-        out.set(bodyB.getPosition());
+    override fun getAnchorB(argOut: Vec2) {
+        argOut.set(bodyB!!.position)
     }
 
-    public void getReactionForce(float invDt, Vec2 out)
-    {
-        out.set(linearImpulse).mulLocal(invDt);
+    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+        argOut.set(linearImpulse).mulLocal(invDt)
     }
 
-    public float getReactionTorque(float invDt)
-    {
-        return angularImpulse * invDt;
-    }
-
-    public float getCorrectionFactor()
-    {
-        return correctionFactor;
-    }
-
-    public void setCorrectionFactor(float correctionFactor)
-    {
-        this.correctionFactor = correctionFactor;
+    override fun getReactionTorque(invDt: Float): Float {
+        return angularImpulse * invDt
     }
 
     /**
      * Set the target linear offset, in frame A, in meters.
      */
-    public void setLinearOffset(Vec2 linearOffset)
-    {
-        if (linearOffset.x != this.linearOffset.x
-                || linearOffset.y != this.linearOffset.y)
-        {
-            bodyA.setAwake(true);
-            bodyB.setAwake(true);
-            this.linearOffset.set(linearOffset);
+    fun setLinearOffset(linearOffset: Vec2) {
+        if (linearOffset.x != this.linearOffset.x || linearOffset.y != this.linearOffset.y) {
+            bodyA!!.isAwake = true
+            bodyB!!.isAwake = true
+            this.linearOffset.set(linearOffset)
         }
     }
 
     /**
      * Get the target linear offset, in frame A, in meters.
      */
-    public void getLinearOffset(Vec2 out)
-    {
-        out.set(linearOffset);
+    fun getLinearOffset(argOut: Vec2) {
+        argOut.set(linearOffset)
     }
 
     /**
      * Get the target linear offset, in frame A, in meters. Do not modify.
      */
-    public Vec2 getLinearOffset()
-    {
-        return linearOffset;
+    fun getLinearOffset(): Vec2 {
+        return linearOffset
     }
 
-    /**
-     * Set the target angular offset, in radians.
-     */
-    public void setAngularOffset(float angularOffset)
-    {
-        if (angularOffset != this.angularOffset)
-        {
-            bodyA.setAwake(true);
-            bodyB.setAwake(true);
-            this.angularOffset = angularOffset;
-        }
-    }
-
-    public float getAngularOffset()
-    {
-        return angularOffset;
-    }
-
-    /**
-     * Set the maximum friction force in N.
-     */
-    public void setMaxForce(float force)
-    {
-        assert (force >= 0.0f);
-        maxForce = force;
-    }
-
-    /**
-     * Get the maximum friction force in N.
-     */
-    public float getMaxForce()
-    {
-        return maxForce;
-    }
-
-    /**
-     * Set the maximum friction torque in N*m.
-     */
-    public void setMaxTorque(float torque)
-    {
-        assert (torque >= 0.0f);
-        maxTorque = torque;
-    }
-
-    /**
-     * Get the maximum friction torque in N*m.
-     */
-    public float getMaxTorque()
-    {
-        return maxTorque;
-    }
-
-    @Override
-    public void initVelocityConstraints(SolverData data)
-    {
-        indexA = bodyA.islandIndex;
-        indexB = bodyB.islandIndex;
-        localCenterA.set(bodyA.sweep.localCenter);
-        localCenterB.set(bodyB.sweep.localCenter);
-        invMassA = bodyA.invMass;
-        invMassB = bodyB.invMass;
-        invIA = bodyA.invI;
-        invIB = bodyB.invI;
-        final Vec2 cA = data.positions[indexA].c;
-        float aA = data.positions[indexA].a;
-        final Vec2 vA = data.velocities[indexA].v;
-        float wA = data.velocities[indexA].w;
-        final Vec2 cB = data.positions[indexB].c;
-        float aB = data.positions[indexB].a;
-        final Vec2 vB = data.velocities[indexB].v;
-        float wB = data.velocities[indexB].w;
-        final Rot qA = pool.popRot();
-        final Rot qB = pool.popRot();
-        final Vec2 temp = pool.popVec2();
-        Mat22 K = pool.popMat22();
-        qA.set(aA);
-        qB.set(aB);
+    override fun initVelocityConstraints(data: SolverData) {
+        indexA = bodyA!!.islandIndex
+        indexB = bodyB!!.islandIndex
+        localCenterA.set(bodyA!!.sweep.localCenter)
+        localCenterB.set(bodyB!!.sweep.localCenter)
+        invMassA = bodyA!!.invMass
+        invMassB = bodyB!!.invMass
+        invIA = bodyA!!.invI
+        invIB = bodyB!!.invI
+        val cA = data.positions[indexA].c
+        val aA = data.positions[indexA].a
+        val vA = data.velocities[indexA].v
+        var wA = data.velocities[indexA].w
+        val cB = data.positions[indexB].c
+        val aB = data.positions[indexB].a
+        val vB = data.velocities[indexB].v
+        var wB = data.velocities[indexB].w
+        val qA = pool.popRot()
+        val qB = pool.popRot()
+        val temp = pool.popVec2()
+        val K = pool.popMat22()
+        qA.set(aA)
+        qB.set(aB)
         // Compute the effective mass matrix.
         // rA = b2Mul(qA, -localCenterA);
         // rB = b2Mul(qB, -localCenterB);
-        rA.x = qA.c * -localCenterA.x - qA.s * -localCenterA.y;
-        rA.y = qA.s * -localCenterA.x + qA.c * -localCenterA.y;
-        rB.x = qB.c * -localCenterB.x - qB.s * -localCenterB.y;
-        rB.y = qB.s * -localCenterB.x + qB.c * -localCenterB.y;
+        rA.x = qA.c * -localCenterA.x - qA.s * -localCenterA.y
+        rA.y = qA.s * -localCenterA.x + qA.c * -localCenterA.y
+        rB.x = qB.c * -localCenterB.x - qB.s * -localCenterB.y
+        rB.y = qB.s * -localCenterB.x + qB.c * -localCenterB.y
         // J = [-I -r1_skew I r2_skew]
         // [ 0 -1 0 1]
         // r_skew = [-ry; rx]
@@ -265,115 +173,108 @@ public class MotorJoint extends Joint
         // -r1y*iA-r2y*iB]
         // [ -r1y*iA*r1x-r2y*iB*r2x, mA+r1x^2*iA+mB+r2x^2*iB, r1x*iA+r2x*iB]
         // [ -r1y*iA-r2y*iB, r1x*iA+r2x*iB, iA+iB]
-        float mA = invMassA, mB = invMassB;
-        float iA = invIA, iB = invIB;
-        K.ex.x = mA + mB + iA * rA.y * rA.y + iB * rB.y * rB.y;
-        K.ex.y = -iA * rA.x * rA.y - iB * rB.x * rB.y;
-        K.ey.x = K.ex.y;
-        K.ey.y = mA + mB + iA * rA.x * rA.x + iB * rB.x * rB.x;
-        K.invertToOut(linearMass);
-        angularMass = iA + iB;
-        if (angularMass > 0.0f)
-        {
-            angularMass = 1.0f / angularMass;
+        val mA = invMassA
+        val mB = invMassB
+        val iA = invIA
+        val iB = invIB
+        K.ex.x = mA + mB + iA * rA.y * rA.y + iB * rB.y * rB.y
+        K.ex.y = -iA * rA.x * rA.y - iB * rB.x * rB.y
+        K.ey.x = K.ex.y
+        K.ey.y = mA + mB + iA * rA.x * rA.x + iB * rB.x * rB.x
+        K.invertToOut(linearMass)
+        angularMass = iA + iB
+        if (angularMass > 0.0f) {
+            angularMass = 1.0f / angularMass
         }
         // linearError = cB + rB - cA - rA - b2Mul(qA, linearOffset);
-        Rot.mulToOutUnsafe(qA, linearOffset, temp);
-        linearError.x = cB.x + rB.x - cA.x - rA.x - temp.x;
-        linearError.y = cB.y + rB.y - cA.y - rA.y - temp.y;
-        angularError = aB - aA - angularOffset;
-        if (data.step.warmStarting)
-        {
+        Rot.mulToOutUnsafe(qA, linearOffset, temp)
+        linearError.x = cB.x + rB.x - cA.x - rA.x - temp.x
+        linearError.y = cB.y + rB.y - cA.y - rA.y - temp.y
+        angularError = aB - aA - angularOffset
+        if (data.step.warmStarting) {
             // Scale impulses to support a variable time step.
-            linearImpulse.x *= data.step.dtRatio;
-            linearImpulse.y *= data.step.dtRatio;
-            angularImpulse *= data.step.dtRatio;
-            final Vec2 P = linearImpulse;
-            vA.x -= mA * P.x;
-            vA.y -= mA * P.y;
-            wA -= iA * (rA.x * P.y - rA.y * P.x + angularImpulse);
-            vB.x += mB * P.x;
-            vB.y += mB * P.y;
-            wB += iB * (rB.x * P.y - rB.y * P.x + angularImpulse);
+            linearImpulse.x *= data.step.dtRatio
+            linearImpulse.y *= data.step.dtRatio
+            angularImpulse *= data.step.dtRatio
+            val P = linearImpulse
+            vA.x -= mA * P.x
+            vA.y -= mA * P.y
+            wA -= iA * (rA.x * P.y - rA.y * P.x + angularImpulse)
+            vB.x += mB * P.x
+            vB.y += mB * P.y
+            wB += iB * (rB.x * P.y - rB.y * P.x + angularImpulse)
+        } else {
+            linearImpulse.setZero()
+            angularImpulse = 0.0f
         }
-        else
-        {
-            linearImpulse.setZero();
-            angularImpulse = 0.0f;
-        }
-        pool.pushVec2(1);
-        pool.pushMat22(1);
-        pool.pushRot(2);
+        pool.pushVec2(1)
+        pool.pushMat22(1)
+        pool.pushRot(2)
         // data.velocities[indexA].v = vA;
-        data.velocities[indexA].w = wA;
+        data.velocities[indexA].w = wA
         // data.velocities[indexB].v = vB;
-        data.velocities[indexB].w = wB;
+        data.velocities[indexB].w = wB
     }
 
-    @Override
-    public void solveVelocityConstraints(SolverData data)
-    {
-        final Vec2 vA = data.velocities[indexA].v;
-        float wA = data.velocities[indexA].w;
-        final Vec2 vB = data.velocities[indexB].v;
-        float wB = data.velocities[indexB].w;
-        float mA = invMassA, mB = invMassB;
-        float iA = invIA, iB = invIB;
-        float h = data.step.dt;
-        float inv_h = data.step.inverseDt;
-        final Vec2 temp = pool.popVec2();
+    override fun solveVelocityConstraints(data: SolverData) {
+        val vA = data.velocities[indexA].v
+        var wA = data.velocities[indexA].w
+        val vB = data.velocities[indexB].v
+        var wB = data.velocities[indexB].w
+        val mA = invMassA
+        val mB = invMassB
+        val iA = invIA
+        val iB = invIB
+        val h = data.step.dt
+        val inv_h = data.step.inverseDt
+        val temp = pool.popVec2()
         // Solve angular friction
-        {
-            float Cdot = wB - wA + inv_h * correctionFactor * angularError;
-            float impulse = -angularMass * Cdot;
-            float oldImpulse = angularImpulse;
-            float maxImpulse = h * maxTorque;
+        run {
+            val Cdot = wB - wA + inv_h * correctionFactor * angularError
+            val impulse = -angularMass * Cdot
+            val oldImpulse = angularImpulse
+            val maxImpulse = h * maxTorque
             angularImpulse = MathUtils.clamp(angularImpulse + impulse,
-                    -maxImpulse, maxImpulse);
-            impulse = angularImpulse - oldImpulse;
-            wA -= iA * impulse;
-            wB += iB * impulse;
+                -maxImpulse, maxImpulse)
+            val incImpulse = angularImpulse - oldImpulse
+            wA -= iA * incImpulse
+            wB += iB * incImpulse
         }
-        final Vec2 Cdot = pool.popVec2();
+        val Cdot = pool.popVec2()
         // Solve linear friction
-        {
+        run {
             // Cdot = vB + b2Cross(wB, rB) - vA - b2Cross(wA, rA) + inv_h *
             // correctionFactor *
             // linearError;
-            Cdot.x = vB.x + -wB * rB.y - vA.x - -wA * rA.y
-                    + inv_h * correctionFactor * linearError.x;
-            Cdot.y = vB.y + wB * rB.x - vA.y - wA * rA.x
-                    + inv_h * correctionFactor * linearError.y;
-            Mat22.mulToOutUnsafe(linearMass, Cdot, temp);
-            temp.negateLocal();
-            final Vec2 oldImpulse = pool.popVec2();
-            oldImpulse.set(linearImpulse);
-            linearImpulse.addLocal(temp);
-            float maxImpulse = h * maxForce;
-            if (linearImpulse.lengthSquared() > maxImpulse * maxImpulse)
-            {
-                linearImpulse.normalize();
-                linearImpulse.mulLocal(maxImpulse);
+            Cdot.x = vB.x + -wB * rB.y - vA.x - -wA * rA.y + inv_h * correctionFactor * linearError.x
+            Cdot.y = vB.y + wB * rB.x - vA.y - wA * rA.x + inv_h * correctionFactor * linearError.y
+            Mat22.mulToOutUnsafe(linearMass, Cdot, temp)
+            temp.negateLocal()
+            val oldImpulse = pool.popVec2()
+            oldImpulse.set(linearImpulse)
+            linearImpulse.addLocal(temp)
+            val maxImpulse = h * maxForce
+            if (linearImpulse.lengthSquared() > maxImpulse * maxImpulse) {
+                linearImpulse.normalize()
+                linearImpulse.mulLocal(maxImpulse)
             }
-            temp.x = linearImpulse.x - oldImpulse.x;
-            temp.y = linearImpulse.y - oldImpulse.y;
-            vA.x -= mA * temp.x;
-            vA.y -= mA * temp.y;
-            wA -= iA * (rA.x * temp.y - rA.y * temp.x);
-            vB.x += mB * temp.x;
-            vB.y += mB * temp.y;
-            wB += iB * (rB.x * temp.y - rB.y * temp.x);
+            temp.x = linearImpulse.x - oldImpulse.x
+            temp.y = linearImpulse.y - oldImpulse.y
+            vA.x -= mA * temp.x
+            vA.y -= mA * temp.y
+            wA -= iA * (rA.x * temp.y - rA.y * temp.x)
+            vB.x += mB * temp.x
+            vB.y += mB * temp.y
+            wB += iB * (rB.x * temp.y - rB.y * temp.x)
         }
-        pool.pushVec2(3);
+        pool.pushVec2(3)
         // data.velocities[indexA].v.set(vA);
-        data.velocities[indexA].w = wA;
+        data.velocities[indexA].w = wA
         // data.velocities[indexB].v.set(vB);
-        data.velocities[indexB].w = wB;
+        data.velocities[indexB].w = wB
     }
 
-    @Override
-    public boolean solvePositionConstraints(SolverData data)
-    {
-        return true;
+    override fun solvePositionConstraints(data: SolverData): Boolean {
+        return true
     }
 }

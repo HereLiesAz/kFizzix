@@ -40,10 +40,16 @@ class Vec2(
     @JvmField var y: Float = 0f
 ) : Serializable {
 
+    constructor(v: Vec2) : this(v.x, v.y)
+
     operator fun component1() = x
     operator fun component2() = y
 
     fun copy(x: Float = this.x, y: Float = this.y) = Vec2(x, y)
+
+    fun clone(): Vec2 {
+        return Vec2(x, y)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -282,6 +288,20 @@ class Vec2(
     fun absLocal() {
         x = MathUtils.abs(x)
         y = MathUtils.abs(y)
+    }
+
+    /**
+     * Subtract another vector from this one and return a new vector.
+     *
+     * @param v the vector to subtract
+     * @return a new vector
+     */
+    fun sub(v: Vec2): Vec2 {
+        return Vec2(x - v.x, y - v.y)
+    }
+
+    fun dot(v: Vec2): Float {
+        return x * v.x + y * v.y
     }
 
     companion object {

@@ -21,19 +21,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
-import com.hereliesaz.kfizzix.collision.broadphase.BroadPhase;
-import com.hereliesaz.kfizzix.collision.shapes.MassData;
-import com.hereliesaz.kfizzix.collision.shapes.Shape;
-import com.hereliesaz.kfizzix.common.MathUtils;
-import com.hereliesaz.kfizzix.common.Rot;
-import com.hereliesaz.kfizzix.common.Sweep;
-import com.hereliesaz.kfizzix.common.Transform;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
-import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge;
-import com.hereliesaz.kfizzix.dynamics.joints.JointEdge;
+import com.hereliesaz.kfizzix.collision.broadphase.BroadPhase
+import com.hereliesaz.kfizzix.collision.shapes.MassData
+import com.hereliesaz.kfizzix.collision.shapes.Shape
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Rot
+import com.hereliesaz.kfizzix.common.Sweep
+import com.hereliesaz.kfizzix.common.Transform
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact
+import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge
+import com.hereliesaz.kfizzix.dynamics.joints.JointEdge
 
 /**
  * A rigid body. These are created via World.createBody.
@@ -43,22 +43,7 @@ import com.hereliesaz.kfizzix.dynamics.joints.JointEdge;
  *
  * @author Daniel Murphy
  */
-public class Body
-{
-
-    public static final int islandFlag = 0x0001;
-
-    public static final int awakeFlag = 0x0002;
-
-    public static final int autoSleepFlag = 0x0004;
-
-    public static final int bulletFlag = 0x0008;
-
-    public static final int fixedRotationFlag = 0x0010;
-
-    public static final int activeFlag = 0x0020;
-
-    public static final int toiFlag = 0x0040;
+class Body(bd: BodyDef, var world: World) {
 
     /**
      * The body type: static, kinematic, or dynamic. Note: if a dynamic body
@@ -66,99 +51,88 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L72-L74
      */
-    public BodyType type;
-
-    public int flags;
-
-    public int islandIndex;
+    var type: BodyType
+    var flags = 0
+    var islandIndex = 0
 
     /**
      * The body origin transform.
      */
-    public final Transform xf = new Transform();
+    val xf = Transform()
 
     /**
      * The previous transform for particle simulation
      */
-    public final Transform xf0 = new Transform();
+    val xf0 = Transform()
 
     /**
      * The swept motion for CCD
      */
-    public final Sweep sweep = new Sweep();
-
-    public final Vec2 linearVelocity = new Vec2();
+    val sweep = Sweep()
+    val linearVelocity = Vec2()
 
     /**
      * The angular velocity of the body.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L86-L87
      */
-    public float angularVelocity;
-
-    public final Vec2 force = new Vec2();
-
-    public float torque;
-
-    public World world;
+    var angularVelocity = 0f
+    val force = Vec2()
+    var torque = 0f
 
     /**
      * The previous body in the world's body list.
      */
-    public Body prev;
+    var prev: Body? = null
 
     /**
      * The next body in the world's body list.
      */
-    public Body next;
-
-    public Fixture fixtureList;
-
-    public int fixtureCount;
-
-    public JointEdge jointList;
-
-    public ContactEdge contactList;
+    var next: Body? = null
+    var fixtureList: Fixture? = null
+    var fixtureCount = 0
+    var jointList: JointEdge? = null
+    var contactList: ContactEdge? = null
 
     /**
      * The mass.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L457
      */
-    public float mass;
+    var mass = 0f
 
     /**
      * The inverse mass ({@code 1 / mass}).
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L457
      */
-    public float invMass;
+    var invMass = 0f
 
     /**
      * The rotational inertia about the center of mass.
      *
-     * <p>
+     *
      * The moment of inertia, otherwise known as the mass moment of
      * inertia,https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L459-L460
      * angular/rotational mass, second moment of mass, or most accurately,
      * rotational inertia, of a rigid body is a quantity that determines the
      * torque needed for a desired angular acceleration about a rotational axis,
      * akin to how mass determines the force needed for a desired acceleration.
-     * </p>
      *
-     * <a href="https://en.wikipedia.org/wiki/Moment_of_inertia">Wikipedia:
-     * Moment of inertia</a>
+     *
+     * [Wikipedia:
+ * Moment of inertia](https://en.wikipedia.org/wiki/Moment_of_inertia)
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L459-L460
      */
-    public float I;
+    var inertia = 0f
 
     /**
      * The inverse rotational inertia about the center of mass.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L459-L460
      */
-    public float invI;
+    var invI = 0f
 
     /**
      * Linear damping is used to reduce the linear velocity. The damping
@@ -168,7 +142,7 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L89-L93
      */
-    public float linearDamping;
+    var linearDamping = 0f
 
     /**
      * Angular damping is used to reduce the angular velocity. The damping
@@ -178,92 +152,81 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L95-L99
      */
-    public float angularDamping;
+    var angularDamping = 0f
 
     /**
      * Scale the gravity applied to this body.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L123-L124
      */
-    public float gravityScale;
-
-    public float sleepTime;
+    var gravityScale = 0f
+    var sleepTime = 0f
 
     /**
      * Use this to store application specific body data.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L120-L121
      */
-    public Object userData;
+    var userData: Any?
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L31-L104
      */
-    public Body(final BodyDef bd, World world)
-    {
-        assert (bd.position.isValid());
-        assert (bd.linearVelocity.isValid());
-        assert (bd.gravityScale >= 0.0f);
-        assert (bd.angularDamping >= 0.0f);
-        assert (bd.linearDamping >= 0.0f);
-        flags = 0;
-        if (bd.bullet)
-        {
-            flags |= bulletFlag;
+    init {
+        assert(bd.position.isValid())
+        assert(bd.linearVelocity.isValid())
+        assert(bd.gravityScale >= 0.0f)
+        assert(bd.angularDamping >= 0.0f)
+        assert(bd.linearDamping >= 0.0f)
+        flags = 0
+        if (bd.bullet) {
+            flags = flags or bulletFlag
         }
-        if (bd.fixedRotation)
-        {
-            flags |= fixedRotationFlag;
+        if (bd.fixedRotation) {
+            flags = flags or fixedRotationFlag
         }
-        if (bd.allowSleep)
-        {
-            flags |= autoSleepFlag;
+        if (bd.allowSleep) {
+            flags = flags or autoSleepFlag
         }
-        if (bd.awake)
-        {
-            flags |= awakeFlag;
+        if (bd.awake) {
+            flags = flags or awakeFlag
         }
-        if (bd.active)
-        {
-            flags |= activeFlag;
+        if (bd.active) {
+            flags = flags or activeFlag
         }
-        this.world = world;
-        xf.p.set(bd.position);
-        xf.q.set(bd.angle);
-        sweep.localCenter.setZero();
-        sweep.c0.set(xf.p);
-        sweep.c.set(xf.p);
-        sweep.a0 = bd.angle;
-        sweep.a = bd.angle;
-        sweep.alpha0 = 0.0f;
-        jointList = null;
-        contactList = null;
-        prev = null;
-        next = null;
-        linearVelocity.set(bd.linearVelocity);
-        angularVelocity = bd.angularVelocity;
-        linearDamping = bd.linearDamping;
-        angularDamping = bd.angularDamping;
-        gravityScale = bd.gravityScale;
-        force.setZero();
-        torque = 0.0f;
-        sleepTime = 0.0f;
-        type = bd.type;
-        if (type == BodyType.DYNAMIC)
-        {
-            mass = 1f;
-            invMass = 1f;
+        xf.p.set(bd.position)
+        xf.q.set(bd.angle)
+        sweep.localCenter.setZero()
+        sweep.c0.set(xf.p)
+        sweep.c.set(xf.p)
+        sweep.a0 = bd.angle
+        sweep.a = bd.angle
+        sweep.alpha0 = 0.0f
+        jointList = null
+        contactList = null
+        prev = null
+        next = null
+        linearVelocity.set(bd.linearVelocity)
+        angularVelocity = bd.angularVelocity
+        linearDamping = bd.linearDamping
+        angularDamping = bd.angularDamping
+        gravityScale = bd.gravityScale
+        force.setZero()
+        torque = 0.0f
+        sleepTime = 0.0f
+        type = bd.type
+        if (type == BodyType.DYNAMIC) {
+            mass = 1f
+            invMass = 1f
+        } else {
+            mass = 0f
+            invMass = 0f
         }
-        else
-        {
-            mass = 0f;
-            invMass = 0f;
-        }
-        I = 0.0f;
-        invI = 0.0f;
-        userData = bd.userData;
-        fixtureList = null;
-        fixtureCount = 0;
+        inertia = 0.0f
+        invI = 0.0f
+        userData = bd.userData
+        fixtureList = null
+        fixtureCount = 0
     }
 
     /**
@@ -279,37 +242,33 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L204-L211
      */
-    public final Fixture createFixture(FixtureDef def)
-    {
-        assert (!world.isLocked());
-        if (world.isLocked())
-        {
-            return null;
+    fun createFixture(def: FixtureDef): Fixture? {
+        assert(!world.isLocked)
+        if (world.isLocked) {
+            return null
         }
-        Fixture fixture = new Fixture();
-        fixture.create(this, def);
-        if ((flags & activeFlag) == activeFlag)
-        {
-            BroadPhase broadPhase = world.contactManager.broadPhase;
-            fixture.createProxies(broadPhase, xf);
+        val fixture = Fixture()
+        fixture.create(this, def)
+        if (flags and activeFlag == activeFlag) {
+            val broadPhase = world.contactManager.broadPhase
+            fixture.createProxies(broadPhase, xf)
         }
-        fixture.next = fixtureList;
-        fixtureList = fixture;
-        ++fixtureCount;
-        fixture.body = this;
+        fixture.next = fixtureList
+        fixtureList = fixture
+        ++fixtureCount
+        fixture.body = this
         // Adjust mass properties if needed.
-        if (fixture.density > 0.0f)
-        {
-            resetMassData();
+        if (fixture.density > 0.0f) {
+            resetMassData()
         }
         // Let the world know we have a new fixture. This will cause new
         // contacts
         // to be created at the beginning of the next time step.
-        world.flags |= World.NEW_FIXTURE;
-        return fixture;
+        world.flags = world.flags or World.NEW_FIXTURE
+        return fixture
     }
 
-    private final FixtureDef fixDef = new FixtureDef();
+    private val fixDef = FixtureDef()
 
     /**
      * Creates a fixture from a shape and attach it to this body. This is a
@@ -324,11 +283,10 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L204-L211
      */
-    public final Fixture createFixture(Shape shape, float density)
-    {
-        fixDef.shape = shape;
-        fixDef.density = density;
-        return createFixture(fixDef);
+    fun createFixture(shape: Shape, density: Float): Fixture? {
+        fixDef.shape = shape
+        fixDef.density = density
+        return createFixture(fixDef)
     }
 
     /**
@@ -344,68 +302,57 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L213-L288
      */
-    public final void destroyFixture(Fixture fixture)
-    {
-        assert (!world.isLocked());
-        if (world.isLocked())
-        {
-            return;
+    fun destroyFixture(fixture: Fixture?) {
+        assert(!world.isLocked)
+        if (world.isLocked) {
+            return
         }
-        assert (fixture.body == this);
+        assert(fixture!!.body === this)
         // Remove the fixture from this body's singly linked list.
-        assert (fixtureCount > 0);
-        Fixture node = fixtureList;
-        Fixture last = null; // java change
-        boolean found = false;
-        while (node != null)
-        {
-            if (node == fixture)
-            {
-                node = fixture.next;
-                found = true;
-                break;
+        assert(fixtureCount > 0)
+        var node = fixtureList
+        var last: Fixture? = null // java change
+        var found = false
+        while (node != null) {
+            if (node === fixture) {
+                node = fixture!!.next
+                found = true
+                break
             }
-            last = node;
-            node = node.next;
+            last = node
+            node = node.next
         }
         // You tried to remove a shape that is not attached to this body.
-        assert (found);
+        assert(found)
         // java change, remove it from the list
-        if (last == null)
-        {
-            fixtureList = fixture.next;
-        }
-        else
-        {
-            last.next = fixture.next;
+        if (last == null) {
+            fixtureList = fixture!!.next
+        } else {
+            last.next = fixture!!.next
         }
         // Destroy any contacts associated with the fixture.
-        ContactEdge edge = contactList;
-        while (edge != null)
-        {
-            Contact c = edge.contact;
-            edge = edge.next;
-            Fixture fixtureA = c.getFixtureA();
-            Fixture fixtureB = c.getFixtureB();
-            if (fixture == fixtureA || fixture == fixtureB)
-            {
+        var edge = contactList
+        while (edge != null) {
+            val c = edge.contact
+            edge = edge.next
+            val fixtureA = c!!.fixtureA
+            val fixtureB = c.fixtureB
+            if (fixture === fixtureA || fixture === fixtureB) {
                 // This destroys the contact and removes it from
                 // this body's contact list.
-                world.contactManager.destroy(c);
+                world.contactManager.destroy(c)
             }
         }
-        if ((flags & activeFlag) == activeFlag)
-        {
-            BroadPhase broadPhase = world.contactManager.broadPhase;
-            fixture.destroyProxies(broadPhase);
+        if (flags and activeFlag == activeFlag) {
+            val broadPhase = world.contactManager.broadPhase
+            fixture!!.destroyProxies(broadPhase)
         }
-        fixture.destroy();
-        fixture.body = null;
-        fixture.next = null;
-        fixture = null;
-        --fixtureCount;
+        fixture!!.destroy()
+        fixture.body = null
+        fixture.next = null
+        --fixtureCount
         // Reset the mass data.
-        resetMassData();
+        resetMassData()
     }
 
     /**
@@ -419,24 +366,23 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L420-L445
      */
-    public final void setTransform(Vec2 position, float angle)
-    {
-        assert (!world.isLocked());
-        if (world.isLocked())
-        {
-            return;
+    fun setTransform(position: Vec2, angle: Float) {
+        assert(!world.isLocked)
+        if (world.isLocked) {
+            return
         }
-        xf.q.set(angle);
-        xf.p.set(position);
+        xf.q.set(angle)
+        xf.p.set(position)
         // sweep.c0 = sweep.c = Mul(xf, sweep.localCenter);
-        Transform.mulToOutUnsafe(xf, sweep.localCenter, sweep.c);
-        sweep.a = angle;
-        sweep.c0.set(sweep.c);
-        sweep.a0 = sweep.a;
-        BroadPhase broadPhase = world.contactManager.broadPhase;
-        for (Fixture f = fixtureList; f != null; f = f.next)
-        {
-            f.synchronize(broadPhase, xf, xf);
+        Transform.mulToOutUnsafe(xf, sweep.localCenter, sweep.c)
+        sweep.a = angle
+        sweep.c0.set(sweep.c)
+        sweep.a0 = sweep.a
+        val broadPhase = world.contactManager.broadPhase
+        var f = fixtureList
+        while (f != null) {
+            f.synchronize(broadPhase, xf, xf)
+            f = f.next
         }
     }
 
@@ -445,74 +391,50 @@ public class Body
      *
      * @return The world transform of the body's origin.
      */
-    public final Transform getTransform()
-    {
-        return xf;
-    }
+    val transform: Transform
+        get() = xf
 
     /**
      * Get the world body origin position. Do not modify.
      *
      * @return The world position of the body's origin.
      */
-    public final Vec2 getPosition()
-    {
-        return xf.p;
-    }
+    val position: Vec2
+        get() = xf.p
 
     /**
      * Get the angle in radians.
      *
      * @return The current world rotation angle in radians.
      */
-    public final float getAngle()
-    {
-        return sweep.a;
-    }
+    val angle: Float
+        get() = sweep.a
 
     /**
      * Get the world position of the center of mass. Do not modify.
      */
-    public final Vec2 getWorldCenter()
-    {
-        return sweep.c;
-    }
+    val worldCenter: Vec2
+        get() = sweep.c
 
     /**
      * Get the local position of the center of mass. Do not modify.
      */
-    public final Vec2 getLocalCenter()
-    {
-        return sweep.localCenter;
-    }
+    val localCenter: Vec2
+        get() = sweep.localCenter
 
     /**
      * Set the linear velocity of the center of mass.
      *
      * @param v The new linear velocity of the center of mass.
      */
-    public final void setLinearVelocity(Vec2 v)
-    {
-        if (type == BodyType.STATIC)
-        {
-            return;
+    fun setLinearVelocity(v: Vec2) {
+        if (type == BodyType.STATIC) {
+            return
         }
-        if (Vec2.dot(v, v) > 0.0f)
-        {
-            setAwake(true);
+        if (Vec2.dot(v, v) > 0.0f) {
+            isAwake = true
         }
-        linearVelocity.set(v);
-    }
-
-    /**
-     * Get the linear velocity of the center of mass. Do not modify, instead use
-     * {@link #setLinearVelocity(Vec2)}.
-     *
-     * @return The linear velocity of the center of mass.
-     */
-    public final Vec2 getLinearVelocity()
-    {
-        return linearVelocity;
+        linearVelocity.set(v)
     }
 
     /**
@@ -520,48 +442,14 @@ public class Body
      *
      * @param w The new angular velocity in radians/second.
      */
-    public final void setAngularVelocity(float w)
-    {
-        if (type == BodyType.STATIC)
-        {
-            return;
+    fun setAngularVelocity(w: Float) {
+        if (type == BodyType.STATIC) {
+            return
         }
-        if (w * w > 0f)
-        {
-            setAwake(true);
+        if (w * w > 0f) {
+            isAwake = true
         }
-        angularVelocity = w;
-    }
-
-    /**
-     * Get the angular velocity.
-     *
-     * @return The angular velocity in radians/second.
-     */
-    public final float getAngularVelocity()
-    {
-        return angularVelocity;
-    }
-
-    /**
-     * Get the gravity scale of the body.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L610-L613
-     *
-     */
-    public float getGravityScale()
-    {
-        return gravityScale;
-    }
-
-    /**
-     * Set the gravity scale of the body.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L615-L618
-     */
-    public void setGravityScale(float gravityScale)
-    {
-        this.gravityScale = gravityScale;
+        angularVelocity = w
     }
 
     /**
@@ -574,24 +462,20 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L743-L761
      */
-    public final void applyForce(Vec2 force, Vec2 point)
-    {
-        if (type != BodyType.DYNAMIC)
-        {
-            return;
+    fun applyForce(force: Vec2, point: Vec2) {
+        if (type != BodyType.DYNAMIC) {
+            return
         }
-        if (!isAwake())
-        {
-            setAwake(true);
+        if (!isAwake) {
+            isAwake = true
         }
         // force.addLocal(force);
         // Vec2 temp = tltemp.get();
         // temp.set(point).subLocal(sweep.c);
         // torque += Vec2.cross(temp, force);
-        this.force.x += force.x;
-        this.force.y += force.y;
-        torque += (point.x - sweep.c.x) * force.y
-                - (point.y - sweep.c.y) * force.x;
+        this.force.x += force.x
+        this.force.y += force.y
+        torque += (point.x - sweep.c.x) * force.y - (point.y - sweep.c.y) * force.x
     }
 
     /**
@@ -601,18 +485,15 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L763-L780
      */
-    public final void applyForceToCenter(Vec2 force)
-    {
-        if (type != BodyType.DYNAMIC)
-        {
-            return;
+    fun applyForceToCenter(force: Vec2) {
+        if (type != BodyType.DYNAMIC) {
+            return
         }
-        if (!isAwake())
-        {
-            setAwake(true);
+        if (!isAwake) {
+            isAwake = true
         }
-        this.force.x += force.x;
-        this.force.y += force.y;
+        this.force.x += force.x
+        this.force.y += force.y
     }
 
     /**
@@ -623,17 +504,14 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L782-L799
      */
-    public final void applyTorque(float torque)
-    {
-        if (type != BodyType.DYNAMIC)
-        {
-            return;
+    fun applyTorque(torque: Float) {
+        if (type != BodyType.DYNAMIC) {
+            return
         }
-        if (!isAwake())
-        {
-            setAwake(true);
+        if (!isAwake) {
+            isAwake = true
         }
-        this.torque += torque;
+        this.torque += torque
     }
 
     /**
@@ -648,27 +526,21 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L801-L819
      */
-    public final void applyLinearImpulse(Vec2 impulse, Vec2 point, boolean wake)
-    {
-        if (type != BodyType.DYNAMIC)
-        {
-            return;
+    fun applyLinearImpulse(impulse: Vec2, point: Vec2, wake: Boolean) {
+        if (type != BodyType.DYNAMIC) {
+            return
         }
-        if (!isAwake())
-        {
-            if (wake)
-            {
-                setAwake(true);
-            }
-            else
-            {
-                return;
+        if (!isAwake) {
+            if (wake) {
+                isAwake = true
+            } else {
+                return
             }
         }
-        linearVelocity.x += impulse.x * invMass;
-        linearVelocity.y += impulse.y * invMass;
+        linearVelocity.x += impulse.x * invMass
+        linearVelocity.y += impulse.y * invMass
         angularVelocity += invI * ((point.x - sweep.c.x) * impulse.y
-                - (point.y - sweep.c.y) * impulse.x);
+                - (point.y - sweep.c.y) * impulse.x)
     }
 
     /**
@@ -678,55 +550,30 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L840-L857
      */
-    public void applyAngularImpulse(float impulse)
-    {
-        if (type != BodyType.DYNAMIC)
-        {
-            return;
+    fun applyAngularImpulse(impulse: Float) {
+        if (type != BodyType.DYNAMIC) {
+            return
         }
-        if (!isAwake())
-        {
-            setAwake(true);
+        if (!isAwake) {
+            isAwake = true
         }
-        angularVelocity += invI * impulse;
-    }
-
-    /**
-     * Get the total mass of the body.
-     *
-     * @return The mass, usually in kilograms (kg).
-     */
-    public final float getMass()
-    {
-        return mass;
-    }
-
-    /**
-     * Get the central rotational inertia of the body.
-     *
-     * @return The rotational inertia, usually in kg-m^2.
-     */
-    public final float getInertia()
-    {
-        return I + mass * (sweep.localCenter.x * sweep.localCenter.x
-                + sweep.localCenter.y * sweep.localCenter.y);
+        angularVelocity += invI * impulse
     }
 
     /**
      * Get the mass data of the body. The rotational inertia is relative to the
      * center of mass.
      */
-    public final void getMassData(MassData data)
-    {
+    fun getMassData(data: MassData) {
         // data.mass = mass;
         // data.I = I + mass * Vec2.dot(sweep.localCenter,
         // sweep.localCenter);
         // data.center.set(sweep.localCenter);
-        data.mass = mass;
-        data.I = I + mass * (sweep.localCenter.x * sweep.localCenter.x
-                + sweep.localCenter.y * sweep.localCenter.y);
-        data.center.x = sweep.localCenter.x;
-        data.center.y = sweep.localCenter.y;
+        data.mass = mass
+        data.i = inertia + mass * (sweep.localCenter.x * sweep.localCenter.x
+                + sweep.localCenter.y * sweep.localCenter.y)
+        data.center.x = sweep.localCenter.x
+        data.center.y = sweep.localCenter.y
     }
 
     /**
@@ -739,51 +586,46 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L356-L395
      */
-    public final void setMassData(MassData massData)
-    {
+    fun setMassData(massData: MassData) {
         // TODO_ERIN adjust linear velocity and torque to account for movement
         // of center.
-        assert (!world.isLocked());
-        if (world.isLocked())
-        {
-            return;
+        assert(!world.isLocked)
+        if (world.isLocked) {
+            return
         }
-        if (type != BodyType.DYNAMIC)
-        {
-            return;
+        if (type != BodyType.DYNAMIC) {
+            return
         }
-        invMass = 0.0f;
-        I = 0.0f;
-        invI = 0.0f;
-        mass = massData.mass;
-        if (mass <= 0.0f)
-        {
-            mass = 1f;
+        invMass = 0.0f
+        inertia = 0.0f
+        invI = 0.0f
+        mass = massData.mass
+        if (mass <= 0.0f) {
+            mass = 1f
         }
-        invMass = 1.0f / mass;
-        if (massData.I > 0.0f && (flags & fixedRotationFlag) == 0)
-        {
-            I = massData.I - mass * Vec2.dot(massData.center, massData.center);
-            assert (I > 0.0f);
-            invI = 1.0f / I;
+        invMass = 1.0f / mass
+        if (massData.i > 0.0f && flags and fixedRotationFlag == 0) {
+            inertia = massData.i - mass * Vec2.dot(massData.center, massData.center)
+            assert(inertia > 0.0f)
+            invI = 1.0f / inertia
         }
-        final Vec2 oldCenter = world.getPool().popVec2();
+        val oldCenter = world.pool.popVec2()
         // Move center of mass.
-        oldCenter.set(sweep.c);
-        sweep.localCenter.set(massData.center);
+        oldCenter.set(sweep.c)
+        sweep.localCenter.set(massData.center)
         // sweep.c0 = sweep.c = Mul(xf, sweep.localCenter);
-        Transform.mulToOutUnsafe(xf, sweep.localCenter, sweep.c0);
-        sweep.c.set(sweep.c0);
+        Transform.mulToOutUnsafe(xf, sweep.localCenter, sweep.c0)
+        sweep.c.set(sweep.c0)
         // Update center of mass velocity.
         // linearVelocity += Cross(angularVelocity, sweep.c - oldCenter);
-        final Vec2 temp = world.getPool().popVec2();
-        temp.set(sweep.c).subLocal(oldCenter);
-        Vec2.crossToOut(angularVelocity, temp, temp);
-        linearVelocity.addLocal(temp);
-        world.getPool().pushVec2(2);
+        val temp = world.pool.popVec2()
+        temp.set(sweep.c).subLocal(oldCenter)
+        Vec2.crossToOut(angularVelocity, temp, temp)
+        linearVelocity.addLocal(temp)
+        world.pool.pushVec2(2)
     }
 
-    private final MassData pmd = new MassData();
+    private val pmd = MassData()
 
     /**
      * This resets the mass properties to the sum of the mass properties of the
@@ -792,79 +634,72 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L290-L354
      */
-    public final void resetMassData()
-    {
+    fun resetMassData() {
         // Compute mass data from shapes. Each shape has its own density.
-        mass = 0.0f;
-        invMass = 0.0f;
-        I = 0.0f;
-        invI = 0.0f;
-        sweep.localCenter.setZero();
+        mass = 0.0f
+        invMass = 0.0f
+        inertia = 0.0f
+        invI = 0.0f
+        sweep.localCenter.setZero()
         // Static and kinematic bodies have zero mass.
-        if (type == BodyType.STATIC || type == BodyType.KINEMATIC)
-        {
+        if (type == BodyType.STATIC || type == BodyType.KINEMATIC) {
             // sweep.c0 = sweep.c = xf.position;
-            sweep.c0.set(xf.p);
-            sweep.c.set(xf.p);
-            sweep.a0 = sweep.a;
-            return;
+            sweep.c0.set(xf.p)
+            sweep.c.set(xf.p)
+            sweep.a0 = sweep.a
+            return
         }
-        assert (type == BodyType.DYNAMIC);
+        assert(type == BodyType.DYNAMIC)
         // Accumulate mass over all fixtures.
-        final Vec2 localCenter = world.getPool().popVec2();
-        localCenter.setZero();
-        final Vec2 temp = world.getPool().popVec2();
-        final MassData massData = pmd;
-        for (Fixture f = fixtureList; f != null; f = f.next)
-        {
-            if (f.density == 0.0f)
-            {
-                continue;
+        val localCenter = world.pool.popVec2()
+        localCenter.setZero()
+        val temp = world.pool.popVec2()
+        val massData = pmd
+        var f = fixtureList
+        while (f != null) {
+            if (f.density == 0.0f) {
+                f = f.next
+                continue
             }
-            f.getMassData(massData);
-            mass += massData.mass;
+            f.getMassData(massData)
+            mass += massData.mass
             // center += massData.mass * massData.center;
-            temp.set(massData.center).mulLocal(massData.mass);
-            localCenter.addLocal(temp);
-            I += massData.I;
+            temp.set(massData.center).mulLocal(massData.mass)
+            localCenter.addLocal(temp)
+            inertia += massData.i
+            f = f.next
         }
         // Compute center of mass.
-        if (mass > 0.0f)
-        {
-            invMass = 1.0f / mass;
-            localCenter.mulLocal(invMass);
-        }
-        else
-        {
+        if (mass > 0.0f) {
+            invMass = 1.0f / mass
+            localCenter.mulLocal(invMass)
+        } else {
             // Force all dynamic bodies to have a positive mass.
-            mass = 1.0f;
-            invMass = 1.0f;
+            mass = 1.0f
+            invMass = 1.0f
         }
-        if (I > 0.0f && (flags & fixedRotationFlag) == 0)
-        {
+        if (inertia > 0.0f && flags and fixedRotationFlag == 0) {
             // Center the inertia about the center of mass.
-            I -= mass * Vec2.dot(localCenter, localCenter);
-            assert (I > 0.0f);
-            invI = 1.0f / I;
+            inertia -= mass * Vec2.dot(localCenter, localCenter)
+            assert(inertia > 0.0f)
+            invI = 1.0f / inertia
+        } else {
+            inertia = 0.0f
+            invI = 0.0f
         }
-        else
-        {
-            I = 0.0f;
-            invI = 0.0f;
-        }
-        Vec2 oldCenter = world.getPool().popVec2();
+        val oldCenter = world.pool.popVec2()
         // Move center of mass.
-        oldCenter.set(sweep.c);
-        sweep.localCenter.set(localCenter);
+        oldCenter.set(sweep.c)
+        sweep.localCenter.set(localCenter)
         // sweep.c0 = sweep.c = Mul(xf, sweep.localCenter);
-        Transform.mulToOutUnsafe(xf, sweep.localCenter, sweep.c0);
-        sweep.c.set(sweep.c0);
+        Transform.mulToOutUnsafe(xf, sweep.localCenter, sweep.c0)
+        sweep.c.set(sweep.c0)
         // Update center of mass velocity.
         // linearVelocity += Cross(angularVelocity, sweep.c - oldCenter);
-        temp.set(sweep.c).subLocal(oldCenter);
-        Vec2.crossToOutUnsafe(angularVelocity, temp, oldCenter);
-        linearVelocity.addLocal(oldCenter);
-        world.getPool().pushVec2(3);
+        temp.set(sweep.c).subLocal(oldCenter)
+        Vec2.crossToOutUnsafe(angularVelocity, temp, oldCenter)
+        linearVelocity.addLocal(oldCenter)
+        world.pool.pushVec2(3)
     }
 
     /**
@@ -875,16 +710,14 @@ public class Body
      *
      * @return The same point expressed in world coordinates.
      */
-    public final Vec2 getWorldPoint(Vec2 localPoint)
-    {
-        Vec2 v = new Vec2();
-        getWorldPointToOut(localPoint, v);
-        return v;
+    fun getWorldPoint(localPoint: Vec2): Vec2 {
+        val v = Vec2()
+        getWorldPointToOut(localPoint, v)
+        return v
     }
 
-    public final void getWorldPointToOut(Vec2 localPoint, Vec2 out)
-    {
-        Transform.mulToOut(xf, localPoint, out);
+    fun getWorldPointToOut(localPoint: Vec2, out: Vec2) {
+        Transform.mulToOut(xf, localPoint, out)
     }
 
     /**
@@ -894,21 +727,18 @@ public class Body
      *
      * @return The same vector expressed in world coordinates.
      */
-    public final Vec2 getWorldVector(Vec2 localVector)
-    {
-        Vec2 out = new Vec2();
-        getWorldVectorToOut(localVector, out);
-        return out;
+    fun getWorldVector(localVector: Vec2): Vec2 {
+        val out = Vec2()
+        getWorldVectorToOut(localVector, out)
+        return out
     }
 
-    public final void getWorldVectorToOut(Vec2 localVector, Vec2 out)
-    {
-        Rot.mulToOut(xf.q, localVector, out);
+    fun getWorldVectorToOut(localVector: Vec2, out: Vec2) {
+        Rot.mulToOut(xf.q, localVector, out)
     }
 
-    public final void getWorldVectorToOutUnsafe(Vec2 localVector, Vec2 out)
-    {
-        Rot.mulToOutUnsafe(xf.q, localVector, out);
+    fun getWorldVectorToOutUnsafe(localVector: Vec2, out: Vec2) {
+        Rot.mulToOutUnsafe(xf.q, localVector, out)
     }
 
     /**
@@ -918,16 +748,14 @@ public class Body
      *
      * @return The corresponding local point relative to the body's origin.
      */
-    public final Vec2 getLocalPoint(Vec2 worldPoint)
-    {
-        Vec2 out = new Vec2();
-        getLocalPointToOut(worldPoint, out);
-        return out;
+    fun getLocalPoint(worldPoint: Vec2): Vec2 {
+        val out = Vec2()
+        getLocalPointToOut(worldPoint, out)
+        return out
     }
 
-    public final void getLocalPointToOut(Vec2 worldPoint, Vec2 out)
-    {
-        Transform.mulTransToOut(xf, worldPoint, out);
+    fun getLocalPointToOut(worldPoint: Vec2, out: Vec2) {
+        Transform.mulTransToOut(xf, worldPoint, out)
     }
 
     /**
@@ -937,21 +765,18 @@ public class Body
      *
      * @return The corresponding local vector.
      */
-    public final Vec2 getLocalVector(Vec2 worldVector)
-    {
-        Vec2 out = new Vec2();
-        getLocalVectorToOut(worldVector, out);
-        return out;
+    fun getLocalVector(worldVector: Vec2): Vec2 {
+        val out = Vec2()
+        getLocalVectorToOut(worldVector, out)
+        return out
     }
 
-    public final void getLocalVectorToOut(Vec2 worldVector, Vec2 out)
-    {
-        Rot.mulTrans(xf.q, worldVector, out);
+    fun getLocalVectorToOut(worldVector: Vec2, out: Vec2) {
+        Rot.mulTrans(xf.q, worldVector, out)
     }
 
-    public final void getLocalVectorToOutUnsafe(Vec2 worldVector, Vec2 out)
-    {
-        Rot.mulTransUnsafe(xf.q, worldVector, out);
+    fun getLocalVectorToOutUnsafe(worldVector: Vec2, out: Vec2) {
+        Rot.mulTransUnsafe(xf.q, worldVector, out)
     }
 
     /**
@@ -961,20 +786,20 @@ public class Body
      *
      * @return The world velocity of a point.
      */
-    public final Vec2 getLinearVelocityFromWorldPoint(Vec2 worldPoint)
-    {
-        Vec2 out = new Vec2();
-        getLinearVelocityFromWorldPointToOut(worldPoint, out);
-        return out;
+    fun getLinearVelocityFromWorldPoint(worldPoint: Vec2): Vec2 {
+        val out = Vec2()
+        getLinearVelocityFromWorldPointToOut(worldPoint, out)
+        return out
     }
 
-    public final void getLinearVelocityFromWorldPointToOut(Vec2 worldPoint,
-            Vec2 out)
-    {
-        final float tempX = worldPoint.x - sweep.c.x;
-        final float tempY = worldPoint.y - sweep.c.y;
-        out.x = -angularVelocity * tempY + linearVelocity.x;
-        out.y = angularVelocity * tempX + linearVelocity.y;
+    fun getLinearVelocityFromWorldPointToOut(
+        worldPoint: Vec2,
+        out: Vec2
+    ) {
+        val tempX = worldPoint.x - sweep.c.x
+        val tempY = worldPoint.y - sweep.c.y
+        out.x = -angularVelocity * tempY + linearVelocity.x
+        out.y = angularVelocity * tempX + linearVelocity.y
     }
 
     /**
@@ -984,104 +809,18 @@ public class Body
      *
      * @return The world velocity of a point.
      */
-    public final Vec2 getLinearVelocityFromLocalPoint(Vec2 localPoint)
-    {
-        Vec2 out = new Vec2();
-        getLinearVelocityFromLocalPointToOut(localPoint, out);
-        return out;
+    fun getLinearVelocityFromLocalPoint(localPoint: Vec2): Vec2 {
+        val out = Vec2()
+        getLinearVelocityFromLocalPointToOut(localPoint, out)
+        return out
     }
 
-    public final void getLinearVelocityFromLocalPointToOut(Vec2 localPoint,
-            Vec2 out)
-    {
-        getWorldPointToOut(localPoint, out);
-        getLinearVelocityFromWorldPointToOut(out, out);
-    }
-
-    /**
-     * Get the linear damping of the body.
-     */
-    public final float getLinearDamping()
-    {
-        return linearDamping;
-    }
-
-    /**
-     * Set the linear damping of the body.
-     */
-    public final void setLinearDamping(float linearDamping)
-    {
-        this.linearDamping = linearDamping;
-    }
-
-    /**
-     * Get the angular damping of the body.
-     */
-    public final float getAngularDamping()
-    {
-        return angularDamping;
-    }
-
-    /**
-     * Set the angular damping of the body.
-     */
-    public final void setAngularDamping(float angularDamping)
-    {
-        this.angularDamping = angularDamping;
-    }
-
-    public BodyType getType()
-    {
-        return type;
-    }
-
-    /**
-     * Set the type of this body. This may alter the mass and velocity.
-     */
-    public void setType(BodyType type)
-    {
-        assert (!world.isLocked());
-        if (world.isLocked())
-        {
-            return;
-        }
-        if (this.type == type)
-        {
-            return;
-        }
-        this.type = type;
-        resetMassData();
-        if (this.type == BodyType.STATIC)
-        {
-            linearVelocity.setZero();
-            angularVelocity = 0.0f;
-            sweep.a0 = sweep.a;
-            sweep.c0.set(sweep.c);
-            synchronizeFixtures();
-        }
-        setAwake(true);
-        force.setZero();
-        torque = 0.0f;
-        // Delete the attached contacts.
-        ContactEdge ce = contactList;
-        while (ce != null)
-        {
-            ContactEdge ce0 = ce;
-            ce = ce.next;
-            world.contactManager.destroy(ce0.contact);
-        }
-        contactList = null;
-        // Touch the proxies so that new contacts will be created (when
-        // appropriate)
-        BroadPhase broadPhase = world.contactManager.broadPhase;
-        for (Fixture f = fixtureList; f != null; f = f.next)
-        {
-            int proxyCount = f.proxyCount;
-            for (int i = 0; i < proxyCount; ++i)
-            {
-                broadPhase.touchProxy(f.proxies[i].proxyId);
-            }
-        }
+    fun getLinearVelocityFromLocalPointToOut(
+        localPoint: Vec2,
+        out: Vec2
+    ) {
+        getWorldPointToOut(localPoint, out)
+        getLinearVelocityFromWorldPointToOut(out, out)
     }
 
     /**
@@ -1089,57 +828,31 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L632-L635
      */
-    public final boolean isBullet()
-    {
-        return (flags & bulletFlag) == bulletFlag;
-    }
-
-    /**
-     * Should this body be treated like a bullet for continuous collision
-     * detection?
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L620-L630
-     */
-    public final void setBullet(boolean flag)
-    {
-        if (flag)
-        {
-            flags |= bulletFlag;
+    var isBullet: Boolean
+        get() = flags and bulletFlag == bulletFlag
+        set(flag) {
+            if (flag) {
+                flags = flags or bulletFlag
+            } else {
+                flags = flags and bulletFlag.inv()
+            }
         }
-        else
-        {
-            flags &= ~bulletFlag;
-        }
-    }
-
-    /**
-     * You can disable sleeping on this body. If you disable sleeping, the body
-     * will be woken.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L675-L686
-     */
-    public void setSleepingAllowed(boolean flag)
-    {
-        if (flag)
-        {
-            flags |= autoSleepFlag;
-        }
-        else
-        {
-            flags &= ~autoSleepFlag;
-            setAwake(true);
-        }
-    }
 
     /**
      * Is this body allowed to sleep?
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L688-L691
      */
-    public boolean isSleepingAllowed()
-    {
-        return (flags & autoSleepFlag) == autoSleepFlag;
-    }
+    var isSleepingAllowed: Boolean
+        get() = flags and autoSleepFlag == autoSleepFlag
+        set(flag) {
+            if (flag) {
+                flags = flags or autoSleepFlag
+            } else {
+                flags = flags and autoSleepFlag.inv()
+                isAwake = true
+            }
+        }
 
     /**
      * Set the sleep state of the body. A sleeping body has very low CPU cost.
@@ -1149,38 +862,23 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L637-L658
      */
-    public void setAwake(boolean flag)
-    {
-        if (flag)
-        {
-            if ((flags & awakeFlag) == 0)
-            {
-                flags |= awakeFlag;
-                sleepTime = 0.0f;
+    var isAwake: Boolean
+        get() = flags and awakeFlag == awakeFlag
+        set(flag) {
+            if (flag) {
+                if (flags and awakeFlag == 0) {
+                    flags = flags or awakeFlag
+                    sleepTime = 0.0f
+                }
+            } else {
+                flags = flags and awakeFlag.inv()
+                sleepTime = 0.0f
+                linearVelocity.setZero()
+                angularVelocity = 0.0f
+                force.setZero()
+                torque = 0.0f
             }
         }
-        else
-        {
-            flags &= ~awakeFlag;
-            sleepTime = 0.0f;
-            linearVelocity.setZero();
-            angularVelocity = 0.0f;
-            force.setZero();
-            torque = 0.0f;
-        }
-    }
-
-    /**
-     * Get the sleeping state of this body.
-     *
-     * @return true if the body is awake.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L660-L663
-     */
-    public boolean isAwake()
-    {
-        return (flags & awakeFlag) == awakeFlag;
-    }
 
     /**
      * Set the active state of the body. An inactive body is not simulated and
@@ -1196,197 +894,100 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L471-L515
      */
-    public void setActive(boolean flag)
-    {
-        assert (!world.isLocked());
-        if (flag == isActive())
-        {
-            return;
-        }
-        if (flag)
-        {
-            flags |= activeFlag;
-            // Create all proxies.
-            BroadPhase broadPhase = world.contactManager.broadPhase;
-            for (Fixture f = fixtureList; f != null; f = f.next)
-            {
-                f.createProxies(broadPhase, xf);
+    var isActive: Boolean
+        get() = flags and activeFlag == activeFlag
+        set(flag) {
+            assert(!world.isLocked)
+            if (flag == isActive) {
+                return
             }
-            // Contacts are created the next time step.
-        }
-        else
-        {
-            flags &= ~activeFlag;
-            // Destroy all proxies.
-            BroadPhase broadPhase = world.contactManager.broadPhase;
-            for (Fixture f = fixtureList; f != null; f = f.next)
-            {
-                f.destroyProxies(broadPhase);
+            if (flag) {
+                flags = flags or activeFlag
+                // Create all proxies.
+                val broadPhase = world.contactManager.broadPhase
+                var f = fixtureList
+                while (f != null) {
+                    f.createProxies(broadPhase, xf)
+                    f = f.next
+                }
+                // Contacts are created the next time step.
+            } else {
+                flags = flags and activeFlag.inv()
+                // Destroy all proxies.
+                val broadPhase = world.contactManager.broadPhase
+                var f = fixtureList
+                while (f != null) {
+                    f.destroyProxies(broadPhase)
+                    f = f.next
+                }
+                // Destroy the attached contacts.
+                var ce = contactList
+                while (ce != null) {
+                    val ce0 = ce
+                    ce = ce!!.next
+                    world.contactManager.destroy(ce0!!.contact)
+                }
+                contactList = null
             }
-            // Destroy the attached contacts.
-            ContactEdge ce = contactList;
-            while (ce != null)
-            {
-                ContactEdge ce0 = ce;
-                ce = ce.next;
-                world.contactManager.destroy(ce0.contact);
-            }
-            contactList = null;
         }
-    }
-
-    /**
-     * Get the active state of the body.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L665-L668
-     */
-    public boolean isActive()
-    {
-        return (flags & activeFlag) == activeFlag;
-    }
 
     /**
      * Set this body to have fixed rotation. This causes the mass to be reset.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L517-L537
      */
-    public void setFixedRotation(boolean flag)
-    {
-        if (flag)
-        {
-            flags |= fixedRotationFlag;
+    var isFixedRotation: Boolean
+        get() = flags and fixedRotationFlag == fixedRotationFlag
+        set(flag) {
+            if (flag) {
+                flags = flags or fixedRotationFlag
+            } else {
+                flags = flags and fixedRotationFlag.inv()
+            }
+            resetMassData()
         }
-        else
-        {
-            flags &= ~fixedRotationFlag;
-        }
-        resetMassData();
-    }
-
-    /**
-     * Does this body have fixed rotation?
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L670-L673
-     */
-    public boolean isFixedRotation()
-    {
-        return (flags & fixedRotationFlag) == fixedRotationFlag;
-    }
-
-    /**
-     * Get the list of all fixtures attached to this body.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L693-L701
-     */
-    public final Fixture getFixtureList()
-    {
-        return fixtureList;
-    }
-
-    /**
-     * Get the list of all joints attached to this body.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L703-L711
-     */
-    public final JointEdge getJointList()
-    {
-        return jointList;
-    }
-
-    /**
-     * Get the list of all contacts attached to this body.
-     *
-     * @warning this list changes during the time step, and you may miss some
-     *     collisions if you don't use ContactListener.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L713-L721
-     */
-    public final ContactEdge getContactList()
-    {
-        return contactList;
-    }
-
-    /**
-     * Get the next body in the world's body list.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L374-L376
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L723-L731
-     */
-    public final Body getNext()
-    {
-        return next;
-    }
-
-    /**
-     * Get the user data pointer that was provided in the body definition.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L733-L741
-     */
-    public final Object getUserData()
-    {
-        return userData;
-    }
-
-    /**
-     * Set the user data. Use this to store your application specific data.
-     */
-    public final void setUserData(Object data)
-    {
-        userData = data;
-    }
-
-    /**
-     * Get the parent world of this body.
-     */
-    public final World getWorld()
-    {
-        return world;
-    }
 
     // djm pooling
-    private final Transform pxf = new Transform();
+    private val pxf = Transform()
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L447-L469
      */
-    protected final void synchronizeFixtures()
-    {
-        final Transform xf1 = pxf;
+    fun synchronizeFixtures() {
+        val xf1 = pxf
         // xf1.position = sweep.c0 - Mul(xf1.R, sweep.localCenter);
         // xf1.q.set(sweep.a0);
         // Rot.mulToOutUnsafe(xf1.q, sweep.localCenter, xf1.p);
         // xf1.p.mulLocal(-1).addLocal(sweep.c0);
         // inlined:
-        xf1.q.s = MathUtils.sin(sweep.a0);
-        xf1.q.c = MathUtils.cos(sweep.a0);
-        xf1.p.x = sweep.c0.x - xf1.q.c * sweep.localCenter.x
-                + xf1.q.s * sweep.localCenter.y;
-        xf1.p.y = sweep.c0.y - xf1.q.s * sweep.localCenter.x
-                - xf1.q.c * sweep.localCenter.y;
+        xf1.q.s = MathUtils.sin(sweep.a0)
+        xf1.q.c = MathUtils.cos(sweep.a0)
+        xf1.p.x = sweep.c0.x - xf1.q.c * sweep.localCenter.x + xf1.q.s * sweep.localCenter.y
+        xf1.p.y = sweep.c0.y - xf1.q.s * sweep.localCenter.x - xf1.q.c * sweep.localCenter.y
         // end inline
-        for (Fixture f = fixtureList; f != null; f = f.next)
-        {
-            f.synchronize(world.contactManager.broadPhase, xf1, xf);
+        var f = fixtureList
+        while (f != null) {
+            f.synchronize(world.contactManager.broadPhase, xf1, xf)
+            f = f.next
         }
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L859-L863
      */
-    public final void synchronizeTransform()
-    {
+    fun synchronizeTransform() {
         // xf.q.set(sweep.a);
         //
         // // xf.position = sweep.c - Mul(xf.R, sweep.localCenter);
         // Rot.mulToOutUnsafe(xf.q, sweep.localCenter, xf.p);
         // xf.p.mulLocal(-1).addLocal(sweep.c);
         //
-        xf.q.s = MathUtils.sin(sweep.a);
-        xf.q.c = MathUtils.cos(sweep.a);
-        Rot q = xf.q;
-        Vec2 v = sweep.localCenter;
-        xf.p.x = sweep.c.x - q.c * v.x + q.s * v.y;
-        xf.p.y = sweep.c.y - q.s * v.x - q.c * v.y;
+        xf.q.s = MathUtils.sin(sweep.a)
+        xf.q.c = MathUtils.cos(sweep.a)
+        val q = xf.q
+        val v = sweep.localCenter
+        xf.p.x = sweep.c.x - q.c * v.x + q.s * v.y
+        xf.p.y = sweep.c.y - q.s * v.x - q.c * v.y
     }
 
     /**
@@ -1395,36 +996,42 @@ public class Body
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L397-L418
      */
-    public boolean shouldCollide(Body other)
-    {
+    fun shouldCollide(other: Body): Boolean {
         // At least one body should be dynamic.
-        if (type != BodyType.DYNAMIC && other.type != BodyType.DYNAMIC)
-        {
-            return false;
+        if (type != BodyType.DYNAMIC && other.type != BodyType.DYNAMIC) {
+            return false
         }
         // Does a joint prevent collision?
-        for (JointEdge jn = jointList; jn != null; jn = jn.next)
-        {
-            if (jn.other == other)
-            {
-                if (!jn.joint.getCollideConnected())
-                {
-                    return false;
+        var jn = jointList
+        while (jn != null) {
+            if (jn.other === other) {
+                if (!jn.joint!!.collideConnected) {
+                    return false
                 }
             }
+            jn = jn.next
         }
-        return true;
+        return true
     }
 
-    protected final void advance(float t)
-    {
+    fun advance(t: Float) {
         // Advance to the new safe time. This doesn't sync the broad-phase.
-        sweep.advance(t);
-        sweep.c.set(sweep.c0);
-        sweep.a = sweep.a0;
-        xf.q.set(sweep.a);
+        sweep.advance(t)
+        sweep.c.set(sweep.c0)
+        sweep.a = sweep.a0
+        xf.q.set(sweep.a)
         // xf.position = sweep.c - Mul(xf.R, sweep.localCenter);
-        Rot.mulToOutUnsafe(xf.q, sweep.localCenter, xf.p);
-        xf.p.mulLocal(-1).addLocal(sweep.c);
+        Rot.mulToOutUnsafe(xf.q, sweep.localCenter, xf.p)
+        xf.p.mulLocal(-1f).addLocal(sweep.c)
+    }
+
+    companion object {
+        const val islandFlag = 0x0001
+        const val awakeFlag = 0x0002
+        const val autoSleepFlag = 0x0004
+        const val bulletFlag = 0x0008
+        const val fixedRotationFlag = 0x0010
+        const val activeFlag = 0x0020
+        const val toiFlag = 0x0040
     }
 }

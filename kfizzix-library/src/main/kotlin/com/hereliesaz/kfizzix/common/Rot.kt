@@ -164,6 +164,28 @@ class Rot(angle: Float? = null) : Serializable {
         return copy
     }
 
+    fun mul(v: Vec2): Vec2 {
+        return Vec2(c * v.x - s * v.y, s * v.x + c * v.y)
+    }
+
+    fun mul(r: Rot): Rot {
+        val out = Rot()
+        out.s = s * r.c + c * r.s
+        out.c = c * r.c - s * r.s
+        return out
+    }
+
+    fun mulTrans(v: Vec2): Vec2 {
+        return Vec2(c * v.x + s * v.y, -s * v.x + c * v.y)
+    }
+
+    fun mulTrans(r: Rot): Rot {
+        val out = Rot()
+        out.s = c * r.s - s * r.c
+        out.c = c * r.c + s * r.s
+        return out
+    }
+
     companion object {
         private const val serialVersionUID = 1L
 

@@ -48,9 +48,13 @@ class Mat33 : Serializable {
     }
 
     constructor(argCol1: Vec3, argCol2: Vec3, argCol3: Vec3) {
-        ex = argCol1.clone()
-        ey = argCol2.clone()
-        ez = argCol3.clone()
+        ex = argCol1.copy()
+        ey = argCol2.copy()
+        ez = argCol3.copy()
+    }
+
+    fun clone(): Mat33 {
+        return Mat33(ex, ey, ez)
     }
 
     fun setZero() {

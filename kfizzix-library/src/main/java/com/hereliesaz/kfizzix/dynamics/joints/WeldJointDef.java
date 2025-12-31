@@ -21,60 +21,50 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * @author Daniel Murphy
  */
-public class WeldJointDef extends JointDef
-{
+class WeldJointDef : JointDef(JointType.WELD) {
     /**
      * The local anchor point relative to body1's origin.
      */
-    public final Vec2 localAnchorA;
+    val localAnchorA = Vec2()
 
     /**
      * The local anchor point relative to body2's origin.
      */
-    public final Vec2 localAnchorB;
+    val localAnchorB = Vec2()
 
     /**
      * The body2 angle minus body1 angle in the reference state (radians).
      */
-    public float referenceAngle;
+    var referenceAngle = 0.0f
 
     /**
      * The mass-spring-damper frequency in Hertz. Rotation only. Disable
      * softness with a value of 0.
      */
-    public float frequencyHz;
+    var frequencyHz = 0f
 
     /**
      * The damping ratio. 0 = no damping, 1 = critical damping.
      */
-    public float dampingRatio;
-
-    public WeldJointDef()
-    {
-        super(JointType.WELD);
-        localAnchorA = new Vec2();
-        localAnchorB = new Vec2();
-        referenceAngle = 0.0f;
-    }
+    var dampingRatio = 0f
 
     /**
      * Initialize the bodies, anchors, and reference angle using a world anchor
      * point.
      */
-    public void initialize(Body bA, Body bB, Vec2 anchor)
-    {
-        bodyA = bA;
-        bodyB = bB;
-        bodyA.getLocalPointToOut(anchor, localAnchorA);
-        bodyB.getLocalPointToOut(anchor, localAnchorB);
-        referenceAngle = bodyB.getAngle() - bodyA.getAngle();
+    fun initialize(bA: Body, bB: Body, anchor: Vec2) {
+        bodyA = bA
+        bodyB = bB
+        bodyA!!.getLocalPointToOut(anchor, localAnchorA)
+        bodyB!!.getLocalPointToOut(anchor, localAnchorB)
+        referenceAngle = bodyB!!.angle - bodyA!!.angle
     }
 }

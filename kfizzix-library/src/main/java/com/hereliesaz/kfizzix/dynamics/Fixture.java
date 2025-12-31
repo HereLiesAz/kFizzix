@@ -21,20 +21,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
-import com.hereliesaz.kfizzix.collision.AABB;
-import com.hereliesaz.kfizzix.collision.RayCastInput;
-import com.hereliesaz.kfizzix.collision.RayCastOutput;
-import com.hereliesaz.kfizzix.collision.broadphase.BroadPhase;
-import com.hereliesaz.kfizzix.collision.shapes.MassData;
-import com.hereliesaz.kfizzix.collision.shapes.Shape;
-import com.hereliesaz.kfizzix.collision.shapes.ShapeType;
-import com.hereliesaz.kfizzix.common.MathUtils;
-import com.hereliesaz.kfizzix.common.Transform;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
-import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge;
+import com.hereliesaz.kfizzix.collision.AABB
+import com.hereliesaz.kfizzix.collision.RayCastInput
+import com.hereliesaz.kfizzix.collision.RayCastOutput
+import com.hereliesaz.kfizzix.collision.broadphase.BroadPhase
+import com.hereliesaz.kfizzix.collision.shapes.MassData
+import com.hereliesaz.kfizzix.collision.shapes.Shape
+import com.hereliesaz.kfizzix.collision.shapes.ShapeType
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Transform
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact
+import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * A fixture is used to attach a shape to a body for collision detection. A
@@ -46,63 +48,58 @@ import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge;
  *
  * @author Daniel Murphy
  */
-public class Fixture
-{
-
-    public Fixture next;
-
-    public Body body;
+class Fixture {
+    var next: Fixture? = null
+    var body: Body? = null
 
     /**
      * The shape, this must be set. The shape will be cloned, so you can create
      * the shape on the stack.
      */
-    public Shape shape;
+    var shape: Shape? = null
 
     /**
      * Use this to store application specific fixture data.
      */
-    public Object userData;
+    var userData: Any? = null
 
     /**
      * The friction coefficient, usually in the range [0,1].
      */
-    public float friction;
+    var friction = 0f
 
     /**
      * The restitution (elasticity) usually in the range [0,1].
      */
-    public float restitution;
+    var restitution = 0f
 
     /**
      * The density, usually in kg/m^2
      */
-    public float density;
+    var density = 0f
 
     /**
      * A sensor shape collects contact information but never generates a
      * collision response.
      */
-    public boolean isSensor;
+    var isSensor = false
 
     /**
      * Contact filtering data;
      */
-    public final Filter filter;
+    val filter: Filter
 
-    public FixtureProxy[] proxies;
+    var proxies: Array<FixtureProxy?>? = null
+    var proxyCount = 0
 
-    public int proxyCount;
-
-    public Fixture()
-    {
-        userData = null;
-        body = null;
-        next = null;
-        proxies = null;
-        proxyCount = 0;
-        shape = null;
-        filter = new Filter();
+    init {
+        userData = null
+        body = null
+        next = null
+        proxies = null
+        proxyCount = 0
+        shape = null
+        filter = Filter()
     }
 
     /**
@@ -111,42 +108,8 @@ public class Fixture
      *
      * @return The shape type.
      */
-    public ShapeType getType()
-    {
-        return shape.getType();
-    }
-
-    /**
-     * Get the child shape. You can modify the child shape, however, you should
-     * not change the number of vertices because this will crash some collision
-     * caching mechanisms.
-     */
-    public Shape getShape()
-    {
-        return shape;
-    }
-
-    /**
-     * Is this fixture a sensor (non-solid)?
-     *
-     * @return The true if the shape is a sensor.
-     */
-    public boolean isSensor()
-    {
-        return isSensor;
-    }
-
-    /**
-     * Set if this fixture is a sensor.
-     */
-    public void setSensor(boolean sensor)
-    {
-        if (sensor != isSensor)
-        {
-            body.setAwake(true);
-            isSensor = sensor;
-        }
-    }
+    val type: ShapeType
+        get() = shape!!.type
 
     /**
      * Set the contact filtering data. This is an expensive operation and should
@@ -154,103 +117,39 @@ public class Fixture
      * time step when either parent body is awake. This automatically calls
      * refilter.
      */
-    public void setFilterData(final Filter filter)
-    {
-        this.filter.set(filter);
-        refilter();
-    }
-
-    /**
-     * Get the contact filtering data.
-     */
-    public Filter getFilterData()
-    {
-        return filter;
+    fun setFilterData(filter: Filter) {
+        this.filter.set(filter)
+        refilter()
     }
 
     /**
      * Call this if you want to establish a collision that was previously
      * disabled by ContactFilter::ShouldCollide.
      */
-    public void refilter()
-    {
-        if (body == null)
-        {
-            return;
+    fun refilter() {
+        if (body == null) {
+            return
         }
         // Flag associated contacts for filtering.
-        ContactEdge edge = body.getContactList();
-        while (edge != null)
-        {
-            Contact contact = edge.contact;
-            Fixture fixtureA = contact.getFixtureA();
-            Fixture fixtureB = contact.getFixtureB();
-            if (fixtureA == this || fixtureB == this)
-            {
-                contact.flagForFiltering();
+        var edge = body!!.contactList
+        while (edge != null) {
+            val contact = edge.contact
+            val fixtureA = contact!!.fixtureA
+            val fixtureB = contact.fixtureB
+            if (fixtureA === this || fixtureB === this) {
+                contact.flagForFiltering()
             }
-            edge = edge.next;
+            edge = edge.next
         }
-        World world = body.getWorld();
-        if (world == null)
-        {
-            return;
+        val world = body!!.world
+        if (world == null) {
+            return
         }
         // Touch each proxy so that new pairs may be created
-        BroadPhase broadPhase = world.contactManager.broadPhase;
-        for (int i = 0; i < proxyCount; ++i)
-        {
-            broadPhase.touchProxy(proxies[i].proxyId);
+        val broadPhase = world.contactManager.broadPhase
+        for (i in 0 until proxyCount) {
+            broadPhase.touchProxy(proxies!![i]!!.proxyId)
         }
-    }
-
-    /**
-     * Get the parent body of this fixture. This is NULL if the fixture is not
-     * attached.
-     *
-     * @return The parent body.
-     */
-    public Body getBody()
-    {
-        return body;
-    }
-
-    /**
-     * Get the next fixture in the parent body's fixture list.
-     *
-     * @return The next shape.
-     */
-    public Fixture getNext()
-    {
-        return next;
-    }
-
-    public void setDensity(float density)
-    {
-        assert (density >= 0f);
-        this.density = density;
-    }
-
-    public float getDensity()
-    {
-        return density;
-    }
-
-    /**
-     * Get the user data that was assigned in the fixture definition. Use this
-     * to store your application-specific data.
-     */
-    public Object getUserData()
-    {
-        return userData;
-    }
-
-    /**
-     * Set the user data. Use this to store your application-specific data.
-     */
-    public void setUserData(Object data)
-    {
-        userData = data;
     }
 
     /**
@@ -259,9 +158,8 @@ public class Fixture
      *
      * @param p A point in the world coordinates.
      */
-    public boolean testPoint(final Vec2 p)
-    {
-        return shape.testPoint(body.xf, p);
+    fun testPoint(p: Vec2): Boolean {
+        return shape!!.testPoint(body!!.xf, p)
     }
 
     /**
@@ -270,53 +168,19 @@ public class Fixture
      * @param output The ray-cast results.
      * @param input The ray-cast input parameters.
      */
-    public boolean raycast(RayCastOutput output, RayCastInput input,
-            int childIndex)
-    {
-        return shape.raycast(output, input, body.xf, childIndex);
+    fun raycast(
+        output: RayCastOutput, input: RayCastInput,
+        childIndex: Int
+    ): Boolean {
+        return shape!!.raycast(output, input, body!!.xf, childIndex)
     }
 
     /**
      * Get the mass data for this fixture. The mass data is based on the density
      * and the shape. The rotational inertia is about the shape's origin.
      */
-    public void getMassData(MassData massData)
-    {
-        shape.computeMass(massData, density);
-    }
-
-    /**
-     * Get the coefficient of friction.
-     */
-    public float getFriction()
-    {
-        return friction;
-    }
-
-    /**
-     * Set the coefficient of friction. This will _not_ change the friction of
-     * existing contacts.
-     */
-    public void setFriction(float friction)
-    {
-        this.friction = friction;
-    }
-
-    /**
-     * Get the coefficient of restitution.
-     */
-    public float getRestitution()
-    {
-        return restitution;
-    }
-
-    /**
-     * Set the coefficient of restitution. This will _not_ change the
-     * restitution of existing contacts.
-     */
-    public void setRestitution(float restitution)
-    {
-        this.restitution = restitution;
+    fun getMassData(massData: MassData) {
+        shape!!.computeMass(massData, density)
     }
 
     /**
@@ -324,10 +188,9 @@ public class Fixture
      * need a more accurate AABB, compute it using the shape and the body
      * transform.
      */
-    public AABB getAABB(int childIndex)
-    {
-        assert (childIndex >= 0 && childIndex < proxyCount);
-        return proxies[childIndex].aabb;
+    fun getAABB(childIndex: Int): AABB {
+        assert(childIndex >= 0 && childIndex < proxyCount)
+        return proxies!![childIndex]!!.aabb
     }
 
     /**
@@ -337,137 +200,119 @@ public class Fixture
      *
      * @return distance
      */
-    public float computeDistance(Vec2 p, int childIndex, Vec2 normalOut)
-    {
-        return shape.computeDistanceToOut(body.getTransform(), p, childIndex,
-                normalOut);
+    fun computeDistance(p: Vec2, childIndex: Int, normalOut: Vec2): Float {
+        return shape!!.computeDistanceToOut(
+            body!!.transform, p, childIndex,
+            normalOut
+        )
     }
     // We need separation create/destroy functions from the
     // constructor/destructor because
     // the destructor cannot access the allocator (no destructor arguments
     // allowed by C++).
-
-    public void create(Body body, FixtureDef def)
-    {
-        userData = def.userData;
-        friction = def.friction;
-        restitution = def.restitution;
-        this.body = body;
-        next = null;
-        filter.set(def.filter);
-        isSensor = def.isSensor;
-        shape = def.shape.clone();
+    fun create(body: Body, def: FixtureDef) {
+        userData = def.userData
+        friction = def.friction
+        restitution = def.restitution
+        this.body = body
+        next = null
+        filter.set(def.filter)
+        isSensor = def.isSensor
+        shape = def.shape!!.clone()
         // Reserve proxy space
-        int childCount = shape.getChildCount();
-        if (proxies == null)
-        {
-            proxies = new FixtureProxy[childCount];
-            for (int i = 0; i < childCount; i++)
-            {
-                proxies[i] = new FixtureProxy();
-                proxies[i].fixture = null;
-                proxies[i].proxyId = BroadPhase.NULL_PROXY;
+        val childCount = shape!!.childCount
+        if (proxies == null) {
+            proxies = arrayOfNulls(childCount)
+            for (i in 0 until childCount) {
+                proxies!![i] = FixtureProxy()
+                proxies!![i]!!.fixture = null
+                proxies!![i]!!.proxyId = BroadPhase.NULL_PROXY
             }
         }
-        if (proxies.length < childCount)
-        {
-            FixtureProxy[] old = proxies;
-            int newLen = MathUtils.max(old.length * 2, childCount);
-            proxies = new FixtureProxy[newLen];
-            System.arraycopy(old, 0, proxies, 0, old.length);
-            for (int i = 0; i < newLen; i++)
-            {
-                if (i >= old.length)
-                {
-                    proxies[i] = new FixtureProxy();
+        if (proxies!!.size < childCount) {
+            val old = proxies
+            val newLen = MathUtils.max(old!!.size * 2, childCount)
+            proxies = arrayOfNulls(newLen)
+            System.arraycopy(old, 0, proxies!!, 0, old.size)
+            for (i in 0 until newLen) {
+                if (i >= old.size) {
+                    proxies!![i] = FixtureProxy()
                 }
-                proxies[i].fixture = null;
-                proxies[i].proxyId = BroadPhase.NULL_PROXY;
+                proxies!![i]!!.fixture = null
+                proxies!![i]!!.proxyId = BroadPhase.NULL_PROXY
             }
         }
-        proxyCount = 0;
-        density = def.density;
+        proxyCount = 0
+        density = def.density
     }
 
-    public void destroy()
-    {
+    fun destroy() {
         // The proxies must be destroyed before calling this.
-        assert (proxyCount == 0);
+        assert(proxyCount == 0)
         // Free the child shape.
-        shape = null;
-        proxies = null;
-        next = null;
+        shape = null
+        proxies = null
+        next = null
         // TODO pool shapes
         // TODO pool fixtures
     }
 
     // These support body activation/deactivation.
-    public void createProxies(BroadPhase broadPhase, final Transform xf)
-    {
-        assert (proxyCount == 0);
+    fun createProxies(broadPhase: BroadPhase, xf: Transform) {
+        assert(proxyCount == 0)
         // Create proxies in the broad-phase.
-        proxyCount = shape.getChildCount();
-        for (int i = 0; i < proxyCount; ++i)
-        {
-            FixtureProxy proxy = proxies[i];
-            shape.computeAABB(proxy.aabb, xf, i);
-            proxy.proxyId = broadPhase.createProxy(proxy.aabb, proxy);
-            proxy.fixture = this;
-            proxy.childIndex = i;
+        proxyCount = shape!!.childCount
+        for (i in 0 until proxyCount) {
+            val proxy = proxies!![i]
+            shape!!.computeAABB(proxy!!.aabb, xf, i)
+            proxy.proxyId = broadPhase.createProxy(proxy.aabb, proxy)
+            proxy.fixture = this
+            proxy.childIndex = i
         }
     }
 
     /**
      * Internal method
      */
-    public void destroyProxies(BroadPhase broadPhase)
-    {
+    fun destroyProxies(broadPhase: BroadPhase) {
         // Destroy proxies in the broad-phase.
-        for (int i = 0; i < proxyCount; ++i)
-        {
-            FixtureProxy proxy = proxies[i];
-            broadPhase.destroyProxy(proxy.proxyId);
-            proxy.proxyId = BroadPhase.NULL_PROXY;
+        for (i in 0 until proxyCount) {
+            val proxy = proxies!![i]
+            broadPhase.destroyProxy(proxy!!.proxyId)
+            proxy.proxyId = BroadPhase.NULL_PROXY
         }
-        proxyCount = 0;
+        proxyCount = 0
     }
 
-    private final AABB pool1 = new AABB();
-
-    private final AABB pool2 = new AABB();
-
-    private final Vec2 displacement = new Vec2();
+    private val pool1 = AABB()
+    private val pool2 = AABB()
+    private val displacement = Vec2()
 
     /**
      * Internal method
      */
-    protected void synchronize(BroadPhase broadPhase,
-            final Transform transform1, final Transform transform2)
-    {
-        if (proxyCount == 0)
-        {
-            return;
+    fun synchronize(
+        broadPhase: BroadPhase,
+        transform1: Transform, transform2: Transform
+    ) {
+        if (proxyCount == 0) {
+            return
         }
-        for (int i = 0; i < proxyCount; ++i)
-        {
-            FixtureProxy proxy = proxies[i];
+        for (i in 0 until proxyCount) {
+            val proxy = proxies!![i]
             // Compute an AABB that covers the swept shape (may miss some
             // rotation effect).
-            final AABB aabb1 = pool1;
-            final AABB aab = pool2;
-            shape.computeAABB(aabb1, transform1, proxy.childIndex);
-            shape.computeAABB(aab, transform2, proxy.childIndex);
-            proxy.aabb.lowerBound.x = Math.min(aabb1.lowerBound.x,
-                    aab.lowerBound.x);
-            proxy.aabb.lowerBound.y = Math.min(aabb1.lowerBound.y,
-                    aab.lowerBound.y);
-            proxy.aabb.upperBound.x = Math.max(aabb1.upperBound.x,
-                    aab.upperBound.x);
-            proxy.aabb.upperBound.y = Math.max(aabb1.upperBound.y,
-                    aab.upperBound.y);
-            displacement.x = transform2.p.x - transform1.p.x;
-            displacement.y = transform2.p.y - transform1.p.y;
-            broadPhase.moveProxy(proxy.proxyId, proxy.aabb, displacement);
+            val aabb1 = pool1
+            val aab = pool2
+            shape!!.computeAABB(aabb1, transform1, proxy!!.childIndex)
+            shape!!.computeAABB(aab, transform2, proxy.childIndex)
+            proxy.aabb.lowerBound.x = min(aabb1.lowerBound.x, aab.lowerBound.x)
+            proxy.aabb.lowerBound.y = min(aabb1.lowerBound.y, aab.lowerBound.y)
+            proxy.aabb.upperBound.x = max(aabb1.upperBound.x, aab.upperBound.x)
+            proxy.aabb.upperBound.y = max(aabb1.upperBound.y, aab.upperBound.y)
+            displacement.x = transform2.p.x - transform1.p.x
+            displacement.y = transform2.p.y - transform1.p.y
+            broadPhase.moveProxy(proxy.proxyId, proxy.aabb, displacement)
         }
     }
 }

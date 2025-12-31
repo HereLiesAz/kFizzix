@@ -18,7 +18,7 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
 package com.hereliesaz.kfizzix.common
@@ -32,18 +32,21 @@ object BufferUtils {
     /**
      * Reallocate a buffer.
      */
+    @Suppress("UNCHECKED_CAST")
     fun <T> reallocateBuffer(
-        klass: Class<T>, oldBuffer: Array<T>?,
+        klass: Class<T>, oldBuffer: kotlin.Array<T?>?,
         oldCapacity: Int, newCapacity: Int
-    ): Array<T> {
+    ): kotlin.Array<T?> {
         assert(newCapacity > oldCapacity)
-        val newBuffer = Array.newInstance(klass, newCapacity) as Array<T>
+        val newBuffer = Array.newInstance(klass, newCapacity) as kotlin.Array<T?>
         if (oldBuffer != null) {
             System.arraycopy(oldBuffer, 0, newBuffer, 0, oldCapacity)
         }
         for (i in oldCapacity until newCapacity) {
             try {
-                newBuffer[i] = klass.getDeclaredConstructor().newInstance()
+                if (!klass.isPrimitive) {
+                    newBuffer[i] = klass.getDeclaredConstructor().newInstance()
+                }
             } catch (e: Exception) {
                 throw RuntimeException(e)
             }
@@ -87,10 +90,10 @@ object BufferUtils {
      * must be kept.
      */
     fun <T> reallocateBuffer(
-        klass: Class<T>, buffer: Array<T>?,
+        klass: Class<T>, buffer: kotlin.Array<T?>?,
         userSuppliedCapacity: Int, oldCapacity: Int, newCapacity: Int,
         deferred: Boolean
-    ): Array<T>? {
+    ): kotlin.Array<T?>? {
         var buffer = buffer
         assert(newCapacity > oldCapacity)
         assert(userSuppliedCapacity == 0 || newCapacity <= userSuppliedCapacity)
@@ -140,7 +143,7 @@ object BufferUtils {
     /**
      * Rotate an array, see std::rotate
      */
-    fun <T> rotate(ray: Array<T>, first: Int, new_first: Int, last: Int) {
+    fun <T> rotate(ray: kotlin.Array<T?>, first: Int, new_first: Int, last: Int) {
         var first = first
         var new_first = new_first
         var next = new_first

@@ -21,7 +21,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.common;
+package com.hereliesaz.kfizzix.common
 
 /**
  * Contains methods from MathUtils that rely on JVM features. These are
@@ -30,21 +30,19 @@ package com.hereliesaz.kfizzix.common;
  *
  * @author Daniel Murphy
  */
-class PlatformMathUtils
-{
-    private static final float SHIFT23 = 1 << 23;
+open class PlatformMathUtils {
+    private val SHIFT23 = (1 shl 23).toFloat()
+    private val INV_SHIFT23 = 1.0f / SHIFT23
 
-    private static final float INV_SHIFT23 = 1.0f / SHIFT23;
-
-    public static float fastPow(float a, float b)
-    {
-        float x = Float.floatToRawIntBits(a);
-        x *= INV_SHIFT23;
-        x -= 127;
-        float y = x - (x >= 0 ? (int) x : (int) x - 1);
-        b *= x + (y - y * y) * 0.346607f;
-        y = b - (b >= 0 ? (int) b : (int) b - 1);
-        y = (y - y * y) * 0.33971f;
-        return Float.intBitsToFloat((int) ((b + 127 - y) * SHIFT23));
+    fun fastPow(a: Float, b: Float): Float {
+        var x = java.lang.Float.floatToRawIntBits(a).toFloat()
+        x *= INV_SHIFT23
+        x -= 127f
+        var y = x - if (x >= 0) x.toInt() else x.toInt() - 1
+        var b = b
+        b *= x + (y - y * y) * 0.346607f
+        y = b - if (b >= 0) b.toInt() else b.toInt() - 1
+        y = (y - y * y) * 0.33971f
+        return java.lang.Float.intBitsToFloat(((b + 127 - y) * SHIFT23).toInt())
     }
 }

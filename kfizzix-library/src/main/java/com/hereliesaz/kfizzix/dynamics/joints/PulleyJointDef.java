@@ -21,11 +21,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Settings;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Settings
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * Pulley joint definition. This requires two ground anchors, two dynamic body
@@ -33,75 +33,64 @@ import com.hereliesaz.kfizzix.dynamics.Body;
  *
  * @author Daniel Murphy
  */
-public class PulleyJointDef extends JointDef
-{
+class PulleyJointDef : JointDef(JointType.PULLEY) {
     /**
      * The first ground anchor in the world coordinates. This point never moves.
      */
-    public Vec2 groundAnchorA;
+    var groundAnchorA: Vec2 = Vec2(-1.0f, 1.0f)
 
     /**
      * The second ground anchor in the world coordinates. This point never
      * moves.
      */
-    public Vec2 groundAnchorB;
+    var groundAnchorB: Vec2 = Vec2(1.0f, 1.0f)
 
     /**
      * The local anchor point relative to bodyA's origin.
      */
-    public Vec2 localAnchorA;
+    var localAnchorA: Vec2 = Vec2(-1.0f, 0.0f)
 
     /**
      * The local anchor point relative to bodyB's origin.
      */
-    public Vec2 localAnchorB;
+    var localAnchorB: Vec2 = Vec2(1.0f, 0.0f)
 
     /**
      * The reference length for the segment attached to bodyA.
      */
-    public float lengthA;
+    var lengthA: Float = 0.0f
 
     /**
      * The reference length for the segment attached to bodyB.
      */
-    public float lengthB;
+    var lengthB: Float = 0.0f
 
     /**
      * The pulley ratio, used to simulate a block-and-tackle.
      */
-    public float ratio;
+    var ratio: Float = 1.0f
 
-    public PulleyJointDef()
-    {
-        super(JointType.PULLEY);
-        groundAnchorA = new Vec2(-1.0f, 1.0f);
-        groundAnchorB = new Vec2(1.0f, 1.0f);
-        localAnchorA = new Vec2(-1.0f, 0.0f);
-        localAnchorB = new Vec2(1.0f, 0.0f);
-        lengthA = 0.0f;
-        lengthB = 0.0f;
-        ratio = 1.0f;
-        collideConnected = true;
+    init {
+        collideConnected = true
     }
 
     /**
      * Initialize the bodies, anchors, lengths, max lengths, and ratio using the
      * world anchors.
      */
-    public void initialize(Body b1, Body b2, Vec2 ga1, Vec2 ga2, Vec2 anchor1,
-            Vec2 anchor2, float r)
-    {
-        bodyA = b1;
-        bodyB = b2;
-        groundAnchorA = ga1;
-        groundAnchorB = ga2;
-        localAnchorA = bodyA.getLocalPoint(anchor1);
-        localAnchorB = bodyB.getLocalPoint(anchor2);
-        Vec2 d1 = anchor1.sub(ga1);
-        lengthA = d1.length();
-        Vec2 d2 = anchor2.sub(ga2);
-        lengthB = d2.length();
-        ratio = r;
-        assert (ratio > Settings.EPSILON);
+    fun initialize(b1: Body, b2: Body, ga1: Vec2, ga2: Vec2, anchor1: Vec2,
+                   anchor2: Vec2, r: Float) {
+        bodyA = b1
+        bodyB = b2
+        groundAnchorA = ga1
+        groundAnchorB = ga2
+        localAnchorA = bodyA!!.getLocalPoint(anchor1)
+        localAnchorB = bodyB!!.getLocalPoint(anchor2)
+        val d1 = anchor1.sub(ga1)
+        lengthA = d1.length()
+        val d2 = anchor2.sub(ga2)
+        lengthB = d2.length()
+        ratio = r
+        assert(ratio > Settings.EPSILON)
     }
 }

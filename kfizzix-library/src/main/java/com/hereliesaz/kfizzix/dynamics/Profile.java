@@ -21,106 +21,74 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
-import java.util.List;
-
-import com.hereliesaz.kfizzix.common.MathUtils;
+import com.hereliesaz.kfizzix.common.MathUtils
 
 /**
  * @author Daniel Murphy
  */
-public class Profile
-{
-    private static final int LONG_AVG_NUMS = 20;
+class Profile {
+    class ProfileEntry {
+        var longAvg = 0f
+        var shortAvg = 0f
+        var min: Float = Float.MAX_VALUE
+        var max: Float = -Float.MAX_VALUE
+        var accum = 0f
 
-    private static final float LONG_FRACTION = 1f / LONG_AVG_NUMS;
-
-    private static final int SHORT_AVG_NUMS = 5;
-
-    private static final float SHORT_FRACTION = 1f / SHORT_AVG_NUMS;
-
-    public static class ProfileEntry
-    {
-        float longAvg;
-
-        float shortAvg;
-
-        float min;
-
-        float max;
-
-        float accum;
-
-        public ProfileEntry()
-        {
-            min = Float.MAX_VALUE;
-            max = -Float.MAX_VALUE;
+        fun record(value: Float) {
+            longAvg = longAvg * (1 - LONG_FRACTION) + value * LONG_FRACTION
+            shortAvg = shortAvg * (1 - SHORT_FRACTION) + value * SHORT_FRACTION
+            min = MathUtils.min(value, min)
+            max = MathUtils.max(value, max)
         }
 
-        public void record(float value)
-        {
-            longAvg = longAvg * (1 - LONG_FRACTION) + value * LONG_FRACTION;
-            shortAvg = shortAvg * (1 - SHORT_FRACTION) + value * SHORT_FRACTION;
-            min = MathUtils.min(value, min);
-            max = MathUtils.max(value, max);
+        fun startAccum() {
+            accum = 0f
         }
 
-        public void startAccum()
-        {
-            accum = 0;
+        fun accum(value: Float) {
+            accum += value
         }
 
-        public void accum(float value)
-        {
-            accum += value;
+        fun endAccum() {
+            record(accum)
         }
 
-        public void endAccum()
-        {
-            record(accum);
-        }
-
-        @Override
-        public String toString()
-        {
-            return String.format("%.2f (%.2f) [%.2f,%.2f]", shortAvg, longAvg,
-                    min, max);
+        override fun toString(): String {
+            return String.format("%.2f (%.2f) [%.2f,%.2f]", shortAvg, longAvg, min, max)
         }
     }
 
-    public final ProfileEntry step = new ProfileEntry();
+    val step = ProfileEntry()
+    val stepInit = ProfileEntry()
+    val collide = ProfileEntry()
+    val solveParticleSystem = ProfileEntry()
+    val solve = ProfileEntry()
+    val solveInit = ProfileEntry()
+    val solveVelocity = ProfileEntry()
+    val solvePosition = ProfileEntry()
+    val broadphase = ProfileEntry()
+    val solveTOI = ProfileEntry()
 
-    public final ProfileEntry stepInit = new ProfileEntry();
+    fun toDebugStrings(strings: MutableList<String>) {
+        strings.add("Profile:")
+        strings.add(" step: $step")
+        strings.add("  init: $stepInit")
+        strings.add("  collide: $collide")
+        strings.add("  particles: $solveParticleSystem")
+        strings.add("  solve: $solve")
+        strings.add("   solveInit: $solveInit")
+        strings.add("   solveVelocity: $solveVelocity")
+        strings.add("   solvePosition: $solvePosition")
+        strings.add("   broadphase: $broadphase")
+        strings.add("  solveTOI: $solveTOI")
+    }
 
-    public final ProfileEntry collide = new ProfileEntry();
-
-    public final ProfileEntry solveParticleSystem = new ProfileEntry();
-
-    public final ProfileEntry solve = new ProfileEntry();
-
-    public final ProfileEntry solveInit = new ProfileEntry();
-
-    public final ProfileEntry solveVelocity = new ProfileEntry();
-
-    public final ProfileEntry solvePosition = new ProfileEntry();
-
-    public final ProfileEntry broadphase = new ProfileEntry();
-
-    public final ProfileEntry solveTOI = new ProfileEntry();
-
-    public void toDebugStrings(List<String> strings)
-    {
-        strings.add("Profile:");
-        strings.add(" step: " + step);
-        strings.add("  init: " + stepInit);
-        strings.add("  collide: " + collide);
-        strings.add("  particles: " + solveParticleSystem);
-        strings.add("  solve: " + solve);
-        strings.add("   solveInit: " + solveInit);
-        strings.add("   solveVelocity: " + solveVelocity);
-        strings.add("   solvePosition: " + solvePosition);
-        strings.add("   broadphase: " + broadphase);
-        strings.add("  solveTOI: " + solveTOI);
+    companion object {
+        private const val LONG_AVG_NUMS = 20
+        private const val LONG_FRACTION = 1f / LONG_AVG_NUMS
+        private const val SHORT_AVG_NUMS = 5
+        private const val SHORT_FRACTION = 1f / SHORT_AVG_NUMS
     }
 }

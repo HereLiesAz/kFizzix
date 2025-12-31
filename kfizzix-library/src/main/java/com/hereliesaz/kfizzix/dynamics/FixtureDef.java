@@ -21,9 +21,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
-import com.hereliesaz.kfizzix.collision.shapes.Shape;
+import com.hereliesaz.kfizzix.collision.shapes.Shape
 
 /**
  * A fixture definition is used to create a fixture. This class defines an
@@ -31,169 +31,41 @@ import com.hereliesaz.kfizzix.collision.shapes.Shape;
  *
  * @author Daniel Murphy
  */
-public class FixtureDef
-{
+class FixtureDef {
     /**
      * The shape, this must be set. The shape will be cloned, so you can create
      * the shape on the stack.
      */
-    public Shape shape;
+    var shape: Shape? = null
 
     /**
      * Use this to store application specific fixture data.
      */
-    public Object userData;
+    var userData: Any? = null
 
     /**
      * The friction coefficient, usually in the range [0,1].
      */
-    public float friction;
+    var friction = 0.2f
 
     /**
      * The restitution (elasticity) usually in the range [0,1].
      */
-    public float restitution;
+    var restitution = 0f
 
     /**
      * The density, usually in kg/m^2
      */
-    public float density;
+    var density = 0f
 
     /**
      * A sensor shape collects contact information but never generates a
      * collision response.
      */
-    public boolean isSensor;
+    var isSensor = false
 
     /**
      * Contact filtering data;
      */
-    public Filter filter;
-
-    public FixtureDef()
-    {
-        shape = null;
-        userData = null;
-        friction = 0.2f;
-        restitution = 0f;
-        density = 0f;
-        filter = new Filter();
-        isSensor = false;
-    }
-
-    /**
-     * The shape, this must be set. The shape will be cloned, so you can create
-     * the shape on the stack.
-     */
-    public Shape getShape()
-    {
-        return shape;
-    }
-
-    /**
-     * The shape, this must be set. The shape will be cloned, so you can create
-     * the shape on the stack.
-     */
-    public void setShape(Shape shape)
-    {
-        this.shape = shape;
-    }
-
-    /**
-     * Use this to store application specific fixture data.
-     */
-    public Object getUserData()
-    {
-        return userData;
-    }
-
-    /**
-     * Use this to store application specific fixture data.
-     */
-    public void setUserData(Object userData)
-    {
-        this.userData = userData;
-    }
-
-    /**
-     * The friction coefficient, usually in the range [0,1].
-     */
-    public float getFriction()
-    {
-        return friction;
-    }
-
-    /**
-     * The friction coefficient, usually in the range [0,1].
-     */
-    public void setFriction(float friction)
-    {
-        this.friction = friction;
-    }
-
-    /**
-     * The restitution (elasticity) usually in the range [0,1].
-     */
-    public float getRestitution()
-    {
-        return restitution;
-    }
-
-    /**
-     * The restitution (elasticity) usually in the range [0,1].
-     */
-    public void setRestitution(float restitution)
-    {
-        this.restitution = restitution;
-    }
-
-    /**
-     * The density, usually in kg/m^2
-     */
-    public float getDensity()
-    {
-        return density;
-    }
-
-    /**
-     * The density, usually in kg/m^2
-     */
-    public void setDensity(float density)
-    {
-        this.density = density;
-    }
-
-    /**
-     * A sensor shape collects contact information but never generates a
-     * collision response.
-     */
-    public boolean isSensor()
-    {
-        return isSensor;
-    }
-
-    /**
-     * A sensor shape collects contact information but never generates a
-     * collision response.
-     */
-    public void setSensor(boolean isSensor)
-    {
-        this.isSensor = isSensor;
-    }
-
-    /**
-     * Contact filtering data;
-     */
-    public Filter getFilter()
-    {
-        return filter;
-    }
-
-    /**
-     * Contact filtering data;
-     */
-    public void setFilter(Filter filter)
-    {
-        this.filter = filter;
-    }
+    var filter = Filter()
 }

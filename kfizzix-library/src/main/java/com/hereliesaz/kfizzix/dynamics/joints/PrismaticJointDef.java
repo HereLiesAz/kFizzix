@@ -21,10 +21,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * Prismatic joint definition. This requires defining a line of motion using an
@@ -37,86 +37,68 @@ import com.hereliesaz.kfizzix.dynamics.Body;
  * @warning at least one body should be dynamic with a non-fixed rotation.
  *
  * @author Daniel Murphy
- *
  */
-public class PrismaticJointDef extends JointDef
-{
+class PrismaticJointDef : JointDef(JointType.PRISMATIC) {
     /**
      * The local anchor point relative to body1's origin.
      */
-    public final Vec2 localAnchorA;
+    val localAnchorA = Vec2()
 
     /**
      * The local anchor point relative to body2's origin.
      */
-    public final Vec2 localAnchorB;
+    val localAnchorB = Vec2()
 
     /**
      * The local translation axis in body1.
      */
-    public final Vec2 localAxisA;
+    val localAxisA = Vec2(1.0f, 0.0f)
 
     /**
      * The constrained angle between the bodies: body2_angle - body1_angle.
      */
-    public float referenceAngle;
+    var referenceAngle = 0.0f
 
     /**
      * Enable/disable the joint limit.
      */
-    public boolean enableLimit;
+    var enableLimit = false
 
     /**
      * The lower translation limit, usually in meters.
      */
-    public float lowerTranslation;
+    var lowerTranslation = 0.0f
 
     /**
      * The upper translation limit, usually in meters.
      */
-    public float upperTranslation;
+    var upperTranslation = 0.0f
 
     /**
      * Enable/disable the joint motor.
      */
-    public boolean enableMotor;
+    var enableMotor = false
 
     /**
      * The maximum motor torque, usually in N-m.
      */
-    public float maxMotorForce;
+    var maxMotorForce = 0.0f
 
     /**
      * The desired motor speed in radians per second.
      */
-    public float motorSpeed;
-
-    public PrismaticJointDef()
-    {
-        super(JointType.PRISMATIC);
-        localAnchorA = new Vec2();
-        localAnchorB = new Vec2();
-        localAxisA = new Vec2(1.0f, 0.0f);
-        referenceAngle = 0.0f;
-        enableLimit = false;
-        lowerTranslation = 0.0f;
-        upperTranslation = 0.0f;
-        enableMotor = false;
-        maxMotorForce = 0.0f;
-        motorSpeed = 0.0f;
-    }
+    var motorSpeed = 0.0f
 
     /**
      * Initialize the bodies, anchors, axis, and reference angle using the world
      * anchor and world axis.
      */
-    public void initialize(Body b1, Body b2, Vec2 anchor, Vec2 axis)
-    {
-        bodyA = b1;
-        bodyB = b2;
-        bodyA.getLocalPointToOut(anchor, localAnchorA);
-        bodyB.getLocalPointToOut(anchor, localAnchorB);
-        bodyA.getLocalVectorToOut(axis, localAxisA);
-        referenceAngle = bodyB.getAngle() - bodyA.getAngle();
+    fun initialize(b1: Body, b2: Body, anchor: Vec2, axis: Vec2) {
+        bodyA = b1
+        bodyB = b2
+        bodyA!!.getLocalPointToOut(anchor, localAnchorA)
+        bodyB!!.getLocalPointToOut(anchor, localAnchorB)
+        bodyA!!.getLocalVectorToOut(axis, localAxisA)
+        referenceAngle = bodyB!!.angle - bodyA!!.angle
     }
 }

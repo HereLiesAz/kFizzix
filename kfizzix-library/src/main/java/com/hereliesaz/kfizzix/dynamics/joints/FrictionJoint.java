@@ -21,14 +21,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Mat22;
-import com.hereliesaz.kfizzix.common.MathUtils;
-import com.hereliesaz.kfizzix.common.Rot;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.SolverData;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.common.Mat22
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Rot
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.SolverData
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * @repolink https://github.com/erincatto/box2d/blob/main/include/box2d/b2_friction_joint.h
@@ -36,197 +36,97 @@ import com.hereliesaz.kfizzix.pooling.WorldPool;
  *
  * @author Daniel Murphy
  */
-public class FrictionJoint extends Joint
-{
+class FrictionJoint(argWorldPool: WorldPool, def: FrictionJointDef) : Joint(argWorldPool, def) {
     /**
      * The local anchor point relative to bodyA's origin.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L45-L46
      */
-    private final Vec2 localAnchorA;
+    val localAnchorA: Vec2 = Vec2(def.localAnchorA)
 
     /**
      * The local anchor point relative to bodyB's origin.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L48-L49
      */
-    private final Vec2 localAnchorB;
+    val localAnchorB: Vec2 = Vec2(def.localAnchorB)
 
     // Solver shared
-    private final Vec2 linearImpulse;
+    private val linearImpulse: Vec2 = Vec2()
 
     /**
      * The maximum friction force in N.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L51-L52
      */
-    private float maxForce;
+    var maxForce: Float = def.maxForce
 
     /**
      * The maximum friction torque in N-m.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L54-L55
      */
-    private float maxTorque;
+    var maxTorque: Float = def.maxTorque
 
-    private float angularImpulse;
+    private var angularImpulse: Float = 0.0f
 
     // Solver temp
-    private int indexA;
+    private var indexA: Int = 0
+    private var indexB: Int = 0
+    private val rA = Vec2()
+    private val rB = Vec2()
+    private val localCenterA = Vec2()
+    private val localCenterB = Vec2()
+    private var invMassA: Float = 0.0f
+    private var invMassB: Float = 0.0f
+    private var invIA: Float = 0.0f
+    private var invIB: Float = 0.0f
+    private val linearMass = Mat22()
+    private var angularMass: Float = 0.0f
 
-    private int indexB;
+    override fun getAnchorA(argOut: Vec2) {
+        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    }
 
-    private final Vec2 rA = new Vec2();
+    override fun getAnchorB(argOut: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    }
 
-    private final Vec2 rB = new Vec2();
+    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+        argOut.set(linearImpulse).mulLocal(invDt)
+    }
 
-    private final Vec2 localCenterA = new Vec2();
-
-    private final Vec2 localCenterB = new Vec2();
-
-    private float invMassA;
-
-    private float invMassB;
-
-    private float invIA;
-
-    private float invIB;
-
-    private final Mat22 linearMass = new Mat22();
-
-    private float angularMass;
-
-    protected FrictionJoint(WorldPool argWorldPool, FrictionJointDef def)
-    {
-        super(argWorldPool, def);
-        localAnchorA = new Vec2(def.localAnchorA);
-        localAnchorB = new Vec2(def.localAnchorB);
-        linearImpulse = new Vec2();
-        angularImpulse = 0.0f;
-        maxForce = def.maxForce;
-        maxTorque = def.maxTorque;
+    override fun getReactionTorque(invDt: Float): Float {
+        return invDt * angularImpulse
     }
 
     /**
-     * Get the local anchor point relative to bodyA's origin.
-     *
-     * @return The local anchor point relative to bodyA's origin.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L69-L70
+     * @see com.hereliesaz.kfizzix.dynamics.joints.Joint.initVelocityConstraints
      */
-    public Vec2 getLocalAnchorA()
-    {
-        return localAnchorA;
-    }
+    override fun initVelocityConstraints(data: SolverData) {
+        indexA = bodyA!!.islandIndex
+        indexB = bodyB!!.islandIndex
+        localCenterA.set(bodyA!!.sweep.localCenter)
+        localCenterB.set(bodyB!!.sweep.localCenter)
+        invMassA = bodyA!!.invMass
+        invMassB = bodyB!!.invMass
+        invIA = bodyA!!.invI
+        invIB = bodyB!!.invI
+        val aA = data.positions[indexA].a
+        val vA = data.velocities[indexA].v
+        var wA = data.velocities[indexA].w
+        val aB = data.positions[indexB].a
+        val vB = data.velocities[indexB].v
+        var wB = data.velocities[indexB].w
 
-    /**
-     * Get the local anchor point relative to bodyB's origin.
-     *
-     * @return The local anchor point relative to bodyB's origin.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L72-L73
-     */
-    public Vec2 getLocalAnchorB()
-    {
-        return localAnchorB;
-    }
-
-    @Override
-    public void getAnchorA(Vec2 argOut)
-    {
-        bodyA.getWorldPointToOut(localAnchorA, argOut);
-    }
-
-    @Override
-    public void getAnchorB(Vec2 argOut)
-    {
-        bodyB.getWorldPointToOut(localAnchorB, argOut);
-    }
-
-    @Override
-    public void getReactionForce(float invDt, Vec2 argOut)
-    {
-        argOut.set(linearImpulse).mulLocal(invDt);
-    }
-
-    @Override
-    public float getReactionTorque(float invDt)
-    {
-        return invDt * angularImpulse;
-    }
-
-    /**
-     * Set the maximum friction force in N.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L75-L76
-     */
-    public void setMaxForce(float force)
-    {
-        assert (force >= 0.0f);
-        maxForce = force;
-    }
-
-    /**
-     * Get the maximum friction force in N.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L78-L79
-     */
-    public float getMaxForce()
-    {
-        return maxForce;
-    }
-
-    /**
-     * Set the maximum friction torque in N*m.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L81-L82
-     */
-    public void setMaxTorque(float torque)
-    {
-        assert (torque >= 0.0f);
-        maxTorque = torque;
-    }
-
-    /**
-     * Get the maximum friction torque in N*m.
-     *
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_friction_joint.h#L84-L85
-     */
-    public float getMaxTorque()
-    {
-        return maxTorque;
-    }
-
-    /**
-     * @see com.hereliesaz.kfizzix.dynamics.joints.Joint#initVelocityConstraints(com.hereliesaz.kfizzix.dynamics.SolverData)
-     */
-    @Override
-    public void initVelocityConstraints(final SolverData data)
-    {
-        indexA = bodyA.islandIndex;
-        indexB = bodyB.islandIndex;
-        localCenterA.set(bodyA.sweep.localCenter);
-        localCenterB.set(bodyB.sweep.localCenter);
-        invMassA = bodyA.invMass;
-        invMassB = bodyB.invMass;
-        invIA = bodyA.invI;
-        invIB = bodyB.invI;
-        float aA = data.positions[indexA].a;
-        Vec2 vA = data.velocities[indexA].v;
-        float wA = data.velocities[indexA].w;
-        float aB = data.positions[indexB].a;
-        Vec2 vB = data.velocities[indexB].v;
-        float wB = data.velocities[indexB].w;
-        final Vec2 temp = pool.popVec2();
-        final Rot qA = pool.popRot();
-        final Rot qB = pool.popRot();
-        qA.set(aA);
-        qB.set(aB);
+        val temp = pool.popVec2()
+        val qA = pool.popRot()
+        val qB = pool.popRot()
+        qA.set(aA)
+        qB.set(aB)
         // Compute the effective mass matrix.
-        Rot.mulToOutUnsafe(qA, temp.set(localAnchorA).subLocal(localCenterA),
-                rA);
-        Rot.mulToOutUnsafe(qB, temp.set(localAnchorB).subLocal(localCenterB),
-                rB);
+        Rot.mulToOutUnsafe(qA, temp.set(localAnchorA).subLocal(localCenterA), rA)
+        Rot.mulToOutUnsafe(qB, temp.set(localAnchorB).subLocal(localCenterB), rB)
         // J = [-I -r1_skew I r2_skew]
         // [ 0 -1 0 1]
         // r_skew = [-ry; rx]
@@ -235,111 +135,104 @@ public class FrictionJoint extends Joint
         // -r1y*iA-r2y*iB]
         // [ -r1y*iA*r1x-r2y*iB*r2x, mA+r1x^2*iA+mB+r2x^2*iB, r1x*iA+r2x*iB]
         // [ -r1y*iA-r2y*iB, r1x*iA+r2x*iB, iA+iB]
-        float mA = invMassA, mB = invMassB;
-        float iA = invIA, iB = invIB;
-        final Mat22 K = pool.popMat22();
-        K.ex.x = mA + mB + iA * rA.y * rA.y + iB * rB.y * rB.y;
-        K.ex.y = -iA * rA.x * rA.y - iB * rB.x * rB.y;
-        K.ey.x = K.ex.y;
-        K.ey.y = mA + mB + iA * rA.x * rA.x + iB * rB.x * rB.x;
-        K.invertToOut(linearMass);
-        angularMass = iA + iB;
-        if (angularMass > 0.0f)
-        {
-            angularMass = 1.0f / angularMass;
+        val mA = invMassA
+        val mB = invMassB
+        val iA = invIA
+        val iB = invIB
+        val K = pool.popMat22()
+        K.ex.x = mA + mB + iA * rA.y * rA.y + iB * rB.y * rB.y
+        K.ex.y = -iA * rA.x * rA.y - iB * rB.x * rB.y
+        K.ey.x = K.ex.y
+        K.ey.y = mA + mB + iA * rA.x * rA.x + iB * rB.x * rB.x
+        K.invertToOut(linearMass)
+        angularMass = iA + iB
+        if (angularMass > 0.0f) {
+            angularMass = 1.0f / angularMass
         }
-        if (data.step.warmStarting)
-        {
+        if (data.step.warmStarting) {
             // Scale impulses to support a variable time step.
-            linearImpulse.mulLocal(data.step.dtRatio);
-            angularImpulse *= data.step.dtRatio;
-            final Vec2 P = pool.popVec2();
-            P.set(linearImpulse);
-            temp.set(P).mulLocal(mA);
-            vA.subLocal(temp);
-            wA -= iA * (Vec2.cross(rA, P) + angularImpulse);
-            temp.set(P).mulLocal(mB);
-            vB.addLocal(temp);
-            wB += iB * (Vec2.cross(rB, P) + angularImpulse);
-            pool.pushVec2(1);
-        }
-        else
-        {
-            linearImpulse.setZero();
-            angularImpulse = 0.0f;
+            linearImpulse.mulLocal(data.step.dtRatio)
+            angularImpulse *= data.step.dtRatio
+            val P = pool.popVec2()
+            P.set(linearImpulse)
+            temp.set(P).mulLocal(mA)
+            vA.subLocal(temp)
+            wA -= iA * (Vec2.cross(rA, P) + angularImpulse)
+            temp.set(P).mulLocal(mB)
+            vB.addLocal(temp)
+            wB += iB * (Vec2.cross(rB, P) + angularImpulse)
+            pool.pushVec2(1)
+        } else {
+            linearImpulse.setZero()
+            angularImpulse = 0.0f
         }
         // data.velocities[indexA].v.set(vA);
-        assert data.velocities[indexA].w == wA
-                || (data.velocities[indexA].w != wA);
-        data.velocities[indexA].w = wA;
+        // assert data.velocities[indexA].w == wA || (data.velocities[indexA].w != wA);
+        data.velocities[indexA].w = wA
         // data.velocities[indexB].v.set(vB);
-        data.velocities[indexB].w = wB;
-        pool.pushRot(2);
-        pool.pushVec2(1);
-        pool.pushMat22(1);
+        data.velocities[indexB].w = wB
+        pool.pushRot(2)
+        pool.pushVec2(1)
+        pool.pushMat22(1)
     }
 
-    @Override
-    public void solveVelocityConstraints(final SolverData data)
-    {
-        Vec2 vA = data.velocities[indexA].v;
-        float wA = data.velocities[indexA].w;
-        Vec2 vB = data.velocities[indexB].v;
-        float wB = data.velocities[indexB].w;
-        float mA = invMassA, mB = invMassB;
-        float iA = invIA, iB = invIB;
-        float h = data.step.dt;
+    override fun solveVelocityConstraints(data: SolverData) {
+        val vA = data.velocities[indexA].v
+        var wA = data.velocities[indexA].w
+        val vB = data.velocities[indexB].v
+        var wB = data.velocities[indexB].w
+        val mA = invMassA
+        val mB = invMassB
+        val iA = invIA
+        val iB = invIB
+        val h = data.step.dt
         // Solve angular friction
-        {
-            float Cdot = wB - wA;
-            float impulse = -angularMass * Cdot;
-            float oldImpulse = angularImpulse;
-            float maxImpulse = h * maxTorque;
+        run {
+            val Cdot = wB - wA
+            val impulse = -angularMass * Cdot
+            val oldImpulse = angularImpulse
+            val maxImpulse = h * maxTorque
             angularImpulse = MathUtils.clamp(angularImpulse + impulse,
-                    -maxImpulse, maxImpulse);
-            impulse = angularImpulse - oldImpulse;
-            wA -= iA * impulse;
-            wB += iB * impulse;
+                -maxImpulse, maxImpulse)
+            val incImpulse = angularImpulse - oldImpulse
+            wA -= iA * incImpulse
+            wB += iB * incImpulse
         }
         // Solve linear friction
-        {
-            final Vec2 Cdot = pool.popVec2();
-            final Vec2 temp = pool.popVec2();
-            Vec2.crossToOutUnsafe(wA, rA, temp);
-            Vec2.crossToOutUnsafe(wB, rB, Cdot);
-            Cdot.addLocal(vB).subLocal(vA).subLocal(temp);
-            final Vec2 impulse = pool.popVec2();
-            Mat22.mulToOutUnsafe(linearMass, Cdot, impulse);
-            impulse.negateLocal();
-            final Vec2 oldImpulse = pool.popVec2();
-            oldImpulse.set(linearImpulse);
-            linearImpulse.addLocal(impulse);
-            float maxImpulse = h * maxForce;
-            if (linearImpulse.lengthSquared() > maxImpulse * maxImpulse)
-            {
-                linearImpulse.normalize();
-                linearImpulse.mulLocal(maxImpulse);
+        run {
+            val Cdot = pool.popVec2()
+            val temp = pool.popVec2()
+            Vec2.crossToOutUnsafe(wA, rA, temp)
+            Vec2.crossToOutUnsafe(wB, rB, Cdot)
+            Cdot.addLocal(vB).subLocal(vA).subLocal(temp)
+            val impulse = pool.popVec2()
+            Mat22.mulToOutUnsafe(linearMass, Cdot, impulse)
+            impulse.negateLocal()
+            val oldImpulse = pool.popVec2()
+            oldImpulse.set(linearImpulse)
+            linearImpulse.addLocal(impulse)
+            val maxImpulse = h * maxForce
+            if (linearImpulse.lengthSquared() > maxImpulse * maxImpulse) {
+                linearImpulse.normalize()
+                linearImpulse.mulLocal(maxImpulse)
             }
-            impulse.set(linearImpulse).subLocal(oldImpulse);
-            temp.set(impulse).mulLocal(mA);
-            vA.subLocal(temp);
-            wA -= iA * Vec2.cross(rA, impulse);
-            temp.set(impulse).mulLocal(mB);
-            vB.addLocal(temp);
-            wB += iB * Vec2.cross(rB, impulse);
+            impulse.set(linearImpulse).subLocal(oldImpulse)
+            temp.set(impulse).mulLocal(mA)
+            vA.subLocal(temp)
+            wA -= iA * Vec2.cross(rA, impulse)
+            temp.set(impulse).mulLocal(mB)
+            vB.addLocal(temp)
+            wB += iB * Vec2.cross(rB, impulse)
         }
         // data.velocities[indexA].v.set(vA);
-        assert data.velocities[indexA].w == wA
-                || (data.velocities[indexA].w != wA);
-        data.velocities[indexA].w = wA;
+        // assert data.velocities[indexA].w == wA || (data.velocities[indexA].w != wA);
+        data.velocities[indexA].w = wA
         // data.velocities[indexB].v.set(vB);
-        data.velocities[indexB].w = wB;
-        pool.pushVec2(4);
+        data.velocities[indexB].w = wB
+        pool.pushVec2(4)
     }
 
-    @Override
-    public boolean solvePositionConstraints(final SolverData data)
-    {
-        return true;
+    override fun solvePositionConstraints(data: SolverData): Boolean {
+        return true
     }
 }

@@ -21,32 +21,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * JBox2D - A Java Port of Erin Catto's Box2D
- *
- * JBox2D homepage: http://jbox2d.sourceforge.net/
- * Box2D homepage: http://www.box2d.org
- *
- * This software is provided 'as-is', without any express or implied
- * warranty.  In no event will the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- * claim that you wrote the original software. If you use this software
- * in a product, an acknowledgment in the product documentation would be
- * appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * Distance joint definition. This requires defining an anchor point on both
@@ -58,42 +36,31 @@ import com.hereliesaz.kfizzix.dynamics.Body;
  *
  * @warning Do not use a zero or short length.
  */
-public class DistanceJointDef extends JointDef
-{
+class DistanceJointDef : JointDef(JointType.DISTANCE) {
     /**
      * The local anchor point relative to body1's origin.
      */
-    public final Vec2 localAnchorA;
+    val localAnchorA = Vec2(0.0f, 0.0f)
 
     /**
      * The local anchor point relative to body2's origin.
      */
-    public final Vec2 localAnchorB;
+    val localAnchorB = Vec2(0.0f, 0.0f)
 
     /**
      * The equilibrium length between the anchor points.
      */
-    public float length;
+    var length = 1.0f
 
     /**
      * The mass-spring-damper frequency in Hertz.
      */
-    public float frequencyHz;
+    var frequencyHz = 0.0f
 
     /**
      * The damping ratio. 0 = no damping, 1 = critical damping.
      */
-    public float dampingRatio;
-
-    public DistanceJointDef()
-    {
-        super(JointType.DISTANCE);
-        localAnchorA = new Vec2(0.0f, 0.0f);
-        localAnchorB = new Vec2(0.0f, 0.0f);
-        length = 1.0f;
-        frequencyHz = 0.0f;
-        dampingRatio = 0.0f;
-    }
+    var dampingRatio = 0.0f
 
     /**
      * Initialize the bodies, anchors, and length using the world anchors.
@@ -103,14 +70,12 @@ public class DistanceJointDef extends JointDef
      * @param anchor1 World anchor on first body
      * @param anchor2 World anchor on second body
      */
-    public void initialize(final Body b1, final Body b2, final Vec2 anchor1,
-            final Vec2 anchor2)
-    {
-        bodyA = b1;
-        bodyB = b2;
-        localAnchorA.set(bodyA.getLocalPoint(anchor1));
-        localAnchorB.set(bodyB.getLocalPoint(anchor2));
-        Vec2 d = anchor2.sub(anchor1);
-        length = d.length();
+    fun initialize(b1: Body, b2: Body, anchor1: Vec2, anchor2: Vec2) {
+        bodyA = b1
+        bodyB = b2
+        localAnchorA.set(bodyA!!.getLocalPoint(anchor1))
+        localAnchorB.set(bodyB!!.getLocalPoint(anchor2))
+        val d = anchor2 - anchor1
+        length = d.length()
     }
 }

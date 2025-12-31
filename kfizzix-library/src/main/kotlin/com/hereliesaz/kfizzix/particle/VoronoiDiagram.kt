@@ -135,8 +135,9 @@ class VoronoiDiagram(generatorCapacity: Int) {
             return VoronoiDiagramTask()
         }
 
-        override fun newArray(size: Int): Array<VoronoiDiagramTask?> {
-            return arrayOfNulls(size)
+        override fun newArray(size: Int): Array<VoronoiDiagramTask> {
+            @Suppress("UNCHECKED_CAST")
+            return arrayOfNulls<VoronoiDiagramTask>(size) as Array<VoronoiDiagramTask>
         }
     }
     private val queue = StackQueue<VoronoiDiagramTask>()

@@ -74,7 +74,7 @@ object MathUtils : PlatformMathUtils() {
 
     init {
         for (i in 0 until Settings.SINCOS_LUT_LENGTH) {
-            sinLUT[i] = Math.sin(i * Settings.SINCOS_LUT_PRECISION).toFloat()
+            sinLUT[i] = Math.sin((i * Settings.SINCOS_LUT_PRECISION).toDouble()).toFloat()
         }
     }
 

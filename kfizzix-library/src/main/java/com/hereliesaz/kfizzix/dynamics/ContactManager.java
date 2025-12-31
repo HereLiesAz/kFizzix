@@ -21,273 +21,223 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
-import com.hereliesaz.kfizzix.callbacks.ContactFilter;
-import com.hereliesaz.kfizzix.callbacks.ContactListener;
-import com.hereliesaz.kfizzix.callbacks.PairCallback;
-import com.hereliesaz.kfizzix.collision.broadphase.BroadPhase;
-import com.hereliesaz.kfizzix.dynamics.contacts.Contact;
-import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge;
+import com.hereliesaz.kfizzix.callbacks.ContactFilter
+import com.hereliesaz.kfizzix.callbacks.ContactListener
+import com.hereliesaz.kfizzix.callbacks.PairCallback
+import com.hereliesaz.kfizzix.collision.broadphase.BroadPhase
+import com.hereliesaz.kfizzix.dynamics.contacts.Contact
 
 /**
  * Delegate of World.
  *
  * @author Daniel Murphy
  */
-public class ContactManager implements PairCallback
-{
-    public BroadPhase broadPhase;
+class ContactManager(private val pool: World, val broadPhase: BroadPhase) : PairCallback {
+    var contactList: Contact? = null
+    var contactCount = 0
+    var contactFilter: ContactFilter? = null
+    var contactListener: ContactListener? = null
 
-    public Contact contactList;
-
-    public int contactCount;
-
-    public ContactFilter contactFilter;
-
-    public ContactListener contactListener;
-
-    private final World pool;
-
-    public ContactManager(World argPool, BroadPhase broadPhase)
-    {
-        contactList = null;
-        contactCount = 0;
-        contactFilter = new ContactFilter();
-        contactListener = null;
-        this.broadPhase = broadPhase;
-        pool = argPool;
+    init {
+        contactList = null
+        contactCount = 0
+        contactFilter = ContactFilter()
+        contactListener = null
     }
 
     /**
      * Broad-phase callback.
      */
-    public void addPair(Object proxyUserDataA, Object proxyUserDataB)
-    {
-        FixtureProxy proxyA = (FixtureProxy) proxyUserDataA;
-        FixtureProxy proxyB = (FixtureProxy) proxyUserDataB;
-        Fixture fixtureA = proxyA.fixture;
-        Fixture fixtureB = proxyB.fixture;
-        int indexA = proxyA.childIndex;
-        int indexB = proxyB.childIndex;
-        Body bodyA = fixtureA.getBody();
-        Body bodyB = fixtureB.getBody();
+    override fun addPair(proxyUserDataA: Any, proxyUserDataB: Any) {
+        val proxyA = proxyUserDataA as FixtureProxy
+        val proxyB = proxyUserDataB as FixtureProxy
+        var fixtureA = proxyA.fixture
+        var fixtureB = proxyB.fixture
+        var indexA = proxyA.childIndex
+        var indexB = proxyB.childIndex
+        var bodyA: Body? = fixtureA!!.body
+        var bodyB: Body? = fixtureB!!.body
         // Are the fixtures on the same body?
-        if (bodyA == bodyB)
-        {
-            return;
+        if (bodyA === bodyB) {
+            return
         }
         // TODO_ERIN use a hash table to remove a potential bottleneck when both
         // bodies have a lot of contacts.
         // Does a contact already exist?
-        ContactEdge edge = bodyB.getContactList();
-        while (edge != null)
-        {
-            if (edge.other == bodyA)
-            {
-                Fixture fA = edge.contact.getFixtureA();
-                Fixture fB = edge.contact.getFixtureB();
-                int iA = edge.contact.getChildIndexA();
-                int iB = edge.contact.getChildIndexB();
-                if (fA == fixtureA && iA == indexA && fB == fixtureB
-                        && iB == indexB)
-                {
+        var edge = bodyB!!.contactList
+        while (edge != null) {
+            if (edge.other === bodyA) {
+                val fA = edge.contact!!.fixtureA
+                val fB = edge.contact!!.fixtureB
+                val iA = edge.contact!!.indexA
+                val iB = edge.contact!!.indexB
+                if (fA === fixtureA && iA == indexA && fB === fixtureB && iB == indexB) {
                     // A contact already exists.
-                    return;
+                    return
                 }
-                if (fA == fixtureB && iA == indexB && fB == fixtureA
-                        && iB == indexA)
-                {
+                if (fA === fixtureB && iA == indexB && fB === fixtureA && iB == indexA) {
                     // A contact already exists.
-                    return;
+                    return
                 }
             }
-            edge = edge.next;
+            edge = edge.next
         }
         // Does a joint override collision? is at least one body dynamic?
-        if (!bodyB.shouldCollide(bodyA))
-        {
-            return;
+        if (!bodyB!!.shouldCollide(bodyA!!)) {
+            return
         }
         // Check user filtering.
-        if (contactFilter != null
-                && !contactFilter.shouldCollide(fixtureA, fixtureB))
-        {
-            return;
+        if (contactFilter != null && !contactFilter!!.shouldCollide(fixtureA, fixtureB)) {
+            return
         }
         // Call the factory.
-        Contact c = pool.popContact(fixtureA, indexA, fixtureB, indexB);
-        if (c == null)
-        {
-            return;
-        }
+        val c = pool.popContact(fixtureA, indexA, fixtureB, indexB)
+            ?: return
         // Contact creation may swap fixtures.
-        fixtureA = c.getFixtureA();
-        fixtureB = c.getFixtureB();
-        indexA = c.getChildIndexA();
-        indexB = c.getChildIndexB();
-        bodyA = fixtureA.getBody();
-        bodyB = fixtureB.getBody();
+        fixtureA = c.fixtureA
+        fixtureB = c.fixtureB
+        indexA = c.indexA
+        indexB = c.indexB
+        bodyA = fixtureA!!.body
+        bodyB = fixtureB!!.body
         // Insert into the world.
-        c.prev = null;
-        c.next = contactList;
-        if (contactList != null)
-        {
-            contactList.prev = c;
+        c.prev = null
+        c.next = contactList
+        if (contactList != null) {
+            contactList!!.prev = c
         }
-        contactList = c;
+        contactList = c
         // Connect to island graph.
         // Connect to body A
-        c.nodeA.contact = c;
-        c.nodeA.other = bodyB;
-        c.nodeA.prev = null;
-        c.nodeA.next = bodyA.contactList;
-        if (bodyA.contactList != null)
-        {
-            bodyA.contactList.prev = c.nodeA;
+        c.nodeA.contact = c
+        c.nodeA.other = bodyB
+        c.nodeA.prev = null
+        c.nodeA.next = bodyA!!.contactList
+        if (bodyA.contactList != null) {
+            bodyA.contactList!!.prev = c.nodeA
         }
-        bodyA.contactList = c.nodeA;
+        bodyA.contactList = c.nodeA
         // Connect to body B
-        c.nodeB.contact = c;
-        c.nodeB.other = bodyA;
-        c.nodeB.prev = null;
-        c.nodeB.next = bodyB.contactList;
-        if (bodyB.contactList != null)
-        {
-            bodyB.contactList.prev = c.nodeB;
+        c.nodeB.contact = c
+        c.nodeB.other = bodyA
+        c.nodeB.prev = null
+        c.nodeB.next = bodyB!!.contactList
+        if (bodyB.contactList != null) {
+            bodyB.contactList!!.prev = c.nodeB
         }
-        bodyB.contactList = c.nodeB;
+        bodyB.contactList = c.nodeB
         // wake up the bodies
-        if (!fixtureA.isSensor() && !fixtureB.isSensor())
-        {
-            bodyA.setAwake(true);
-            bodyB.setAwake(true);
+        if (!fixtureA.isSensor && !fixtureB!!.isSensor) {
+            bodyA.isAwake = true
+            bodyB.isAwake = true
         }
-        ++contactCount;
+        ++contactCount
     }
 
-    public void findNewContacts()
-    {
-        broadPhase.updatePairs(this);
+    fun findNewContacts() {
+        broadPhase.updatePairs(this)
     }
 
-    public void destroy(Contact c)
-    {
-        Fixture fixtureA = c.getFixtureA();
-        Fixture fixtureB = c.getFixtureB();
-        Body bodyA = fixtureA.getBody();
-        Body bodyB = fixtureB.getBody();
-        if (contactListener != null && c.isTouching())
-        {
-            contactListener.endContact(c);
+    fun destroy(c: Contact?) {
+        val fixtureA = c!!.fixtureA
+        val fixtureB = c.fixtureB
+        val bodyA = fixtureA!!.body
+        val bodyB = fixtureB!!.body
+        if (contactListener != null && c.isTouching) {
+            contactListener!!.endContact(c)
         }
         // Remove from the world.
-        if (c.prev != null)
-        {
-            c.prev.next = c.next;
+        if (c.prev != null) {
+            c.prev!!.next = c.next
         }
-        if (c.next != null)
-        {
-            c.next.prev = c.prev;
+        if (c.next != null) {
+            c.next!!.prev = c.prev
         }
-        if (c == contactList)
-        {
-            contactList = c.next;
+        if (c === contactList) {
+            contactList = c.next
         }
         // Remove from body 1
-        if (c.nodeA.prev != null)
-        {
-            c.nodeA.prev.next = c.nodeA.next;
+        if (c.nodeA.prev != null) {
+            c.nodeA.prev!!.next = c.nodeA.next
         }
-        if (c.nodeA.next != null)
-        {
-            c.nodeA.next.prev = c.nodeA.prev;
+        if (c.nodeA.next != null) {
+            c.nodeA.next!!.prev = c.nodeA.prev
         }
-        if (c.nodeA == bodyA.contactList)
-        {
-            bodyA.contactList = c.nodeA.next;
+        if (c.nodeA === bodyA!!.contactList) {
+            bodyA.contactList = c.nodeA.next
         }
         // Remove from body 2
-        if (c.nodeB.prev != null)
-        {
-            c.nodeB.prev.next = c.nodeB.next;
+        if (c.nodeB.prev != null) {
+            c.nodeB.prev!!.next = c.nodeB.next
         }
-        if (c.nodeB.next != null)
-        {
-            c.nodeB.next.prev = c.nodeB.prev;
+        if (c.nodeB.next != null) {
+            c.nodeB.next!!.prev = c.nodeB.prev
         }
-        if (c.nodeB == bodyB.contactList)
-        {
-            bodyB.contactList = c.nodeB.next;
+        if (c.nodeB === bodyB!!.contactList) {
+            bodyB.contactList = c.nodeB.next
         }
         // Call the factory.
-        pool.pushContact(c);
-        --contactCount;
+        pool.pushContact(c)
+        --contactCount
     }
 
     /**
      * This is the top level collision call for the time step. Here all the
      * narrow phase collision is processed for the world contact list.
      */
-    public void collide()
-    {
+    fun collide() {
         // Update awake contacts.
-        Contact c = contactList;
-        while (c != null)
-        {
-            Fixture fixtureA = c.getFixtureA();
-            Fixture fixtureB = c.getFixtureB();
-            int indexA = c.getChildIndexA();
-            int indexB = c.getChildIndexB();
-            Body bodyA = fixtureA.getBody();
-            Body bodyB = fixtureB.getBody();
+        var c = contactList
+        while (c != null) {
+            val fixtureA = c.fixtureA
+            val fixtureB = c.fixtureB
+            val indexA = c.indexA
+            val indexB = c.indexB
+            val bodyA = fixtureA!!.body
+            val bodyB = fixtureB!!.body
             // is this contact flagged for filtering?
-            if ((c.flags & Contact.FILTER_FLAG) == Contact.FILTER_FLAG)
-            {
+            if (c.flags and Contact.FILTER_FLAG == Contact.FILTER_FLAG) {
                 // Should these bodies collide?
-                if (!bodyB.shouldCollide(bodyA))
-                {
-                    Contact cNuke = c;
-                    c = cNuke.getNext();
-                    destroy(cNuke);
-                    continue;
+                if (!bodyB!!.shouldCollide(bodyA!!)) {
+                    val cNuke = c
+                    c = cNuke.next
+                    destroy(cNuke)
+                    continue
                 }
                 // Check user filtering.
-                if (contactFilter != null
-                        && !contactFilter.shouldCollide(fixtureA, fixtureB))
-                {
-                    Contact cNuke = c;
-                    c = cNuke.getNext();
-                    destroy(cNuke);
-                    continue;
+                if (contactFilter != null && !contactFilter!!.shouldCollide(fixtureA, fixtureB)) {
+                    val cNuke = c
+                    c = cNuke.next
+                    destroy(cNuke)
+                    continue
                 }
                 // Clear the filtering flag.
-                c.flags &= ~Contact.FILTER_FLAG;
+                c.flags = c.flags and Contact.FILTER_FLAG.inv()
             }
-            boolean activeA = bodyA.isAwake() && bodyA.type != BodyType.STATIC;
-            boolean activeB = bodyB.isAwake() && bodyB.type != BodyType.STATIC;
+            val activeA = bodyA!!.isActive && bodyA.isAwake && bodyA.type != BodyType.STATIC
+            val activeB = bodyB!!.isActive && bodyB.isAwake && bodyB.type != BodyType.STATIC
             // At least one body must be awake, and it must be dynamic or
             // kinematic.
-            if (!activeA && !activeB)
-            {
-                c = c.getNext();
-                continue;
+            if (!activeA && !activeB) {
+                c = c.next
+                continue
             }
-            int proxyIdA = fixtureA.proxies[indexA].proxyId;
-            int proxyIdB = fixtureB.proxies[indexB].proxyId;
-            boolean overlap = broadPhase.testOverlap(proxyIdA, proxyIdB);
+            val proxyIdA = fixtureA.proxies!![indexA]!!.proxyId
+            val proxyIdB = fixtureB!!.proxies!![indexB]!!.proxyId
+            val overlap = broadPhase.testOverlap(proxyIdA, proxyIdB)
             // Here we destroy contacts that cease to overlap in the
             // broad-phase.
-            if (!overlap)
-            {
-                Contact cNuke = c;
-                c = cNuke.getNext();
-                destroy(cNuke);
-                continue;
+            if (!overlap) {
+                val cNuke = c
+                c = cNuke.next
+                destroy(cNuke)
+                continue
             }
             // The contact persists.
-            c.update(contactListener);
-            c = c.getNext();
+            c.update(contactListener)
+            c = c.next
         }
     }
 }

@@ -21,16 +21,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts
 
-import com.hereliesaz.kfizzix.common.Vec2;
+import com.hereliesaz.kfizzix.common.Vec2
 
 /**
  * @author Daniel Murphy
  */
-public class Velocity
-{
-    public final Vec2 v = new Vec2();
-
-    public float w;
+class Velocity {
+    val v = Vec2()
+    var w: Float = 0f
 }

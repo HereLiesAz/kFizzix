@@ -126,9 +126,13 @@ class DefaultWorldPool(argSize: Int, argContainerSize: Int) : WorldPool {
         }
     }
 
-    override val collision: Collision
-    override val timeOfImpact: TimeOfImpact
-    override val distance: Distance
+    private val collision: Collision
+    private val timeOfImpact: TimeOfImpact
+    private val distance: Distance
+
+    override fun getCollision() = collision
+    override fun getTimeOfImpact() = timeOfImpact
+    override fun getDistance() = distance
 
     init {
         vecs = object : OrderedStack<Vec2>(argSize, argContainerSize) {

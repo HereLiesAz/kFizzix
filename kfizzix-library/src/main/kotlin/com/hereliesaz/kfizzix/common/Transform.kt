@@ -65,14 +65,6 @@ class Transform(
     }
 
     /**
-     * Initialize using a position vector and a rotation matrix.
-     *
-     * @param _position the position of the transform
-     * @param _R the rotation of the transform
-     */
-    constructor(position: Vec2, rotation: Rot) : this(position.copy(), rotation.copy())
-
-    /**
      * Set this to equal another transform.
      *
      * @param xf the transform to copy from
@@ -103,6 +95,32 @@ class Transform(
 
     override fun toString(): String {
         return "XForm:\nPosition: $p\nR: \n$q\n"
+    }
+
+    fun mul(v: Vec2): Vec2 {
+        return Vec2((q.c * v.x - q.s * v.y) + p.x, (q.s * v.x + q.c * v.y) + p.y)
+    }
+
+    fun mul(T: Transform): Transform {
+        val C = Transform()
+        Rot.mulUnsafe(q, T.q, C.q)
+        Rot.mulToOutUnsafe(q, T.p, C.p)
+        C.p.addLocal(p)
+        return C
+    }
+
+    fun mulTrans(v: Vec2): Vec2 {
+        val px = v.x - p.x
+        val py = v.y - p.y
+        return Vec2((q.c * px + q.s * py), (-q.s * px + q.c * py))
+    }
+
+    fun mulTrans(T: Transform): Transform {
+        val C = Transform()
+        Rot.mulTransUnsafe(q, T.q, C.q)
+        val pool = T.p - p
+        Rot.mulTransUnsafe(q, pool, C.p)
+        return C
     }
 
     companion object {

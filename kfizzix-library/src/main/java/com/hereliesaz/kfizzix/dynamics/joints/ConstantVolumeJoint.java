@@ -21,294 +21,208 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.MathUtils;
-import com.hereliesaz.kfizzix.common.Settings;
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
-import com.hereliesaz.kfizzix.dynamics.SolverData;
-import com.hereliesaz.kfizzix.dynamics.World;
-import com.hereliesaz.kfizzix.dynamics.contacts.Position;
-import com.hereliesaz.kfizzix.dynamics.contacts.Velocity;
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Settings
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
+import com.hereliesaz.kfizzix.dynamics.SolverData
+import com.hereliesaz.kfizzix.dynamics.World
+import com.hereliesaz.kfizzix.dynamics.contacts.Position
+import com.hereliesaz.kfizzix.dynamics.contacts.Velocity
 
 /**
  * @author Daniel Murphy
  */
-public class ConstantVolumeJoint extends Joint
-{
-    private final Body[] bodies;
+class ConstantVolumeJoint(argWorld: World, def: ConstantVolumeJointDef) : Joint(argWorld.pool, def) {
+    val bodies: Array<Body>
+    private var targetVolume: Float
+    private val normals: Array<Vec2>
+    private var impulse = 0.0f
+    private val world: World
+    val joints: Array<DistanceJoint>
 
-    private float targetVolume;
-
-    private final Vec2[] normals;
-
-    private float impulse = 0.0f;
-
-    private final World world;
-
-    private final DistanceJoint[] distanceJoints;
-
-    public Body[] getBodies()
-    {
-        return bodies;
-    }
-
-    public DistanceJoint[] getJoints()
-    {
-        return distanceJoints;
-    }
-
-    public void inflate(float factor)
-    {
-        targetVolume *= factor;
-    }
-
-    public ConstantVolumeJoint(World argWorld, ConstantVolumeJointDef def)
-    {
-        super(argWorld.getPool(), def);
-        world = argWorld;
-        if (def.bodies.size() <= 2)
-        {
-            throw new IllegalArgumentException(
-                    "You cannot create a constant volume joint with less than three bodies.");
+    init {
+        world = argWorld
+        if (def.bodies.size <= 2) {
+            throw IllegalArgumentException(
+                "You cannot create a constant volume joint with less than three bodies.")
         }
-        bodies = def.bodies.toArray(new Body[0]);
-        float[] targetLengths = new float[bodies.length];
-        for (int i = 0; i < targetLengths.length; ++i)
-        {
-            final int next = (i == targetLengths.length - 1) ? 0 : i + 1;
-            float dist = bodies[i].getWorldCenter()
-                    .sub(bodies[next].getWorldCenter()).length();
-            targetLengths[i] = dist;
+        bodies = def.bodies.toTypedArray()
+        val targetLengths = FloatArray(bodies.size)
+        for (i in targetLengths.indices) {
+            val next = if (i == targetLengths.size - 1) 0 else i + 1
+            val dist = bodies[i].worldCenter.sub(bodies[next].worldCenter).length()
+            targetLengths[i] = dist
         }
-        targetVolume = getBodyArea();
-        if (def.joints != null && def.joints.size() != def.bodies.size())
-        {
-            throw new IllegalArgumentException(
-                    "Incorrect joint definition.  Joints have to correspond to the bodies");
+        targetVolume = getBodyArea()
+        if (def.joints != null && def.joints!!.size != def.bodies.size) {
+            throw IllegalArgumentException(
+                "Incorrect joint definition.  Joints have to correspond to the bodies")
         }
-        if (def.joints == null)
-        {
-            final DistanceJointDef djd = new DistanceJointDef();
-            distanceJoints = new DistanceJoint[bodies.length];
-            for (int i = 0; i < targetLengths.length; ++i)
-            {
-                final int next = (i == targetLengths.length - 1) ? 0 : i + 1;
-                djd.frequencyHz = def.frequencyHz;// 20.0f;
-                djd.dampingRatio = def.dampingRatio;// 50.0f;
-                djd.collideConnected = def.collideConnected;
-                djd.initialize(bodies[i], bodies[next],
-                        bodies[i].getWorldCenter(),
-                        bodies[next].getWorldCenter());
-                distanceJoints[i] = (DistanceJoint) world.createJoint(djd);
+        if (def.joints == null) {
+            val djd = DistanceJointDef()
+            joints = Array(bodies.size) { i ->
+                val next = if (i == targetLengths.size - 1) 0 else i + 1
+                djd.frequencyHz = def.frequencyHz
+                djd.dampingRatio = def.dampingRatio
+                djd.collideConnected = def.collideConnected
+                djd.initialize(bodies[i], bodies[next], bodies[i].worldCenter, bodies[next].worldCenter)
+                world.createJoint(djd) as DistanceJoint
             }
+        } else {
+            joints = def.joints!!.toTypedArray()
         }
-        else
-        {
-            distanceJoints = def.joints.toArray(new DistanceJoint[0]);
-        }
-        normals = new Vec2[bodies.length];
-        for (int i = 0; i < normals.length; ++i)
-        {
-            normals[i] = new Vec2();
+        normals = Array(bodies.size) { Vec2() }
+    }
+
+    fun inflate(factor: Float) {
+        targetVolume *= factor
+    }
+
+    override fun destructor() {
+        for (distanceJoint in joints) {
+            world.destroyJoint(distanceJoint)
         }
     }
 
-    @Override
-    public void destructor()
-    {
-        for (DistanceJoint distanceJoint : distanceJoints)
-        {
-            world.destroyJoint(distanceJoint);
+    private fun getBodyArea(): Float {
+        var area = 0.0f
+        for (i in bodies.indices) {
+            val next = if (i == bodies.size - 1) 0 else i + 1
+            area += bodies[i].worldCenter.x * bodies[next].worldCenter.y - bodies[next].worldCenter.x * bodies[i].worldCenter.y
         }
+        area *= .5f
+        return area
     }
 
-    private float getBodyArea()
-    {
-        float area = 0.0f;
-        for (int i = 0; i < bodies.length; ++i)
-        {
-            final int next = (i == bodies.length - 1) ? 0 : i + 1;
-            area += bodies[i].getWorldCenter().x
-                    * bodies[next].getWorldCenter().y
-                    - bodies[next].getWorldCenter().x
-                            * bodies[i].getWorldCenter().y;
+    private fun getSolverArea(positions: Array<Position>): Float {
+        var area = 0.0f
+        for (i in bodies.indices) {
+            val next = if (i == bodies.size - 1) 0 else i + 1
+            area += positions[bodies[i].islandIndex].c.x * positions[bodies[next].islandIndex].c.y - positions[bodies[next].islandIndex].c.x * positions[bodies[i].islandIndex].c.y
         }
-        area *= .5f;
-        return area;
+        area *= .5f
+        return area
     }
 
-    private float getSolverArea(Position[] positions)
-    {
-        float area = 0.0f;
-        for (int i = 0; i < bodies.length; ++i)
-        {
-            final int next = (i == bodies.length - 1) ? 0 : i + 1;
-            area += positions[bodies[i].islandIndex].c.x
-                    * positions[bodies[next].islandIndex].c.y
-                    - positions[bodies[next].islandIndex].c.x
-                            * positions[bodies[i].islandIndex].c.y;
-        }
-        area *= .5f;
-        return area;
-    }
-
-    private boolean constrainEdges(Position[] positions)
-    {
-        float perimeter = 0.0f;
-        for (int i = 0; i < bodies.length; ++i)
-        {
-            final int next = (i == bodies.length - 1) ? 0 : i + 1;
-            float dx = positions[bodies[next].islandIndex].c.x
-                    - positions[bodies[i].islandIndex].c.x;
-            float dy = positions[bodies[next].islandIndex].c.y
-                    - positions[bodies[i].islandIndex].c.y;
-            float dist = MathUtils.sqrt(dx * dx + dy * dy);
-            if (dist < Settings.EPSILON)
-            {
-                dist = 1.0f;
+    private fun constrainEdges(positions: Array<Position>): Boolean {
+        var perimeter = 0.0f
+        for (i in bodies.indices) {
+            val next = if (i == bodies.size - 1) 0 else i + 1
+            val dx = positions[bodies[next].islandIndex].c.x - positions[bodies[i].islandIndex].c.x
+            val dy = positions[bodies[next].islandIndex].c.y - positions[bodies[i].islandIndex].c.y
+            var dist = MathUtils.sqrt(dx * dx + dy * dy)
+            if (dist < Settings.EPSILON) {
+                dist = 1.0f
             }
-            normals[i].x = dy / dist;
-            normals[i].y = -dx / dist;
-            perimeter += dist;
+            normals[i].x = dy / dist
+            normals[i].y = -dx / dist
+            perimeter += dist
         }
-        final Vec2 delta = pool.popVec2();
-        float deltaArea = targetVolume - getSolverArea(positions);
-        float toExtrude = 0.5f * deltaArea / perimeter; // *relaxationFactor
+        val delta = pool.popVec2()
+        val deltaArea = targetVolume - getSolverArea(positions)
+        val toExtrude = 0.5f * deltaArea / perimeter // *relaxationFactor
         // float sumdeltax = 0.0f;
-        boolean done = true;
-        for (int i = 0; i < bodies.length; ++i)
-        {
-            final int next = (i == bodies.length - 1) ? 0 : i + 1;
+        var done = true
+        for (i in bodies.indices) {
+            val next = if (i == bodies.size - 1) 0 else i + 1
             delta.set(toExtrude * (normals[i].x + normals[next].x),
-                    toExtrude * (normals[i].y + normals[next].y));
+                toExtrude * (normals[i].y + normals[next].y))
             // sumdeltax += dx;
-            float normSqrd = delta.lengthSquared();
-            if (normSqrd > Settings.maxLinearCorrection
-                    * Settings.maxLinearCorrection)
-            {
-                delta.mulLocal(Settings.maxLinearCorrection
-                        / MathUtils.sqrt(normSqrd));
+            val normSqrd = delta.lengthSquared()
+            if (normSqrd > Settings.maxLinearCorrection * Settings.maxLinearCorrection) {
+                delta.mulLocal(Settings.maxLinearCorrection / MathUtils.sqrt(normSqrd))
             }
-            if (normSqrd > Settings.linearSlop * Settings.linearSlop)
-            {
-                done = false;
+            if (normSqrd > Settings.linearSlop * Settings.linearSlop) {
+                done = false
             }
-            positions[bodies[next].islandIndex].c.x += delta.x;
-            positions[bodies[next].islandIndex].c.y += delta.y;
+            positions[bodies[next].islandIndex].c.x += delta.x
+            positions[bodies[next].islandIndex].c.y += delta.y
             // bodies[next].linearVelocity.x += delta.x * step.inv_dt;
             // bodies[next].linearVelocity.y += delta.y * step.inv_dt;
         }
-        pool.pushVec2(1);
+        pool.pushVec2(1)
         // System.out.println(sumdeltax);
-        return done;
+        return done
     }
 
-    @Override
-    public void initVelocityConstraints(final SolverData step)
-    {
-        Velocity[] velocities = step.velocities;
-        Position[] positions = step.positions;
-        final Vec2[] d = pool.getVec2Array(bodies.length);
-        for (int i = 0; i < bodies.length; ++i)
-        {
-            final int prev = (i == 0) ? bodies.length - 1 : i - 1;
-            final int next = (i == bodies.length - 1) ? 0 : i + 1;
-            d[i].set(positions[bodies[next].islandIndex].c);
-            d[i].subLocal(positions[bodies[prev].islandIndex].c);
+    override fun initVelocityConstraints(step: SolverData) {
+        val velocities = step.velocities
+        val positions = step.positions
+        val d = pool.getVec2Array(bodies.size)
+        for (i in bodies.indices) {
+            val prev = if (i == 0) bodies.size - 1 else i - 1
+            val next = if (i == bodies.size - 1) 0 else i + 1
+            d[i].set(positions[bodies[next].islandIndex].c)
+            d[i].subLocal(positions[bodies[prev].islandIndex].c)
         }
-        if (step.step.warmStarting)
-        {
-            impulse *= step.step.dtRatio;
+        if (step.step.warmStarting) {
+            impulse *= step.step.dtRatio
             // float lambda = -2.0f * crossMassSum / dotMassSum;
             // System.out.println(crossMassSum + " " +dotMassSum);
             // lambda = MathUtils.clamp(lambda, -Settings.maxLinearCorrection,
             // Settings.maxLinearCorrection);
             // impulse = lambda;
-            for (int i = 0; i < bodies.length; ++i)
-            {
-                velocities[bodies[i].islandIndex].v.x += bodies[i].invMass
-                        * d[i].y * .5f * impulse;
-                velocities[bodies[i].islandIndex].v.y += bodies[i].invMass
-                        * -d[i].x * .5f * impulse;
+            for (i in bodies.indices) {
+                velocities[bodies[i].islandIndex].v.x += bodies[i].invMass * d[i].y * .5f * impulse
+                velocities[bodies[i].islandIndex].v.y += bodies[i].invMass * -d[i].x * .5f * impulse
             }
-        }
-        else
-        {
-            impulse = 0.0f;
+        } else {
+            impulse = 0.0f
         }
     }
 
-    @Override
-    public boolean solvePositionConstraints(SolverData step)
-    {
-        return constrainEdges(step.positions);
+    override fun solvePositionConstraints(step: SolverData): Boolean {
+        return constrainEdges(step.positions)
     }
 
-    @Override
-    public void solveVelocityConstraints(final SolverData step)
-    {
-        float crossMassSum = 0.0f;
-        float dotMassSum = 0.0f;
-        Velocity[] velocities = step.velocities;
-        Position[] positions = step.positions;
-        final Vec2[] d = pool.getVec2Array(bodies.length);
-        for (int i = 0; i < bodies.length; ++i)
-        {
-            final int prev = (i == 0) ? bodies.length - 1 : i - 1;
-            final int next = (i == bodies.length - 1) ? 0 : i + 1;
-            d[i].set(positions[bodies[next].islandIndex].c);
-            d[i].subLocal(positions[bodies[prev].islandIndex].c);
-            dotMassSum += (d[i].lengthSquared()) / bodies[i].getMass();
-            crossMassSum += Vec2.cross(velocities[bodies[i].islandIndex].v,
-                    d[i]);
+    override fun solveVelocityConstraints(step: SolverData) {
+        var crossMassSum = 0.0f
+        var dotMassSum = 0.0f
+        val velocities = step.velocities
+        val positions = step.positions
+        val d = pool.getVec2Array(bodies.size)
+        for (i in bodies.indices) {
+            val prev = if (i == 0) bodies.size - 1 else i - 1
+            val next = if (i == bodies.size - 1) 0 else i + 1
+            d[i].set(positions[bodies[next].islandIndex].c)
+            d[i].subLocal(positions[bodies[prev].islandIndex].c)
+            dotMassSum += d[i].lengthSquared() / bodies[i].mass
+            crossMassSum += Vec2.cross(velocities[bodies[i].islandIndex].v, d[i])
         }
-        float lambda = -2.0f * crossMassSum / dotMassSum;
+        val lambda = -2.0f * crossMassSum / dotMassSum
         // System.out.println(crossMassSum + " " +dotMassSum);
         // lambda = MathUtils.clamp(lambda, -Settings.maxLinearCorrection,
         // Settings.maxLinearCorrection);
-        impulse += lambda;
+        impulse += lambda
         // System.out.println(impulse);
-        for (int i = 0; i < bodies.length; ++i)
-        {
-            velocities[bodies[i].islandIndex].v.x += bodies[i].invMass * d[i].y
-                    * .5f * lambda;
-            velocities[bodies[i].islandIndex].v.y += bodies[i].invMass * -d[i].x
-                    * .5f * lambda;
+        for (i in bodies.indices) {
+            velocities[bodies[i].islandIndex].v.x += bodies[i].invMass * d[i].y * .5f * lambda
+            velocities[bodies[i].islandIndex].v.y += bodies[i].invMass * -d[i].x * .5f * lambda
         }
     }
 
     /**
      * No-op
      */
-    @Override
-    public void getAnchorA(Vec2 argOut)
-    {
-    }
+    override fun getAnchorA(argOut: Vec2) {}
 
     /**
      * No-op
      */
-    @Override
-    public void getAnchorB(Vec2 argOut)
-    {
-    }
+    override fun getAnchorB(argOut: Vec2) {}
 
     /**
      * No-op
      */
-    @Override
-    public void getReactionForce(float invDt, Vec2 argOut)
-    {
-    }
+    override fun getReactionForce(invDt: Float, argOut: Vec2) {}
 
     /**
      * No-op
      */
-    @Override
-    public float getReactionTorque(float invDt)
-    {
-        return 0;
+    override fun getReactionTorque(invDt: Float): Float {
+        return 0f
     }
 }

@@ -21,18 +21,17 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts
 
-import com.hereliesaz.kfizzix.dynamics.Fixture;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.dynamics.Fixture
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * @author Daniel Murphy
  */
-public interface ContactCreator
-{
-    Contact contactCreateFcn(WorldPool argPool, Fixture fixtureA,
-            Fixture fixtureB);
+interface ContactCreator {
+    fun contactCreateFcn(argPool: WorldPool, fixtureA: Fixture?,
+                         fixtureB: Fixture?): Contact?
 
-    void contactDestroyFcn(WorldPool argPool, Contact contact);
+    fun contactDestroyFcn(argPool: WorldPool, contact: Contact?)
 }

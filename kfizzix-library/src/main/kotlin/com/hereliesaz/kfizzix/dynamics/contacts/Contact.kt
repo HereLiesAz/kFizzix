@@ -99,8 +99,9 @@ abstract class Contact(protected val pool: WorldPool) {
         val bodyB = fixtureB!!.body
         val shapeA = fixtureA!!.shape
         val shapeB = fixtureB!!.shape
-        worldManifold.initialize(manifold, bodyA!!.transform, shapeA!!.radius,
-            bodyB!!.transform, shapeB!!.radius)
+        val radiusA = shapeA!!.radius
+        val radiusB = shapeB!!.radius
+        worldManifold.initialize(manifold, bodyA!!.transform, radiusA, bodyB!!.transform, radiusB)
     }
 
     /**

@@ -21,9 +21,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * A joint edge is used to connect bodies and joints together in a joint graph
@@ -35,33 +35,32 @@ import com.hereliesaz.kfizzix.dynamics.Body;
  *
  * @author Daniel Murphy
  */
-public class JointEdge
-{
+class JointEdge {
     /**
      * Provides quick access to the other body attached.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_joint.h#L64
      */
-    public Body other = null;
+    var other: Body? = null
 
     /**
      * The joint.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_joint.h#L64
      */
-    public Joint joint = null;
+    var joint: Joint? = null
 
     /**
      * The previous joint edge in the body's joint list.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_joint.h#L64
      */
-    public JointEdge prev = null;
+    var prev: JointEdge? = null
 
     /**
      * The next joint edge in the body's joint list.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_joint.h#L64
      */
-    public JointEdge next = null;
+    var next: JointEdge? = null
 }

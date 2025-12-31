@@ -21,37 +21,30 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts
 
-import com.hereliesaz.kfizzix.collision.Manifold;
-import com.hereliesaz.kfizzix.collision.shapes.PolygonShape;
-import com.hereliesaz.kfizzix.collision.shapes.ShapeType;
-import com.hereliesaz.kfizzix.common.Transform;
-import com.hereliesaz.kfizzix.dynamics.Fixture;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.collision.Manifold
+import com.hereliesaz.kfizzix.collision.shapes.PolygonShape
+import com.hereliesaz.kfizzix.collision.shapes.ShapeType
+import com.hereliesaz.kfizzix.common.Transform
+import com.hereliesaz.kfizzix.dynamics.Fixture
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * @author Daniel Murphy
  */
-public class PolygonContact extends Contact
-{
-    public PolygonContact(WorldPool argPool)
-    {
-        super(argPool);
+class PolygonContact(argPool: WorldPool) : Contact(argPool) {
+    fun init(fixtureA: Fixture?, fixtureB: Fixture?) {
+        super.init(fixtureA!!, 0, fixtureB!!, 0)
+        assert(this.fixtureA!!.type == ShapeType.POLYGON)
+        assert(this.fixtureB!!.type == ShapeType.POLYGON)
     }
 
-    public void init(Fixture fixtureA, Fixture fixtureB)
-    {
-        super.init(fixtureA, 0, fixtureB, 0);
-        assert (this.fixtureA.getType() == ShapeType.POLYGON);
-        assert (this.fixtureB.getType() == ShapeType.POLYGON);
-    }
-
-    @Override
-    public void evaluate(Manifold manifold, Transform xfA, Transform xfB)
-    {
-        pool.getCollision().collidePolygons(manifold,
-                (PolygonShape) fixtureA.getShape(), xfA,
-                (PolygonShape) fixtureB.getShape(), xfB);
+    override fun evaluate(manifold: Manifold, xfA: Transform, xfB: Transform) {
+        pool.getCollision().collidePolygons(
+            manifold,
+            fixtureA!!.shape as PolygonShape, xfA,
+            fixtureB!!.shape as PolygonShape, xfB
+        )
     }
 }

@@ -21,19 +21,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics;
+package com.hereliesaz.kfizzix.dynamics
 
-import com.hereliesaz.kfizzix.dynamics.contacts.Position;
-import com.hereliesaz.kfizzix.dynamics.contacts.Velocity;
+import com.hereliesaz.kfizzix.dynamics.contacts.Position
+import com.hereliesaz.kfizzix.dynamics.contacts.Velocity
 
 /**
  * @author Daniel Murphy
  */
-public class SolverData
-{
-    public TimeStep step;
-
-    public Position[] positions;
-
-    public Velocity[] velocities;
+class SolverData {
+    lateinit var step: TimeStep
+    lateinit var positions: Array<Position>
+    lateinit var velocities: Array<Velocity>
 }

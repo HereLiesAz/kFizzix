@@ -66,6 +66,16 @@ class Manifold(
         CIRCLES, FACE_A, FACE_B
     }
 
+    fun set(cp: Manifold) {
+        for (i in 0 until cp.pointCount) {
+            points[i].set(cp.points[i])
+        }
+        type = cp.type
+        localNormal.set(cp.localNormal)
+        localPoint.set(cp.localPoint)
+        pointCount = cp.pointCount
+    }
+
     override fun toString(): String {
         return "Manifold(points=${points.contentToString()}, localNormal=$localNormal, localPoint=$localPoint, type=$type, pointCount=$pointCount)"
     }

@@ -21,39 +21,31 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.contacts;
+package com.hereliesaz.kfizzix.dynamics.contacts
 
-import com.hereliesaz.kfizzix.collision.Manifold;
-import com.hereliesaz.kfizzix.collision.shapes.CircleShape;
-import com.hereliesaz.kfizzix.collision.shapes.EdgeShape;
-import com.hereliesaz.kfizzix.collision.shapes.ShapeType;
-import com.hereliesaz.kfizzix.common.Transform;
-import com.hereliesaz.kfizzix.dynamics.Fixture;
-import com.hereliesaz.kfizzix.pooling.WorldPool;
+import com.hereliesaz.kfizzix.collision.Manifold
+import com.hereliesaz.kfizzix.collision.shapes.CircleShape
+import com.hereliesaz.kfizzix.collision.shapes.EdgeShape
+import com.hereliesaz.kfizzix.collision.shapes.ShapeType
+import com.hereliesaz.kfizzix.common.Transform
+import com.hereliesaz.kfizzix.dynamics.Fixture
+import com.hereliesaz.kfizzix.pooling.WorldPool
 
 /**
  * @author Daniel Murphy
  */
-public class EdgeAndCircleContact extends Contact
-{
-    public EdgeAndCircleContact(WorldPool argPool)
-    {
-        super(argPool);
+class EdgeAndCircleContact(argPool: WorldPool) : Contact(argPool) {
+    override fun init(fA: Fixture, indexA: Int, fB: Fixture, indexB: Int) {
+        super.init(fA, indexA, fB, indexB)
+        assert(fixtureA!!.type == ShapeType.EDGE)
+        assert(fixtureB!!.type == ShapeType.CIRCLE)
     }
 
-    @Override
-    public void init(Fixture fA, int indexA, Fixture fB, int indexB)
-    {
-        super.init(fA, indexA, fB, indexB);
-        assert (fixtureA.getType() == ShapeType.EDGE);
-        assert (fixtureB.getType() == ShapeType.CIRCLE);
-    }
-
-    @Override
-    public void evaluate(Manifold manifold, Transform xfA, Transform xfB)
-    {
-        pool.getCollision().collideEdgeAndCircle(manifold,
-                (EdgeShape) fixtureA.getShape(), xfA,
-                (CircleShape) fixtureB.getShape(), xfB);
+    override fun evaluate(manifold: Manifold, xfA: Transform, xfB: Transform) {
+        pool.getCollision().collideEdgeAndCircle(
+            manifold,
+            fixtureA!!.shape as EdgeShape, xfA,
+            fixtureB!!.shape as CircleShape, xfB
+        )
     }
 }

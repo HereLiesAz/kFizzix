@@ -21,98 +21,81 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics.joints;
+package com.hereliesaz.kfizzix.dynamics.joints
 
-import com.hereliesaz.kfizzix.common.Vec2;
-import com.hereliesaz.kfizzix.dynamics.Body;
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.Body
 
 /**
  * Revolute joint definition. This requires defining an anchor point where the
  * bodies are joined. The definition uses local anchor points so that the
  * initial configuration can violate the constraint slightly. You also need to
  * specify the initial relative angle for joint limits. This helps when saving
- * and loading a game. The local anchor points are measured from the body's
- * origin rather than the center of mass because:<br/>
- * <ul>
- * <li>you might not know where the center of mass will be.</li>
- * <li>if you add/remove shapes from a body and recompute the mass, the joints
- * will be broken.</li>
- * </ul>
+ * and loading a game.
+ *
+ * The local anchor points are measured from the body's origin rather than the
+ * center of mass because: 1. you might not know where the center of mass will
+ * be. 2. if you add/remove shapes from a body and recompute the mass, the
+ * joints will be broken.
  *
  * @author Daniel Murphy
  */
-public class RevoluteJointDef extends JointDef
-{
+class RevoluteJointDef : JointDef(JointType.REVOLUTE) {
     /**
      * The local anchor point relative to body1's origin.
      */
-    public Vec2 localAnchorA;
+    val localAnchorA = Vec2(0.0f, 0.0f)
 
     /**
      * The local anchor point relative to body2's origin.
      */
-    public Vec2 localAnchorB;
+    val localAnchorB = Vec2(0.0f, 0.0f)
 
     /**
      * The body2 angle minus body1 angle in the reference state (radians).
      */
-    public float referenceAngle;
+    var referenceAngle = 0.0f
 
     /**
      * A flag to enable joint limits.
      */
-    public boolean enableLimit;
+    var enableLimit = false
 
     /**
      * The lower angle for the joint limit (radians).
      */
-    public float lowerAngle;
+    var lowerAngle = 0.0f
 
     /**
      * The upper angle for the joint limit (radians).
      */
-    public float upperAngle;
+    var upperAngle = 0.0f
 
     /**
      * A flag to enable the joint motor.
      */
-    public boolean enableMotor;
+    var enableMotor = false
 
     /**
      * The desired motor speed. Usually in radians per second.
      */
-    public float motorSpeed;
+    var motorSpeed = 0.0f
 
     /**
      * The maximum motor torque used to achieve the desired motor speed. Usually
      * in N-m.
      */
-    public float maxMotorTorque;
-
-    public RevoluteJointDef()
-    {
-        super(JointType.REVOLUTE);
-        localAnchorA = new Vec2(0.0f, 0.0f);
-        localAnchorB = new Vec2(0.0f, 0.0f);
-        referenceAngle = 0.0f;
-        lowerAngle = 0.0f;
-        upperAngle = 0.0f;
-        maxMotorTorque = 0.0f;
-        motorSpeed = 0.0f;
-        enableLimit = false;
-        enableMotor = false;
-    }
+    var maxMotorTorque = 0.0f
 
     /**
      * Initialize the bodies, anchors, and reference angle using the world
      * anchor.
      */
-    public void initialize(final Body b1, final Body b2, final Vec2 anchor)
-    {
-        bodyA = b1;
-        bodyB = b2;
-        bodyA.getLocalPointToOut(anchor, localAnchorA);
-        bodyB.getLocalPointToOut(anchor, localAnchorB);
-        referenceAngle = bodyB.getAngle() - bodyA.getAngle();
+    fun initialize(b1: Body, b2: Body, anchor: Vec2) {
+        bodyA = b1
+        bodyB = b2
+        bodyA!!.getLocalPointToOut(anchor, localAnchorA)
+        bodyB!!.getLocalPointToOut(anchor, localAnchorB)
+        referenceAngle = bodyB!!.angle - bodyA!!.angle
     }
 }

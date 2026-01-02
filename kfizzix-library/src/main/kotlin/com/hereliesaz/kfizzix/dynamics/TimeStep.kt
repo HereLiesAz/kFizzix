@@ -32,27 +32,18 @@ class TimeStep {
     /**
      * The time step.
      */
-    @JvmField
-    var dt: Float = 0f
+    var dt = 0f
 
     /**
      * The inverse time step (0 if dt == 0).
      */
-    @JvmField
-    var inverseDt: Float = 0f
+    var inverseDt = 0f
 
     /**
      * `dt * inverseDt`
      */
-    @JvmField
-    var dtRatio: Float = 0f
-
-    @JvmField
-    var velocityIterations: Int = 0
-
-    @JvmField
-    var positionIterations: Int = 0
-
-    @JvmField
-    var warmStarting: Boolean = false
+    var dtRatio = 0f
+    var velocityIterations = 0
+    var positionIterations = 0
+    var warmStarting = false
 }

@@ -537,7 +537,7 @@ class Island {
             return
         }
         for (i in 0 until contactCount) {
-            val c = contacts!![i]!!
+            val c = contacts!![i]
             val vc = constraints[i]
             impulse.count = vc.pointCount
             for (j in 0 until vc.pointCount) {

@@ -43,6 +43,8 @@ import com.hereliesaz.kfizzix.dynamics.contacts.PolygonAndCircleContact
 import com.hereliesaz.kfizzix.dynamics.contacts.PolygonContact
 import com.hereliesaz.kfizzix.pooling.DynamicStack
 import com.hereliesaz.kfizzix.pooling.WorldPool
+import com.hereliesaz.kfizzix.pooling.arrays.FloatArrayPool
+import com.hereliesaz.kfizzix.pooling.arrays.IntArrayPool
 
 /**
  * Provides object pooling for all objects used in the engine. Objects retrieved
@@ -126,13 +128,12 @@ class DefaultWorldPool(argSize: Int, argContainerSize: Int) : WorldPool {
         }
     }
 
-    private val collision: Collision
-    private val timeOfImpact: TimeOfImpact
-    private val distance: Distance
+    private val _collision: Collision
+    private val _timeOfImpact: TimeOfImpact
+    private val _distance: Distance
 
-    override fun getCollision() = collision
-    override fun getTimeOfImpact() = timeOfImpact
-    override fun getDistance() = distance
+    private val intArrayPool = IntArrayPool()
+    private val floatArrayPool = FloatArrayPool()
 
     init {
         vecs = object : OrderedStack<Vec2>(argSize, argContainerSize) {
@@ -165,9 +166,9 @@ class DefaultWorldPool(argSize: Int, argContainerSize: Int) : WorldPool {
                 return Mat33()
             }
         }
-        distance = Distance()
-        collision = Collision(this)
-        timeOfImpact = TimeOfImpact(this)
+        _distance = Distance()
+        _collision = Collision(this)
+        _timeOfImpact = TimeOfImpact(this)
     }
 
     override fun getPolyContactStack(): DynamicStack<Contact> {
@@ -262,20 +263,28 @@ class DefaultWorldPool(argSize: Int, argContainerSize: Int) : WorldPool {
         rots.push(num)
     }
 
+    override fun getCollision(): Collision = _collision
+
+    override fun getTimeOfImpact(): TimeOfImpact = _timeOfImpact
+
+    override fun getDistance(): Distance = _distance
+
     override fun getFloatArray(argLength: Int): FloatArray {
         if (!afloats.containsKey(argLength)) {
-            afloats[argLength] = FloatArray(argLength)
+            afloats[argLength] = floatArrayPool.get(argLength)
         }
-        assert(afloats[argLength]!!.size == argLength) { "Array not built with correct length" }
-        return afloats[argLength]!!
+        val array = afloats[argLength]!!
+        assert(array.size == argLength) { "Array not built with correct length" }
+        return array
     }
 
     override fun getIntArray(argLength: Int): IntArray {
         if (!aints.containsKey(argLength)) {
-            aints[argLength] = IntArray(argLength)
+            aints[argLength] = intArrayPool.get(argLength)
         }
-        assert(aints[argLength]!!.size == argLength) { "Array not built with correct length" }
-        return aints[argLength]!!
+        val array = aints[argLength]!!
+        assert(array.size == argLength) { "Array not built with correct length" }
+        return array
     }
 
     override fun getVec2Array(argLength: Int): Array<Vec2> {

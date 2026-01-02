@@ -24,7 +24,6 @@
 package com.hereliesaz.kfizzix.dynamics
 
 import com.hereliesaz.kfizzix.common.MathUtils
-import java.util.List
 
 /**
  * @author Daniel Murphy
@@ -33,8 +32,8 @@ class Profile {
     class ProfileEntry {
         var longAvg = 0f
         var shortAvg = 0f
-        var min = Float.MAX_VALUE
-        var max = -Float.MAX_VALUE
+        var min: Float = Float.MAX_VALUE
+        var max: Float = -Float.MAX_VALUE
         var accum = 0f
 
         fun record(value: Float) {
@@ -61,16 +60,16 @@ class Profile {
         }
     }
 
-    @JvmField val step = ProfileEntry()
-    @JvmField val stepInit = ProfileEntry()
-    @JvmField val collide = ProfileEntry()
-    @JvmField val solveParticleSystem = ProfileEntry()
-    @JvmField val solve = ProfileEntry()
-    @JvmField val solveInit = ProfileEntry()
-    @JvmField val solveVelocity = ProfileEntry()
-    @JvmField val solvePosition = ProfileEntry()
-    @JvmField val broadphase = ProfileEntry()
-    @JvmField val solveTOI = ProfileEntry()
+    val step = ProfileEntry()
+    val stepInit = ProfileEntry()
+    val collide = ProfileEntry()
+    val solveParticleSystem = ProfileEntry()
+    val solve = ProfileEntry()
+    val solveInit = ProfileEntry()
+    val solveVelocity = ProfileEntry()
+    val solvePosition = ProfileEntry()
+    val broadphase = ProfileEntry()
+    val solveTOI = ProfileEntry()
 
     fun toDebugStrings(strings: MutableList<String>) {
         strings.add("Profile:")

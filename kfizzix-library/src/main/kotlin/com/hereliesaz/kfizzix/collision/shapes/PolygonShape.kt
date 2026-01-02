@@ -1,0 +1,503 @@
+/*
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+package com.hereliesaz.kfizzix.collision.shapes
+
+import com.hereliesaz.kfizzix.collision.AABB
+import com.hereliesaz.kfizzix.collision.RayCastInput
+import com.hereliesaz.kfizzix.collision.RayCastOutput
+import com.hereliesaz.kfizzix.common.MathUtils
+import com.hereliesaz.kfizzix.common.Rot
+import com.hereliesaz.kfizzix.common.Settings
+import com.hereliesaz.kfizzix.common.Transform
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.pooling.arrays.IntArrayPool
+import com.hereliesaz.kfizzix.pooling.arrays.Vec2Array
+
+/**
+ * A convex polygon shape. Polygons have a maximum number of vertices equal to
+ * _maxPolygonVertices. In most cases you should not need many vertices for a
+ * convex polygon.
+ *
+ * @repolink https://github.com/erincatto/box2d/blob/main/src/collision/b2_polygon_shape.cpp
+ *
+ * @author Daniel Murphy
+ */
+class PolygonShape : Shape(ShapeType.POLYGON) {
+    /**
+     * Local position of the shape centroid in parent body frame.
+     */
+    val centroid = Vec2()
+
+    /**
+     * The vertices of the shape. Note: use getVertexCount(), not
+     * vertices.length, to get number of active vertices.
+     */
+    val vertices: Array<Vec2>
+
+    /**
+     * The normals of the shape. Note: use getVertexCount(), not normals.length,
+     * to get number of active normals.
+     */
+    val normals: Array<Vec2>
+
+    /**
+     * Number of active vertices in the shape.
+     */
+    var count: Int
+
+    // pooling
+    private val pool1 = Vec2()
+    private val pool2 = Vec2()
+    private val pool3 = Vec2()
+    private val pool4 = Vec2()
+    private val poolt1 = Transform()
+
+    init {
+        count = 0
+        vertices = Array(Settings.maxPolygonVertices) { Vec2() }
+        normals = Array(Settings.maxPolygonVertices) { Vec2() }
+        radius = Settings.polygonRadius
+        centroid.setZero()
+    }
+
+    public override fun clone(): Shape {
+        val shape = PolygonShape()
+        shape.centroid.set(centroid)
+        for (i in shape.normals.indices) {
+            shape.normals[i].set(normals[i])
+            shape.vertices[i].set(vertices[i])
+        }
+        shape.radius = radius
+        shape.count = count
+        return shape
+    }
+
+    /**
+     * Create a convex hull from the given array of points. The count must be in
+     * the range [3, Settings.maxPolygonVertices].
+     *
+     * @warning the points may be re-ordered, even if they form a convex
+     * polygon.
+     * @warning collinear points are removed.
+     */
+    fun set(vertices: Array<Vec2>, count: Int) {
+        set(vertices, count, null, null)
+    }
+
+    /**
+     * Create a convex hull from the given array of points. The count must be in
+     * the range [3, Settings.maxPolygonVertices]. This method takes an
+     * arraypool for pooling.
+     *
+     * @warning the points may be re-ordered, even if they form a convex
+     * polygon.
+     * @warning collinear points are removed.
+     */
+    fun set(
+        verts: Array<Vec2>, num: Int,
+        vecPool: Vec2Array?, intPool: IntArrayPool?
+    ) {
+        assert(3 <= num && num <= Settings.maxPolygonVertices)
+        var n = MathUtils.min(num, Settings.maxPolygonVertices)
+        // Perform welding and copy vertices into local buffer.
+        val ps = if (vecPool != null) vecPool[Settings.maxPolygonVertices] else Array(Settings.maxPolygonVertices) { Vec2() }
+        var tempCount = 0
+        for (i in 0 until n) {
+            val v = verts[i]
+            var unique = true
+            for (j in 0 until tempCount) {
+                if (MathUtils.distanceSquared(v, ps[j]) < 0.5f * Settings.linearSlop) {
+                    unique = false
+                    break
+                }
+            }
+            if (unique) {
+                ps[tempCount++] = v
+            }
+        }
+        n = tempCount
+        if (n < 3) {
+            // Polygon is degenerate.
+            assert(false)
+            setAsBox(1.0f, 1.0f)
+            return
+        }
+        // Create the convex hull using the Gift wrapping algorithm
+        // http://en.wikipedia.org/wiki/Gift_wrapping_algorithm
+        // Find the right most point on the hull
+        var i0 = 0
+        var x0 = ps[0].x
+        for (i in 1 until n) {
+            val x = ps[i].x
+            if (x > x0 || x == x0 && ps[i].y < ps[i0].y) {
+                i0 = i
+                x0 = x
+            }
+        }
+        val hull = if (intPool != null) intPool.get(Settings.maxPolygonVertices) else IntArray(Settings.maxPolygonVertices)
+        var m = 0
+        var ih = i0
+        while (true) {
+            hull[m] = ih
+            var ie = 0
+            for (j in 1 until n) {
+                if (ie == ih) {
+                    ie = j
+                    continue
+                }
+                val r = pool1.set(ps[ie]).subLocal(ps[hull[m]])
+                val v = pool2.set(ps[j]).subLocal(ps[hull[m]])
+                val c = Vec2.cross(r, v)
+                if (c < 0.0f) {
+                    ie = j
+                }
+                // Collinearity check
+                if (c == 0.0f && v.lengthSquared() > r.lengthSquared()) {
+                    ie = j
+                }
+            }
+            ++m
+            ih = ie
+            if (ie == i0) {
+                break
+            }
+        }
+        count = m
+        // Copy vertices.
+        for (i in 0 until count) {
+            vertices[i].set(ps[hull[i]])
+        }
+        val edge = pool1
+        // Compute normals. Ensure the edges have non-zero length.
+        for (i in 0 until count) {
+            val i1 = i
+            val i2 = if (i + 1 < count) i + 1 else 0
+            edge.set(vertices[i2]).subLocal(vertices[i1])
+            assert(edge.lengthSquared() > Settings.EPSILON * Settings.EPSILON)
+            Vec2.crossToOutUnsafe(edge, 1f, normals[i])
+            normals[i].normalize()
+        }
+        // Compute the polygon centroid.
+        computeCentroidToOut(vertices, count, centroid)
+    }
+
+    /**
+     * Build vertices to represent an axis-aligned box.
+     *
+     * @param hx The half-width.
+     * @param hy The half-height.
+     */
+    fun setAsBox(hx: Float, hy: Float) {
+        count = 4
+        vertices[0].set(-hx, -hy)
+        vertices[1].set(hx, -hy)
+        vertices[2].set(hx, hy)
+        vertices[3].set(-hx, hy)
+        normals[0].set(0.0f, -1.0f)
+        normals[1].set(1.0f, 0.0f)
+        normals[2].set(0.0f, 1.0f)
+        normals[3].set(-1.0f, 0.0f)
+        centroid.setZero()
+    }
+
+    /**
+     * Build vertices to represent an oriented box.
+     *
+     * @param hx The half-width.
+     * @param hy The half-height.
+     * @param center The center of the box in local coordinates.
+     * @param angle The rotation of the box in local coordinates.
+     */
+    fun setAsBox(hx: Float, hy: Float, center: Vec2, angle: Float) {
+        count = 4
+        vertices[0].set(-hx, -hy)
+        vertices[1].set(hx, -hy)
+        vertices[2].set(hx, hy)
+        vertices[3].set(-hx, hy)
+        normals[0].set(0.0f, -1.0f)
+        normals[1].set(1.0f, 0.0f)
+        normals[2].set(0.0f, 1.0f)
+        normals[3].set(-1.0f, 0.0f)
+        centroid.set(center)
+        val xf = poolt1
+        xf.p.set(center)
+        xf.q.set(angle)
+        // Transform vertices and normals.
+        for (i in 0 until count) {
+            Transform.mulToOut(xf, vertices[i], vertices[i])
+            Rot.mulToOut(xf.q, normals[i], normals[i])
+        }
+    }
+
+    override val childCount: Int
+        get() = 1
+
+    override fun testPoint(xf: Transform, p: Vec2): Boolean {
+        val pLocal = xf.q.mulT(p - xf.p)
+
+        if (debug) {
+            println("--testPoint debug--")
+            println("Vertices: ")
+            for (i in 0 until count) {
+                println(vertices[i])
+            }
+            println("pLocal: $pLocal")
+        }
+
+        for (i in 0 until count) {
+            val dot = Vec2.dot(normals[i], pLocal - vertices[i])
+            if (dot > 0.0f) {
+                return false
+            }
+        }
+        return true
+    }
+
+    override fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int) {
+        val v1 = Transform.mul(xf, vertices[0])
+        aabb.lowerBound.set(v1)
+        aabb.upperBound.set(v1)
+
+        for (i in 1 until count) {
+            val v2 = Transform.mul(xf, vertices[i])
+            aabb.lowerBound.x = MathUtils.min(aabb.lowerBound.x, v2.x)
+            aabb.lowerBound.y = MathUtils.min(aabb.lowerBound.y, v2.y)
+            aabb.upperBound.x = MathUtils.max(aabb.upperBound.x, v2.x)
+            aabb.upperBound.y = MathUtils.max(aabb.upperBound.y, v2.y)
+        }
+
+        aabb.lowerBound.x -= radius
+        aabb.lowerBound.y -= radius
+        aabb.upperBound.x += radius
+        aabb.upperBound.y += radius
+    }
+
+    /**
+     * Get a vertex by index.
+     *
+     * @param index
+     */
+    fun getVertex(index: Int): Vec2 {
+        assert(0 <= index && index < count)
+        return vertices[index]
+    }
+
+    override fun raycast(
+        output: RayCastOutput, input: RayCastInput,
+        xf: Transform, childIndex: Int
+    ): Boolean {
+        // Put the ray into the polygon's frame of reference.
+        val p1 = Rot.mulTrans(xf.q, input.p1 - xf.p)
+        val p2 = Rot.mulTrans(xf.q, input.p2 - xf.p)
+        val d = p2 - p1
+
+        var lower = 0f
+        var upper = input.maxFraction
+
+        var index = -1
+
+        for (i in 0 until count) {
+            val numerator = Vec2.dot(normals[i], vertices[i] - p1)
+            val denominator = Vec2.dot(normals[i], d)
+
+            if (denominator == 0.0f) {
+                if (numerator < 0.0f) {
+                    return false
+                }
+            } else {
+                // Note: we want this predicate without division:
+                // lower < numerator / denominator, where denominator < 0
+                // Since denominator < 0, we have to flip the inequality:
+                // lower < numerator / denominator <==> denominator * lower > numerator.
+                if (denominator < 0.0f && numerator < lower * denominator) {
+                    // Increase lower.
+                    // The segment enters this half-space.
+                    lower = numerator / denominator
+                    index = i
+                } else if (denominator > 0.0f && numerator < upper * denominator) {
+                    // Decrease upper.
+                    // The segment exits this half-space.
+                    upper = numerator / denominator
+                }
+            }
+
+            if (upper < lower) {
+                return false
+            }
+        }
+
+        // assert(lower in 0.0f..input.maxFraction)
+
+        if (index >= 0) {
+            output.fraction = lower
+            Rot.mulToOutUnsafe(xf.q, normals[index], output.normal)
+            return true
+        }
+        return false
+    }
+
+    fun computeCentroidToOut(vs: Array<Vec2>, count: Int, out: Vec2) {
+        assert(count >= 3)
+        out.set(0.0f, 0.0f)
+        var area = 0.0f
+        // pRef is the reference point for forming triangles.
+        // It's location doesn't change the result (except for rounding error).
+        val pRef = pool1
+        pRef.setZero()
+        val e1 = pool2
+        val e2 = pool3
+        val inv3 = 1.0f / 3.0f
+        for (i in 0 until count) {
+            // Triangle vertices.
+            val p1 = pRef
+            val p2 = vs[i]
+            val p3 = if (i + 1 < count) vs[i + 1] else vs[0]
+            e1.set(p2).subLocal(p1)
+            e2.set(p3).subLocal(p1)
+            val D = Vec2.cross(e1, e2)
+            val triangleArea = 0.5f * D
+            area += triangleArea
+            // Area weighted centroid
+            e1.set(p1).addLocal(p2).addLocal(p3).mulLocal(triangleArea * inv3)
+            out.addLocal(e1)
+        }
+        // Centroid
+        assert(area > Settings.EPSILON)
+        out.mulLocal(1.0f / area)
+    }
+
+    override fun computeMass(massData: MassData, density: Float) {
+        // Polygon mass, centroid, and inertia.
+        // Let rho be the polygon density in mass per unit area.
+        // Then:
+        // mass = rho * int(dA)
+        // centroid.x = (1/mass) * rho * int(x * dA)
+        // centroid.y = (1/mass) * rho * int(y * dA)
+        // I = rho * int((x*x + y*y) * dA)
+        //
+        // We can compute these integrals by summing all the integrals
+        // for each triangle of the polygon. To evaluate the integral
+        // for a single triangle, we make a change of variables to
+        // the (u,v) coordinates of the triangle:
+        // x = x0 + e1x * u + e2x * v
+        // y = y0 + e1y * u + e2y * v
+        // where 0 <= u && 0 <= v && u + v <= 1.
+        //
+        // We integrate u from [0,1-v] and then v from [0,1].
+        // We also need to use the Jacobian of the transformation:
+        // D = cross(e1, e2)
+        //
+        // Simplification: triangle centroid = (1/3) * (p1 + p2 + p3)
+        //
+        // The rest of the derivation is handled by computer algebra.
+        assert(count >= 3)
+        val center = pool1
+        center.setZero()
+        var area = 0.0f
+        var I = 0.0f
+        // pRef is the reference point for forming triangles.
+        // It's location doesn't change the result (except for rounding error).
+        val s = pool2
+        s.setZero()
+        // This code would put the reference point inside the polygon.
+        for (i in 0 until count) {
+            s.addLocal(vertices[i])
+        }
+        s.mulLocal(1.0f / count)
+        val inv3 = 1.0f / 3.0f
+        val e1 = pool3
+        val e2 = pool4
+        for (i in 0 until count) {
+            // Triangle vertices.
+            e1.set(vertices[i]).subLocal(s)
+            e2.set(s).negateLocal().addLocal(if (i + 1 < count) vertices[i + 1] else vertices[0])
+            val D = Vec2.cross(e1, e2)
+            val triangleArea = 0.5f * D
+            area += triangleArea
+            // Area weighted centroid
+            center.x += triangleArea * inv3 * (e1.x + e2.x)
+            center.y += triangleArea * inv3 * (e1.y + e2.y)
+            val ex1 = e1.x
+            val ey1 = e1.y
+            val ex2 = e2.x
+            val ey2 = e2.y
+            val intX2 = ex1 * ex1 + ex2 * ex1 + ex2 * ex2
+            val intY2 = ey1 * ey1 + ey2 * ey1 + ey2 * ey2
+            I += 0.25f * inv3 * D * (intX2 + intY2)
+        }
+        // Total mass
+        massData.mass = density * area
+        // Center of mass
+        assert(area > Settings.EPSILON)
+        center.mulLocal(1.0f / area)
+        massData.center.set(center).addLocal(s)
+        // Inertia tensor relative to the local origin (point s)
+        massData.i = I * density
+        // Shift to center of mass then to original body origin.
+        massData.i += massData.mass * Vec2.dot(massData.center, massData.center)
+    }
+
+    /**
+     * Validate convexity. This is a very time consuming operation.
+     */
+    fun validate(): Boolean {
+        for (i in 0 until count) {
+            val i1 = i
+            val i2 = if (i < count - 1) i1 + 1 else 0
+            val p = vertices[i1]
+            val e = pool1.set(vertices[i2]).subLocal(p)
+            for (j in 0 until count) {
+                if (j == i1 || j == i2) {
+                    continue
+                }
+                val v = pool2.set(vertices[j]).subLocal(p)
+                val c = Vec2.cross(e, v)
+                if (c < 0.0f) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    /**
+     * Get the centroid and apply the supplied transform.
+     */
+    fun centroid(xf: Transform): Vec2 {
+        return Transform.mul(xf, centroid)
+    }
+
+    /**
+     * Get the centroid and apply the supplied transform.
+     */
+    fun centroidToOut(xf: Transform, out: Vec2): Vec2 {
+        Transform.mulToOutUnsafe(xf, centroid, out)
+        return out
+    }
+
+    companion object {
+        /** Dump lots of debug information.  */
+        private const val debug = false
+    }
+}

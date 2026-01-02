@@ -1,0 +1,1814 @@
+/*
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+package com.hereliesaz.kfizzix.particle
+
+import com.hereliesaz.kfizzix.callbacks.ParticleDestructionListener
+import com.hereliesaz.kfizzix.callbacks.ParticleQueryCallback
+import com.hereliesaz.kfizzix.callbacks.ParticleRaycastCallback
+import com.hereliesaz.kfizzix.callbacks.QueryCallback
+import com.hereliesaz.kfizzix.collision.AABB
+import com.hereliesaz.kfizzix.collision.RayCastInput
+import com.hereliesaz.kfizzix.collision.RayCastOutput
+import com.hereliesaz.kfizzix.collision.shapes.Shape
+import com.hereliesaz.kfizzix.common.*
+import com.hereliesaz.kfizzix.dynamics.Body
+import com.hereliesaz.kfizzix.dynamics.BodyType
+import com.hereliesaz.kfizzix.dynamics.Fixture
+import com.hereliesaz.kfizzix.dynamics.TimeStep
+import com.hereliesaz.kfizzix.dynamics.World
+import com.hereliesaz.kfizzix.particle.VoronoiDiagram.VoronoiDiagramCallback
+import java.util.*
+
+class ParticleSystem(var world: World) {
+
+    companion object {
+        const val pairFlags = ParticleType.springParticle or ParticleType.elasticParticle
+        const val triadFlags = ParticleType.elasticParticle
+        const val noPressureFlags = ParticleType.powderParticle or ParticleType.tensileParticle
+    }
+
+    var timestamp = 0
+    var allParticleFlags = 0
+    var allGroupFlags = 0
+    var density = 0f
+    var inverseDensity = 0f
+    var gravityScale = 0f
+    var particleDiameter = 0f
+    var inverseDiameter = 0f
+    var squaredDiameter = 0f
+    var count = 0
+    var internalAllocatedCapacity = 0
+    var maxCount = 0
+    var flagsBuffer = ParticleBufferInt()
+    var positionBuffer = ParticleBuffer(Vec2::class.java)
+    var velocityBuffer = ParticleBuffer(Vec2::class.java)
+    var accumulationBuffer: FloatArray? = null // temporary values
+    var accumulation2Buffer: Array<Vec2>? = null // temporary vector values
+    var depthBuffer: FloatArray? = null // distance from the surface
+    var colorBuffer = ParticleBuffer(ParticleColor::class.java)
+    var groupBuffer: Array<ParticleGroup?>? = null
+    var userDataBuffer = ParticleBuffer(Any::class.java)
+    var proxyCount = 0
+    var proxyCapacity = 0
+    var proxyBuffer: Array<Proxy?>? = null
+    var contactCount = 0
+    var contactCapacity = 0
+    var contactBuffer: Array<ParticleContact?>? = null
+    var bodyContactCount = 0
+    var bodyContactCapacity = 0
+    var bodyContactBuffer: Array<ParticleBodyContact?>? = null
+    var pairCount = 0
+    var pairCapacity = 0
+    var pairBuffer: Array<Pair?>? = null
+    var triadCount = 0
+    var triadCapacity = 0
+    var triadBuffer: Array<Triad?>? = null
+    var groupCount = 0
+    var groupList: ParticleGroup? = null
+    var pressureStrength = 0f
+    var dampingStrength = 0f
+    var elasticStrength = 0f
+    var springStrength = 0f
+    var viscousStrength = 0f
+    var surfaceTensionStrengthA = 0f
+    var surfaceTensionStrengthB = 0f
+    var powderStrength = 0f
+    var ejectionStrength = 0f
+    var colorMixingStrength = 0f
+
+    fun createParticle(def: ParticleDef): Int {
+        if (count >= internalAllocatedCapacity) {
+            val capacity = capacity
+            if (internalAllocatedCapacity < capacity) {
+                flagsBuffer.data = reallocateBuffer(
+                    flagsBuffer,
+                    internalAllocatedCapacity, capacity, false
+                )
+                positionBuffer.data = reallocateBuffer(
+                    positionBuffer,
+                    internalAllocatedCapacity, capacity, false
+                )
+                velocityBuffer.data = reallocateBuffer(
+                    velocityBuffer,
+                    internalAllocatedCapacity, capacity, false
+                )
+                accumulationBuffer = BufferUtils.reallocateBuffer(
+                    accumulationBuffer, 0, internalAllocatedCapacity,
+                    capacity, false
+                )
+                accumulation2Buffer = BufferUtils.reallocateBuffer(
+                    Vec2::class.java,
+                    accumulation2Buffer as Array<Vec2?>?, 0, internalAllocatedCapacity,
+                    capacity, true
+                ) as Array<Vec2>?
+                depthBuffer = BufferUtils.reallocateBuffer(
+                    depthBuffer, 0,
+                    internalAllocatedCapacity, capacity, true
+                )
+                colorBuffer.data = reallocateBuffer(
+                    colorBuffer,
+                    internalAllocatedCapacity, capacity, true
+                )
+                groupBuffer = BufferUtils.reallocateBuffer(
+                    ParticleGroup::class.java,
+                    groupBuffer as Array<ParticleGroup?>?, 0, internalAllocatedCapacity, capacity,
+                    false
+                ) as Array<ParticleGroup?>?
+                userDataBuffer.data = reallocateBuffer(
+                    userDataBuffer,
+                    internalAllocatedCapacity, capacity, true
+                )
+                internalAllocatedCapacity = capacity
+            }
+        }
+        if (count >= internalAllocatedCapacity) {
+            return Settings.invalidParticleIndex
+        }
+        val index = count++
+        flagsBuffer.data!![index] = def.flags
+        positionBuffer.data!![index]!!.set(def.position)
+        // assertNotSamePosition();
+        velocityBuffer.data!![index]!!.set(def.velocity)
+        groupBuffer!![index] = null
+        if (depthBuffer != null) {
+            depthBuffer!![index] = 0f
+        }
+        if (colorBuffer.data != null || def.color != null) {
+            colorBuffer.data = requestParticleBuffer(
+                colorBuffer.dataClass,
+                colorBuffer.data
+            )
+            if (def.color != null) {
+                colorBuffer.data!![index]!!.set(def.color!!)
+            }
+        }
+        if (userDataBuffer.data != null || def.userData != null) {
+            userDataBuffer.data = requestParticleBuffer(
+                userDataBuffer.dataClass, userDataBuffer.data
+            )
+            userDataBuffer.data!![index] = def.userData
+        }
+        if (proxyCount >= proxyCapacity) {
+            val oldCapacity = proxyCapacity
+            val newCapacity = if (proxyCount != 0) 2 * proxyCount else Settings.minParticleBufferCapacity
+            proxyBuffer = BufferUtils.reallocateBuffer(
+                Proxy::class.java, proxyBuffer as Array<Proxy?>?,
+                oldCapacity, newCapacity
+            ) as Array<Proxy?>?
+            proxyCapacity = newCapacity
+        }
+        proxyBuffer!![proxyCount++] = Proxy().apply { this.index = index }
+        return index
+    }
+
+    private val capacity: Int
+        private get() {
+            var capacity = if (count != 0) 2 * count else Settings.minParticleBufferCapacity
+            capacity = limitCapacity(capacity, maxCount)
+            capacity = limitCapacity(capacity, flagsBuffer.userSuppliedCapacity)
+            capacity = limitCapacity(capacity, positionBuffer.userSuppliedCapacity)
+            capacity = limitCapacity(capacity, velocityBuffer.userSuppliedCapacity)
+            capacity = limitCapacity(capacity, colorBuffer.userSuppliedCapacity)
+            capacity = limitCapacity(capacity, userDataBuffer.userSuppliedCapacity)
+            return capacity
+        }
+
+    private fun limitCapacity(capacity: Int, maxCount: Int): Int {
+        return if (maxCount > 0 && capacity > maxCount) maxCount else capacity
+    }
+
+    fun destroyParticle(index: Int, callDestructionListener: Boolean) {
+        var flags = ParticleType.zombieParticle
+        if (callDestructionListener) {
+            flags = flags or ParticleType.destructionListener
+        }
+        flagsBuffer.data!![index] = flagsBuffer.data!![index] or flags
+    }
+
+    fun queryAABB(callback: ParticleQueryCallback, aabb: AABB) {
+        if (count == 0) return
+        val lowerBound = aabb.lowerBound
+        val upperBound = aabb.upperBound
+        for (i in 0 until count) {
+             val p = positionBuffer.data!![i]!!
+             if (p.x >= lowerBound.x && p.x <= upperBound.x &&
+                 p.y >= lowerBound.y && p.y <= upperBound.y) {
+                 if (!callback.reportParticle(i)) break
+             }
+        }
+    }
+
+    private val temp = AABB()
+    private val dpcallback = DestroyParticlesInShapeCallback()
+    fun destroyParticlesInShape(shape: Shape, xf: Transform, callDestructionListener: Boolean): Int {
+        dpcallback.init(this, shape, xf, callDestructionListener)
+        shape.computeAABB(temp, xf, 0)
+        this.queryAABB(dpcallback, temp)
+        return dpcallback.destroyed
+    }
+
+    fun destroyParticlesInGroup(group: ParticleGroup, callDestructionListener: Boolean) {
+        for (i in group.firstIndex until group.lastIndex) {
+            destroyParticle(i, callDestructionListener)
+        }
+    }
+
+    private val temp2 = AABB()
+    private val tempVec = Vec2()
+    private val tempTransform = Transform()
+    private val tempTransform2 = Transform()
+    private val createParticleGroupCallback = CreateParticleGroupCallback()
+    private val tempParticleDef = ParticleDef()
+    fun createParticleGroup(groupDef: ParticleGroupDef): ParticleGroup {
+        val stride = particleStride
+        val identity = tempTransform
+        identity.setIdentity()
+        val transform = tempTransform2
+        transform.setIdentity()
+        val firstIndex = count
+        if (groupDef.shape != null) {
+            val particleDef = tempParticleDef
+            particleDef.flags = groupDef.flags
+            particleDef.color = groupDef.color
+            particleDef.userData = groupDef.userData
+            val shape = groupDef.shape
+            transform.set(groupDef.position, groupDef.angle)
+            val aabb = temp
+            val childCount = shape!!.childCount
+            for (childIndex in 0 until childCount) {
+                if (childIndex == 0) {
+                    shape.computeAABB(aabb, identity, childIndex)
+                } else {
+                    val childAABB = temp2
+                    shape.computeAABB(childAABB, identity, childIndex)
+                    aabb.combine(childAABB)
+                }
+            }
+            val upperBoundY = aabb.upperBound.y
+            val upperBoundX = aabb.upperBound.x
+            var y = MathUtils.floor(aabb.lowerBound.y / stride) * stride
+            while (y < upperBoundY) {
+                var x = MathUtils.floor(aabb.lowerBound.x / stride) * stride
+                while (x < upperBoundX) {
+                    val p = tempVec
+                    p.x = x
+                    p.y = y
+                    if (shape.testPoint(identity, p)) {
+                        Transform.mulToOut(transform, p, p)
+                        particleDef.position.x = p.x
+                        particleDef.position.y = p.y
+                        p.subLocal(groupDef.position)
+                        Vec2.crossToOutUnsafe(groupDef.angularVelocity, p, particleDef.velocity)
+                        particleDef.velocity.addLocal(groupDef.linearVelocity)
+                        createParticle(particleDef)
+                    }
+                    x += stride
+                }
+                y += stride
+            }
+        }
+        val lastIndex = count
+        val group = ParticleGroup()
+        group.system = this
+        group.firstIndex = firstIndex
+        group.lastIndex = lastIndex
+        group.groupFlags = groupDef.groupFlags
+        group.strength = groupDef.strength
+        group.userData = groupDef.userData
+        group.transform.set(transform)
+        group.destroyAutomatically = groupDef.destroyAutomatically
+        group.prev = null
+        group.next = groupList
+        if (groupList != null) {
+            groupList!!.prev = group
+        }
+        groupList = group
+        ++groupCount
+        for (i in firstIndex until lastIndex) {
+            groupBuffer!![i] = group
+        }
+        updateContacts(true)
+        if (groupDef.flags and pairFlags != 0) {
+            for (k in 0 until contactCount) {
+                val contact = contactBuffer!![k]
+                var a = contact!!.indexA
+                var b = contact.indexB
+                if (a > b) {
+                    val temp = a
+                    a = b
+                    b = temp
+                }
+                if (firstIndex <= a && b < lastIndex) {
+                    if (pairCount >= pairCapacity) {
+                        val oldCapacity = pairCapacity
+                        val newCapacity = if (pairCount != 0) 2 * pairCount else Settings.minParticleBufferCapacity
+                        pairBuffer = BufferUtils.reallocateBuffer(
+                            Pair::class.java,
+                            pairBuffer as Array<Pair?>?, oldCapacity, newCapacity
+                        ) as Array<Pair?>?
+                        pairCapacity = newCapacity
+                    }
+                    val pair = pairBuffer!![pairCount]!!
+                    pair.indexA = a
+                    pair.indexB = b
+                    pair.flags = contact.flags
+                    pair.strength = groupDef.strength
+                    pair.distance = MathUtils.distance(
+                        positionBuffer.data!![a]!!,
+                        positionBuffer.data!![b]!!
+                    )
+                    pairCount++
+                }
+            }
+        }
+        if (groupDef.flags and triadFlags != 0) {
+            val diagram = VoronoiDiagram(lastIndex - firstIndex)
+            for (i in firstIndex until lastIndex) {
+                diagram.addGenerator(positionBuffer.data!![i]!!, i)
+            }
+            diagram.generate(stride / 2)
+            createParticleGroupCallback.system = this
+            createParticleGroupCallback.def = groupDef
+            createParticleGroupCallback.firstIndex = firstIndex
+            diagram.getNodes(createParticleGroupCallback)
+        }
+        if (groupDef.groupFlags and ParticleGroupType.solidParticleGroup != 0) {
+            computeDepthForGroup(group)
+        }
+        return group
+    }
+
+    fun joinParticleGroups(groupA: ParticleGroup, groupB: ParticleGroup) {
+        assert(groupA !== groupB)
+        RotateBuffer(groupB.firstIndex, groupB.lastIndex, count)
+        assert(groupB.lastIndex == count)
+        RotateBuffer(groupA.firstIndex, groupA.lastIndex, groupB.firstIndex)
+        assert(groupA.lastIndex == groupB.firstIndex)
+        var particleFlags = 0
+        for (i in groupA.firstIndex until groupB.lastIndex) {
+            particleFlags = particleFlags or flagsBuffer.data!![i]
+        }
+        updateContacts(true)
+        if (particleFlags and pairFlags != 0) {
+            for (k in 0 until contactCount) {
+                val contact = contactBuffer!![k]
+                var a = contact!!.indexA
+                var b = contact.indexB
+                if (a > b) {
+                    val temp = a
+                    a = b
+                    b = temp
+                }
+                if (groupA.firstIndex <= a && a < groupA.lastIndex && groupB.firstIndex <= b && b < groupB.lastIndex) {
+                    if (pairCount >= pairCapacity) {
+                        val oldCapacity = pairCapacity
+                        val newCapacity = if (pairCount != 0) 2 * pairCount else Settings.minParticleBufferCapacity
+                        pairBuffer = BufferUtils.reallocateBuffer(
+                            Pair::class.java,
+                            pairBuffer as Array<Pair?>?, oldCapacity, newCapacity
+                        ) as Array<Pair?>?
+                        pairCapacity = newCapacity
+                    }
+                    val pair = pairBuffer!![pairCount]!!
+                    pair.indexA = a
+                    pair.indexB = b
+                    pair.flags = contact.flags
+                    pair.strength = MathUtils.min(groupA.strength, groupB.strength)
+                    pair.distance = MathUtils.distance(
+                        positionBuffer.data!![a]!!,
+                        positionBuffer.data!![b]!!
+                    )
+                    pairCount++
+                }
+            }
+        }
+        if (particleFlags and triadFlags != 0) {
+            val diagram = VoronoiDiagram(groupB.lastIndex - groupA.firstIndex)
+            for (i in groupA.firstIndex until groupB.lastIndex) {
+                if (flagsBuffer.data!![i] and ParticleType.zombieParticle == 0) {
+                    diagram.addGenerator(positionBuffer.data!![i]!!, i)
+                }
+            }
+            diagram.generate(particleStride / 2)
+            val callback = JoinParticleGroupsCallback()
+            callback.system = this
+            callback.groupA = groupA
+            callback.groupB = groupB
+            diagram.getNodes(callback)
+        }
+        for (i in groupB.firstIndex until groupB.lastIndex) {
+            groupBuffer!![i] = groupA
+        }
+        val groupFlags = groupA.groupFlags or groupB.groupFlags
+        groupA.groupFlags = groupFlags
+        groupA.lastIndex = groupB.lastIndex
+        groupB.firstIndex = groupB.lastIndex
+        destroyParticleGroup(groupB)
+        if (groupFlags and ParticleGroupType.solidParticleGroup != 0) {
+            computeDepthForGroup(groupA)
+        }
+    }
+
+    // Only called from solveZombie() or joinParticleGroups().
+    fun destroyParticleGroup(group: ParticleGroup?) {
+        assert(groupCount > 0)
+        assert(group != null)
+        if (world.particleDestructionListener != null) {
+            world.particleDestructionListener!!.sayGoodbye(group!!)
+        }
+        for (i in group!!.firstIndex until group.lastIndex) {
+            groupBuffer!![i] = null
+        }
+        if (group.prev != null) {
+            group.prev!!.next = group.next
+        }
+        if (group.next != null) {
+            group.next!!.prev = group.prev
+        }
+        if (group === groupList) {
+            groupList = group.next
+        }
+        --groupCount
+    }
+
+    fun computeDepthForGroup(group: ParticleGroup) {
+        for (i in group.firstIndex until group.lastIndex) {
+            accumulationBuffer!![i] = 0f
+        }
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]
+            val a = contact!!.indexA
+            val b = contact.indexB
+            if (a >= group.firstIndex && a < group.lastIndex && b >= group.firstIndex && b < group.lastIndex) {
+                val w = contact.weight
+                accumulationBuffer!![a] += w
+                accumulationBuffer!![b] += w
+            }
+        }
+        depthBuffer = requestParticleBuffer(depthBuffer)
+        for (i in group.firstIndex until group.lastIndex) {
+            val w = accumulationBuffer!![i]
+            depthBuffer!![i] = if (w < 0.8f) 0f else Float.MAX_VALUE
+        }
+        val iterationCount = group.particleCount
+        for (t in 0 until iterationCount) {
+            var updated = false
+            for (k in 0 until contactCount) {
+                val contact = contactBuffer!![k]
+                val a = contact!!.indexA
+                val b = contact.indexB
+                if (a >= group.firstIndex && a < group.lastIndex && b >= group.firstIndex && b < group.lastIndex) {
+                    val r = 1 - contact.weight
+                    val ap0 = depthBuffer!![a]
+                    val bp0 = depthBuffer!![b]
+                    val ap1 = bp0 + r
+                    val bp1 = ap0 + r
+                    if (ap0 > ap1) {
+                        depthBuffer!![a] = ap1
+                        updated = true
+                    }
+                    if (bp0 > bp1) {
+                        depthBuffer!![b] = bp1
+                        updated = true
+                    }
+                }
+            }
+            if (!updated) {
+                break
+            }
+        }
+        for (i in group.firstIndex until group.lastIndex) {
+            val p = depthBuffer!![i]
+            if (p < Float.MAX_VALUE) {
+                depthBuffer!![i] *= particleDiameter
+            } else {
+                depthBuffer!![i] = 0f
+            }
+        }
+    }
+
+    fun addContact(a: Int, b: Int) {
+        assert(a != b)
+        val pa = positionBuffer.data!![a]!!
+        val pb = positionBuffer.data!![b]!!
+        val dx = pb.x - pa.x
+        val dy = pb.y - pa.y
+        val d2 = dx * dx + dy * dy
+        // assert(d2 != 0);
+        if (d2 < squaredDiameter) {
+            if (contactCount >= contactCapacity) {
+                val oldCapacity = contactCapacity
+                val newCapacity = if (contactCount != 0) 2 * contactCount else Settings.minParticleBufferCapacity
+                contactBuffer = BufferUtils.reallocateBuffer(
+                    ParticleContact::class.java, contactBuffer as Array<ParticleContact?>?, oldCapacity,
+                    newCapacity
+                ) as Array<ParticleContact?>?
+                contactCapacity = newCapacity
+            }
+            val invD = if (d2 != 0f) MathUtils.sqrt(1 / d2) else Float.MAX_VALUE
+            val contact = contactBuffer!![contactCount]!!
+            contact.indexA = a
+            contact.indexB = b
+            contact.flags = flagsBuffer.data!![a] or flagsBuffer.data!![b]
+            contact.weight = 1 - d2 * invD * inverseDiameter
+            contact.normal.x = invD * dx
+            contact.normal.y = invD * dy
+            contactCount++
+        }
+    }
+
+    fun updateContacts(exceptZombie: Boolean) {
+        for (p in 0 until proxyCount) {
+            val proxy = proxyBuffer!![p]
+            val i = proxy!!.index
+            val pos = positionBuffer.data!![i]!!
+            proxy.tag = computeTag(inverseDiameter * pos.x, inverseDiameter * pos.y)
+        }
+        Arrays.sort(proxyBuffer, 0, proxyCount)
+        contactCount = 0
+        var c_index = 0
+        for (i in 0 until proxyCount) {
+            val a = proxyBuffer!![i]
+            val rightTag = computeRelativeTag(a!!.tag, 1, 0)
+            for (j in i + 1 until proxyCount) {
+                val b = proxyBuffer!![j]
+                if (rightTag < b!!.tag) {
+                    break
+                }
+                addContact(a.index, b.index)
+            }
+            val bottomLeftTag = computeRelativeTag(a.tag, -1, 1)
+            while (c_index < proxyCount) {
+                val c = proxyBuffer!![c_index]
+                if (bottomLeftTag <= c!!.tag) {
+                    break
+                }
+                c_index++
+            }
+            val bottomRightTag = computeRelativeTag(a.tag, 1, 1)
+            for (b_index in c_index until proxyCount) {
+                val b = proxyBuffer!![b_index]
+                if (bottomRightTag < b!!.tag) {
+                    break
+                }
+                addContact(a.index, b.index)
+            }
+        }
+        if (exceptZombie) {
+            var j = contactCount
+            var i = 0
+            while (i < j) {
+                if (contactBuffer!![i]!!.flags and ParticleType.zombieParticle != 0) {
+                    --j
+                    val temp = contactBuffer!![j]
+                    contactBuffer!![j] = contactBuffer!![i]
+                    contactBuffer!![i] = temp
+                    --i
+                }
+                i++
+            }
+            contactCount = j
+        }
+    }
+
+    private val ubcCallback = UpdateBodyContactsCallback()
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L2608-L2708
+     */
+    fun updateBodyContacts() {
+        val aabb = temp
+        aabb.lowerBound.x = Float.MAX_VALUE
+        aabb.lowerBound.y = Float.MAX_VALUE
+        aabb.upperBound.x = -Float.MAX_VALUE
+        aabb.upperBound.y = -Float.MAX_VALUE
+        for (i in 0 until count) {
+            val p = positionBuffer.data!![i]!!
+            Vec2.minToOut(aabb.lowerBound, p, aabb.lowerBound)
+            Vec2.maxToOut(aabb.upperBound, p, aabb.upperBound)
+        }
+        aabb.lowerBound.x -= particleDiameter
+        aabb.lowerBound.y -= particleDiameter
+        aabb.upperBound.x += particleDiameter
+        aabb.upperBound.y += particleDiameter
+        bodyContactCount = 0
+        ubcCallback.system = this
+        world.queryAABB(ubcCallback, aabb)
+    }
+
+    private val scCallback = SolveCollisionCallback()
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L2752-L2852
+     */
+    fun solveCollision(step: TimeStep) {
+        val aabb = temp
+        val lowerBound = aabb.lowerBound
+        val upperBound = aabb.upperBound
+        lowerBound.x = Float.MAX_VALUE
+        lowerBound.y = Float.MAX_VALUE
+        upperBound.x = -Float.MAX_VALUE
+        upperBound.y = -Float.MAX_VALUE
+        for (i in 0 until count) {
+            val v = velocityBuffer.data!![i]!!
+            val p1 = positionBuffer.data!![i]!!
+            val p1x = p1.x
+            val p1y = p1.y
+            val p2x = p1x + step.dt * v.x
+            val p2y = p1y + step.dt * v.y
+            val bx = Math.min(p1x, p2x)
+            val by = Math.min(p1y, p2y)
+            lowerBound.x = Math.min(lowerBound.x, bx)
+            lowerBound.y = Math.min(lowerBound.y, by)
+            val b1x = Math.max(p1x, p2x)
+            val b1y = Math.max(p1y, p2y)
+            upperBound.x = Math.max(upperBound.x, b1x)
+            upperBound.y = Math.max(upperBound.y, b1y)
+        }
+        scCallback.step = step
+        scCallback.system = this
+        world.queryAABB(scCallback, aabb)
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L2973-L3095
+     */
+    fun solve(step: TimeStep) {
+        ++timestamp
+        if (count == 0) {
+            return
+        }
+        allParticleFlags = 0
+        for (i in 0 until count) {
+            allParticleFlags = allParticleFlags or flagsBuffer.data!![i]
+        }
+        if (allParticleFlags and ParticleType.zombieParticle != 0) {
+            solveZombie()
+        }
+        if (count == 0) {
+            return
+        }
+        allGroupFlags = 0
+        var group: ParticleGroup? = groupList
+        while (group != null) {
+            allGroupFlags = allGroupFlags or group.groupFlags
+            group = group.next
+        }
+        val gravityX = (step.dt * gravityScale * world.getGravity().x).toFloat()
+        val gravityY = (step.dt * gravityScale * world.getGravity().y).toFloat()
+        val criticalVelocityYSquared = getCriticalVelocitySquared(step)
+        for (i in 0 until count) {
+            val v = velocityBuffer.data!![i]!!
+            v.x += gravityX
+            v.y += gravityY
+            val v2 = v.x * v.x + v.y * v.y
+            if (v2 > criticalVelocityYSquared) {
+                val a = if (v2 == 0f) Float.MAX_VALUE else MathUtils.sqrt(criticalVelocityYSquared / v2)
+                v.x *= a
+                v.y *= a
+            }
+        }
+        solveCollision(step)
+        if (allGroupFlags and ParticleGroupType.rigidParticleGroup != 0) {
+            solveRigid(step)
+        }
+        if (allParticleFlags and ParticleType.wallParticle != 0) {
+            solveWall(step)
+        }
+        for (i in 0 until count) {
+            val pos = positionBuffer.data!![i]!!
+            val vel = velocityBuffer.data!![i]!!
+            pos.x += step.dt * vel.x
+            pos.y += step.dt * vel.y
+        }
+        updateBodyContacts()
+        updateContacts(false)
+        if (allParticleFlags and ParticleType.viscousParticle != 0) {
+            solveViscous(step)
+        }
+        if (allParticleFlags and ParticleType.powderParticle != 0) {
+            solvePowder(step)
+        }
+        if (allParticleFlags and ParticleType.tensileParticle != 0) {
+            solveTensile(step)
+        }
+        if (allParticleFlags and ParticleType.elasticParticle != 0) {
+            solveElastic(step)
+        }
+        if (allParticleFlags and ParticleType.springParticle != 0) {
+            solveSpring(step)
+        }
+        if (allGroupFlags and ParticleGroupType.solidParticleGroup != 0) {
+            solveSolid(step)
+        }
+        if (allParticleFlags and ParticleType.colorMixingParticle != 0) {
+            solveColorMixing(step)
+        }
+        solvePressure(step)
+        solveDamping(step)
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3195-L3258
+     */
+    fun solvePressure(step: TimeStep) {
+        // calculates the sum of contact-weights for each particle
+        // that means dimensionless density
+        for (i in 0 until count) {
+            accumulationBuffer!![i] = 0f
+        }
+        for (k in 0 until bodyContactCount) {
+            val contact = bodyContactBuffer!![k]
+            val a = contact!!.index
+            val w = contact.weight
+            accumulationBuffer!![a] += w
+        }
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]
+            val a = contact!!.indexA
+            val b = contact.indexB
+            val w = contact.weight
+            accumulationBuffer!![a] += w
+            accumulationBuffer!![b] += w
+        }
+        // ignores powder particles
+        if (allParticleFlags and noPressureFlags != 0) {
+            for (i in 0 until count) {
+                if (flagsBuffer.data!![i] and noPressureFlags != 0) {
+                    accumulationBuffer!![i] = 0f
+                }
+            }
+        }
+        // calculates pressure as a linear function of density
+        val pressurePerWeight = pressureStrength * getCriticalPressure(step)
+        for (i in 0 until count) {
+            val w = accumulationBuffer!![i]
+            val h = pressurePerWeight * MathUtils.max(
+                0.0f,
+                MathUtils.min(w, Settings.maxParticleWeight) - Settings.minParticleWeight
+            )
+            accumulationBuffer!![i] = h
+        }
+        // applies pressure between each particle in contact
+        val velocityPerPressure = step.dt / (density * particleDiameter)
+        for (k in 0 until bodyContactCount) {
+            val contact = bodyContactBuffer!![k]
+            val a = contact!!.index
+            val b = contact.body
+            val w = contact.weight
+            val m = contact.mass
+            val n = contact.normal
+            val p = positionBuffer.data!![a]!!
+            val h = accumulationBuffer!![a] + pressurePerWeight * w
+            val f = tempVec
+            val coef = velocityPerPressure * w * m * h
+            f.x = coef * n.x
+            f.y = coef * n.y
+            val velData = velocityBuffer.data!![a]!!
+            val particleInvMass = particleInvMass
+            velData.x -= particleInvMass * f.x
+            velData.y -= particleInvMass * f.y
+            b!!.applyLinearImpulse(f, p, true)
+        }
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]
+            val a = contact!!.indexA
+            val b = contact.indexB
+            val w = contact.weight
+            val n = contact.normal
+            val h = accumulationBuffer!![a] + accumulationBuffer!![b]
+            val fx = velocityPerPressure * w * h * n.x
+            val fy = velocityPerPressure * w * h * n.y
+            val velDataA = velocityBuffer.data!![a]!!
+            val velDataB = velocityBuffer.data!![b]!!
+            velDataA.x -= fx
+            velDataA.y -= fy
+            velDataB.x += fx
+            velDataB.y += fy
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3260-L3304
+     */
+    fun solveDamping(step: TimeStep) {
+        // reduces the normal velocity of each contact
+        val damping = dampingStrength
+        for (k in 0 until bodyContactCount) {
+            val contact = bodyContactBuffer!![k]
+            val a = contact!!.index
+            val b = contact.body
+            val w = contact.weight
+            val m = contact.mass
+            val n = contact.normal
+            val p = positionBuffer.data!![a]!!
+            val tempX = p.x - b!!.sweep.c.x
+            val tempY = p.y - b.sweep.c.y
+            val velA = velocityBuffer.data!![a]!!
+            // getLinearVelocityFromWorldPointToOut, with -= velA
+            var vx = -b.angularVelocity * tempY + b.linearVelocity.x - velA.x
+            var vy = b.angularVelocity * tempX + b.linearVelocity.y - velA.y
+            // done
+            val vn = vx * n.x + vy * n.y
+            if (vn < 0) {
+                val f = tempVec
+                f.x = damping * w * m * vn * n.x
+                f.y = damping * w * m * vn * n.y
+                val invMass = particleInvMass
+                velA.x += invMass * f.x
+                velA.y += invMass * f.y
+                f.x = -f.x
+                f.y = -f.y
+                b.applyLinearImpulse(f, p, true)
+            }
+        }
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]
+            val a = contact!!.indexA
+            val b = contact.indexB
+            val w = contact.weight
+            val n = contact.normal
+            val velA = velocityBuffer.data!![a]!!
+            val velB = velocityBuffer.data!![b]!!
+            val vx = velB.x - velA.x
+            val vy = velB.y - velA.y
+            val vn = vx * n.x + vy * n.y
+            if (vn < 0) {
+                val fx = damping * w * vn * n.x
+                val fy = damping * w * vn * n.y
+                velA.x += fx
+                velA.y += fy
+                velB.x -= fx
+                velB.y -= fy
+            }
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3506-L3515
+     */
+    fun solveWall(step: TimeStep) {
+        for (i in 0 until count) {
+            if (flagsBuffer.data!![i] and ParticleType.wallParticle != 0) {
+                val r = velocityBuffer.data!![i]!!
+                r.x = 0.0f
+                r.y = 0.0f
+            }
+        }
+    }
+
+    private val tempVec2 = Vec2()
+    private val tempRot = Rot()
+    private val tempXf = Transform()
+    private val tempXf2 = Transform()
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3517-L3541
+     */
+    fun solveRigid(step: TimeStep) {
+        var group: ParticleGroup? = groupList
+        while (group != null) {
+            if (group.groupFlags and ParticleGroupType.rigidParticleGroup != 0) {
+                group.updateStatistics()
+                val temp = tempVec
+                val cross = tempVec2
+                val rotation = tempRot
+                rotation.set(step.dt * group.angularVelocity)
+                Rot.mulToOutUnsafe(rotation, group.center, cross)
+                temp.set(group.linearVelocity).mulLocal(step.dt).addLocal(group.center).subLocal(cross)
+                tempXf.p.set(temp)
+                tempXf.q.set(rotation)
+                Transform.mulToOut(tempXf, group.transform, group.transform)
+                val velocityTransform = tempXf2
+                velocityTransform.p.x = step.inverseDt * tempXf.p.x
+                velocityTransform.p.y = step.inverseDt * tempXf.p.y
+                velocityTransform.q.s = step.inverseDt * tempXf.q.s
+                velocityTransform.q.c = step.inverseDt * (tempXf.q.c - 1)
+                for (i in group.firstIndex until group.lastIndex) {
+                    Transform.mulToOutUnsafe(
+                        velocityTransform,
+                        positionBuffer.data!![i]!!, velocityBuffer.data!![i]!!
+                    )
+                }
+            }
+            group = group.next
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3543-L3583
+     */
+    fun solveElastic(step: TimeStep) {
+        val elasticStrength = step.inverseDt * elasticStrength
+        for (k in 0 until triadCount) {
+            val triad = triadBuffer!![k]!!
+            if (triad.flags and ParticleType.elasticParticle != 0) {
+                val a = triad.indexA
+                val b = triad.indexB
+                val c = triad.indexC
+                val oa = triad.pa
+                val ob = triad.pb
+                val oc = triad.pc
+                val pa = positionBuffer.data!![a]!!
+                val pb = positionBuffer.data!![b]!!
+                val pc = positionBuffer.data!![c]!!
+                val px = 1f / 3 * (pa.x + pb.x + pc.x)
+                val py = 1f / 3 * (pa.y + pb.y + pc.y)
+                var rs = Vec2.cross(oa, pa) + Vec2.cross(ob, pb) + Vec2.cross(oc, pc)
+                var rc = Vec2.dot(oa, pa) + Vec2.dot(ob, pb) + Vec2.dot(oc, pc)
+                val r2 = rs * rs + rc * rc
+                val invR = if (r2 == 0f) Float.MAX_VALUE else MathUtils.sqrt(1f / r2)
+                rs *= invR
+                rc *= invR
+                val strength = elasticStrength * triad.strength
+                val roax = rc * oa.x - rs * oa.y
+                val roay = rs * oa.x + rc * oa.y
+                val robx = rc * ob.x - rs * ob.y
+                val roby = rs * ob.x + rc * ob.y
+                val rocx = rc * oc.x - rs * oc.y
+                val rocy = rs * oc.x + rc * oc.y
+                val va = velocityBuffer.data!![a]!!
+                val vb = velocityBuffer.data!![b]!!
+                val vc = velocityBuffer.data!![c]!!
+                va.x += strength * (roax - (pa.x - px))
+                va.y += strength * (roay - (pa.y - py))
+                vb.x += strength * (robx - (pb.x - px))
+                vb.y += strength * (roby - (pb.y - py))
+                vc.x += strength * (rocx - (pc.x - px))
+                vc.y += strength * (rocy - (pc.y - py))
+            }
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3585-L3610
+     */
+    fun solveSpring(step: TimeStep) {
+        val springStrength = step.inverseDt * springStrength
+        for (k in 0 until pairCount) {
+            val pair = pairBuffer!![k]!!
+            if (pair.flags and ParticleType.springParticle != 0) {
+                val a = pair.indexA
+                val b = pair.indexB
+                val pa = positionBuffer.data!![a]!!
+                val pb = positionBuffer.data!![b]!!
+                val dx = pb.x - pa.x
+                val dy = pb.y - pa.y
+                val r0 = pair.distance
+                var r1 = MathUtils.sqrt(dx * dx + dy * dy)
+                if (r1 == 0f) r1 = Float.MAX_VALUE
+                val strength = springStrength * pair.strength
+                val fx = strength * (r0 - r1) / r1 * dx
+                val fy = strength * (r0 - r1) / r1 * dy
+                val va = velocityBuffer.data!![a]!!
+                val vb = velocityBuffer.data!![b]!!
+                va.x -= fx
+                va.y -= fy
+                vb.x += fx
+                vb.y += fy
+            }
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3612-L3658
+     */
+    fun solveTensile(step: TimeStep) {
+        accumulation2Buffer = requestParticleBuffer(
+            Vec2::class.java,
+            accumulation2Buffer as Array<Vec2?>?
+        ) as Array<Vec2>?
+        for (i in 0 until count) {
+            accumulationBuffer!![i] = 0f
+            accumulation2Buffer!![i]!!.setZero()
+        }
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]!!
+            if (contact.flags and ParticleType.tensileParticle != 0) {
+                val a = contact.indexA
+                val b = contact.indexB
+                val w = contact.weight
+                val n = contact.normal
+                accumulationBuffer!![a] += w
+                accumulationBuffer!![b] += w
+                val a2A = accumulation2Buffer!![a]!!
+                val a2B = accumulation2Buffer!![b]!!
+                val inter = (1 - w) * w
+                a2A.x -= inter * n.x
+                a2A.y -= inter * n.y
+                a2B.x += inter * n.x
+                a2B.y += inter * n.y
+            }
+        }
+        val strengthA = surfaceTensionStrengthA * getCriticalVelocity(step)
+        val strengthB = surfaceTensionStrengthB * getCriticalVelocity(step)
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]!!
+            if (contact.flags and ParticleType.tensileParticle != 0) {
+                val a = contact.indexA
+                val b = contact.indexB
+                val w = contact.weight
+                val n = contact.normal
+                val a2A = accumulation2Buffer!![a]!!
+                val a2B = accumulation2Buffer!![b]!!
+                val h = accumulationBuffer!![a] + accumulationBuffer!![b]
+                val sx = a2B.x - a2A.x
+                val sy = a2B.y - a2A.y
+                val fn = (strengthA * (h - 2) + strengthB * (sx * n.x + sy * n.y)) * w
+                val fx = fn * n.x
+                val fy = fn * n.y
+                val va = velocityBuffer.data!![a]!!
+                val vb = velocityBuffer.data!![b]!!
+                va.x -= fx
+                va.y -= fy
+                vb.x += fx
+                vb.y += fy
+            }
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3660-L3694
+     */
+    fun solveViscous(step: TimeStep) {
+        val viscousStrength = viscousStrength
+        for (k in 0 until bodyContactCount) {
+            val contact = bodyContactBuffer!![k]!!
+            val a = contact.index
+            if (flagsBuffer.data!![a] and ParticleType.viscousParticle != 0) {
+                val b = contact.body
+                val w = contact.weight
+                val m = contact.mass
+                val p = positionBuffer.data!![a]!!
+                val va = velocityBuffer.data!![a]!!
+                val tempX = p.x - b!!.sweep.c.x
+                val tempY = p.y - b.sweep.c.y
+                val vx = -b.angularVelocity * tempY + b.linearVelocity.x - va.x
+                val vy = b.angularVelocity * tempX + b.linearVelocity.y - va.y
+                val f = tempVec
+                val pInvMass = particleInvMass
+                f.x = viscousStrength * m * w * vx
+                f.y = viscousStrength * m * w * vy
+                va.x += pInvMass * f.x
+                va.y += pInvMass * f.y
+                f.x = -f.x
+                f.y = -f.y
+                b.applyLinearImpulse(f, p, true)
+            }
+        }
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]!!
+            if (contact.flags and ParticleType.viscousParticle != 0) {
+                val a = contact.indexA
+                val b = contact.indexB
+                val w = contact.weight
+                val va = velocityBuffer.data!![a]!!
+                val vb = velocityBuffer.data!![b]!!
+                val vx = vb.x - va.x
+                val vy = vb.y - va.y
+                val fx = viscousStrength * w * vx
+                val fy = viscousStrength * w * vy
+                va.x += fx
+                va.y += fy
+                vb.x -= fx
+                vb.y -= fy
+            }
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3719-L3740
+     */
+    fun solvePowder(step: TimeStep) {
+        val powderStrength = powderStrength * getCriticalVelocity(step)
+        val minWeight = 1.0f - Settings.particleStride
+        for (k in 0 until bodyContactCount) {
+            val contact = bodyContactBuffer!![k]!!
+            val a = contact.index
+            if (flagsBuffer.data!![a] and ParticleType.powderParticle != 0) {
+                val w = contact.weight
+                if (w > minWeight) {
+                    val b = contact.body
+                    val m = contact.mass
+                    val p = positionBuffer.data!![a]!!
+                    val n = contact.normal
+                    val f = tempVec
+                    val va = velocityBuffer.data!![a]!!
+                    val inter = powderStrength * m * (w - minWeight)
+                    val pInvMass = particleInvMass
+                    f.x = inter * n.x
+                    f.y = inter * n.y
+                    va.x -= pInvMass * f.x
+                    va.y -= pInvMass * f.y
+                    b!!.applyLinearImpulse(f, p, true)
+                }
+            }
+        }
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]!!
+            if (contact.flags and ParticleType.powderParticle != 0) {
+                val w = contact.weight
+                if (w > minWeight) {
+                    val a = contact.indexA
+                    val b = contact.indexB
+                    val n = contact.normal
+                    val va = velocityBuffer.data!![a]!!
+                    val vb = velocityBuffer.data!![b]!!
+                    val inter = powderStrength * (w - minWeight)
+                    val fx = inter * n.x
+                    val fy = inter * n.y
+                    va.x -= fx
+                    va.y -= fy
+                    vb.x += fx
+                    vb.y += fy
+                }
+            }
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3742-L3762
+     */
+    fun solveSolid(step: TimeStep) {
+        // applies extra repulsive force from solid particle groups
+        depthBuffer = requestParticleBuffer(depthBuffer)
+        val ejectionStrength = step.inverseDt * ejectionStrength
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]!!
+            val a = contact.indexA
+            val b = contact.indexB
+            if (groupBuffer!![a] !== groupBuffer!![b]) {
+                val w = contact.weight
+                val n = contact.normal
+                val h = depthBuffer!![a] + depthBuffer!![b]
+                val va = velocityBuffer.data!![a]!!
+                val vb = velocityBuffer.data!![b]!!
+                val inter = ejectionStrength * h * w
+                val fx = inter * n.x
+                val fy = inter * n.y
+                va.x -= fx
+                va.y -= fy
+                vb.x += fx
+                vb.y += fy
+            }
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3774-L3796
+     */
+    fun solveColorMixing(step: TimeStep) {
+        // mixes color between contacting particles
+        colorBuffer.data = requestParticleBuffer(
+            ParticleColor::class.java,
+            colorBuffer.data
+        )
+        val colorMixing256 = (256 * colorMixingStrength).toInt()
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]!!
+            val a = contact.indexA
+            val b = contact.indexB
+            if (flagsBuffer.data!![a] and flagsBuffer.data!![b] and ParticleType.colorMixingParticle != 0) {
+                val colorA = colorBuffer.data!![a]!!
+                val colorB = colorBuffer.data!![b]!!
+                val dr = colorMixing256 * ((colorB!!.r.toInt() and 0xFF) - (colorA!!.r.toInt() and 0xFF)) shr 8
+                val dg = colorMixing256 * ((colorB.g.toInt() and 0xFF) - (colorA.g.toInt() and 0xFF)) shr 8
+                val db = colorMixing256 * ((colorB.b.toInt() and 0xFF) - (colorA.b.toInt() and 0xFF)) shr 8
+                val da = colorMixing256 * ((colorB.a.toInt() and 0xFF) - (colorA.a.toInt() and 0xFF)) shr 8
+                colorA.r = (colorA.r.toInt() + dr).toByte()
+                colorA.g = (colorA.g.toInt() + dg).toByte()
+                colorA.b = (colorA.b.toInt() + db).toByte()
+                colorA.a = (colorA.a.toInt() + da).toByte()
+                colorB.r = (colorB.r.toInt() - dr).toByte()
+                colorB.g = (colorB.g.toInt() - dg).toByte()
+                colorB.b = (colorB.b.toInt() - db).toByte()
+                colorB.a = (colorB.a.toInt() - da).toByte()
+            }
+        }
+    }
+
+    /**
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3798-L3892
+     */
+    fun solveZombie() {
+        // removes particles with a zombie flag
+        var newCount = 0
+        val newIndices = IntArray(count)
+        for (i in 0 until count) {
+            val flags = flagsBuffer.data!![i]
+            if (flags and ParticleType.zombieParticle != 0) {
+                val destructionListener = world.particleDestructionListener
+                if (flags and ParticleType.destructionListener != 0 && destructionListener != null) {
+                    destructionListener.sayGoodbye(i)
+                }
+                newIndices[i] = Settings.invalidParticleIndex
+            } else {
+                newIndices[i] = newCount
+                if (i != newCount) {
+                    flagsBuffer.data!![newCount] = flagsBuffer.data!![i]
+                    positionBuffer.data!![newCount]!!.set(positionBuffer.data!![i]!!)
+                    velocityBuffer.data!![newCount]!!.set(velocityBuffer.data!![i]!!)
+                    groupBuffer!![newCount] = groupBuffer!![i]
+                    if (depthBuffer != null) {
+                        depthBuffer!![newCount] = depthBuffer!![i]
+                    }
+                    if (colorBuffer.data != null) {
+                        colorBuffer.data!![newCount]!!.set(colorBuffer.data!![i]!!)
+                    }
+                    if (userDataBuffer.data != null) {
+                        userDataBuffer.data!![newCount] = userDataBuffer.data!![i]
+                    }
+                }
+                newCount++
+            }
+        }
+        // update proxies
+        for (k in 0 until proxyCount) {
+            val proxy = proxyBuffer!![k]
+            proxy!!.index = newIndices[proxy.index]
+        }
+        var j = proxyCount
+        var i = 0
+        while (i < j) {
+            if (proxyBuffer!![i]!!.index < 0) {
+                --j
+                val temp = proxyBuffer!![j]
+                proxyBuffer!![j] = proxyBuffer!![i]
+                proxyBuffer!![i] = temp
+                --i
+            }
+            i++
+        }
+        proxyCount = j
+        // update contacts
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]!!
+            contact.indexA = newIndices[contact.indexA]
+            contact.indexB = newIndices[contact.indexB]
+        }
+        j = contactCount
+        i = 0
+        while (i < j) {
+            val c = contactBuffer!![i]!!
+            if (c.indexA < 0 || c.indexB < 0) {
+                --j
+                val temp = contactBuffer!![j]
+                contactBuffer!![j] = contactBuffer!![i]
+                contactBuffer!![i] = temp
+                --i
+            }
+            i++
+        }
+        contactCount = j
+        // update particle-body contacts
+        for (k in 0 until bodyContactCount) {
+            val contact = bodyContactBuffer!![k]!!
+            contact.index = newIndices[contact.index]
+        }
+        j = bodyContactCount
+        i = 0
+        while (i < j) {
+            if (bodyContactBuffer!![i]!!.index < 0) {
+                --j
+                val temp = bodyContactBuffer!![j]
+                bodyContactBuffer!![j] = bodyContactBuffer!![i]
+                bodyContactBuffer!![i] = temp
+                --i
+            }
+            i++
+        }
+        bodyContactCount = j
+        // update pairs
+        for (k in 0 until pairCount) {
+            val pair = pairBuffer!![k]!!
+            pair.indexA = newIndices[pair.indexA]
+            pair.indexB = newIndices[pair.indexB]
+        }
+        j = pairCount
+        i = 0
+        while (i < j) {
+            val p = pairBuffer!![i]!!
+            if (p.indexA < 0 || p.indexB < 0) {
+                --j
+                val temp = pairBuffer!![j]
+                pairBuffer!![j] = pairBuffer!![i]
+                pairBuffer!![i] = temp
+                --i
+            }
+            i++
+        }
+        pairCount = j
+        // update triads
+        for (k in 0 until triadCount) {
+            val triad = triadBuffer!![k]!!
+            triad.indexA = newIndices[triad.indexA]
+            triad.indexB = newIndices[triad.indexB]
+            triad.indexC = newIndices[triad.indexC]
+        }
+        j = triadCount
+        i = 0
+        while (i < j) {
+            val t = triadBuffer!![i]!!
+            if (t.indexA < 0 || t.indexB < 0 || t.indexC < 0) {
+                --j
+                val temp = triadBuffer!![j]
+                triadBuffer!![j] = triadBuffer!![i]
+                triadBuffer!![i] = temp
+                --i
+            }
+            i++
+        }
+        triadCount = j
+        // update groups
+        var group: ParticleGroup? = groupList
+        while (group != null) {
+            var firstIndex = newCount
+            var lastIndex = 0
+            var modified = false
+            for (i in group.firstIndex until group.lastIndex) {
+                j = newIndices[i]
+                if (j >= 0) {
+                    firstIndex = MathUtils.min(firstIndex, j)
+                    lastIndex = MathUtils.max(lastIndex, j + 1)
+                } else {
+                    modified = true
+                }
+            }
+            if (firstIndex < lastIndex) {
+                group.firstIndex = firstIndex
+                group.lastIndex = lastIndex
+                if (modified) {
+                    if (group.groupFlags and ParticleGroupType.rigidParticleGroup != 0) {
+                        group.toBeSplit = true
+                    }
+                }
+            } else {
+                group.firstIndex = 0
+                group.lastIndex = 0
+                if (group.destroyAutomatically) {
+                    group.toBeDestroyed = true
+                }
+            }
+            group = group.next
+        }
+        // update particle count
+        count = newCount
+        // world.stackAllocator.Free(newIndices);
+        // destroy bodies with no particles
+        group = groupList
+        while (group != null) {
+            val next = group.next
+            if (group.toBeDestroyed) {
+                destroyParticleGroup(group)
+            } else if (group.toBeSplit) {
+                // TODO: split the group
+            }
+            group = next
+        }
+    }
+
+    private class NewIndices {
+        var start = 0
+        var mid = 0
+        var end = 0
+        fun getIndex(i: Int): Int {
+            return if (i < start) {
+                i
+            } else if (i < mid) {
+                i + end - mid
+            } else if (i < end) {
+                i + start - mid
+            } else {
+                i
+            }
+        }
+    }
+
+    private val newIndices = NewIndices()
+    fun RotateBuffer(start: Int, mid: Int, end: Int) {
+        // move the particles assigned to the given group toward the end of
+        // the array
+        if (start == mid || mid == end) {
+            return
+        }
+        newIndices.start = start
+        newIndices.mid = mid
+        newIndices.end = end
+        BufferUtils.rotate(flagsBuffer.data!!, start, mid, end)
+        BufferUtils.rotate(positionBuffer.data!!, start, mid, end)
+        BufferUtils.rotate(velocityBuffer.data!!, start, mid, end)
+        BufferUtils.rotate(groupBuffer as Array<ParticleGroup?>, start, mid, end)
+        if (depthBuffer != null) {
+            BufferUtils.rotate(depthBuffer!!, start, mid, end)
+        }
+        if (colorBuffer.data != null) {
+            BufferUtils.rotate(colorBuffer.data!!, start, mid, end)
+        }
+        if (userDataBuffer.data != null) {
+            BufferUtils.rotate(userDataBuffer.data!!, start, mid, end)
+        }
+        // update proxies
+        for (k in 0 until proxyCount) {
+            val proxy = proxyBuffer!![k]
+            proxy!!.index = newIndices.getIndex(proxy.index)
+        }
+        // update contacts
+        for (k in 0 until contactCount) {
+            val contact = contactBuffer!![k]
+            contact!!.indexA = newIndices.getIndex(contact.indexA)
+            contact.indexB = newIndices.getIndex(contact.indexB)
+        }
+        // update particle-body contacts
+        for (k in 0 until bodyContactCount) {
+            val contact = bodyContactBuffer!![k]
+            contact!!.index = newIndices.getIndex(contact.index)
+        }
+        // update pairs
+        for (k in 0 until pairCount) {
+            val pair = pairBuffer!![k]
+            pair!!.indexA = newIndices.getIndex(pair.indexA)
+            pair.indexB = newIndices.getIndex(pair.indexB)
+        }
+        // update triads
+        for (k in 0 until triadCount) {
+            val triad = triadBuffer!![k]
+            triad!!.indexA = newIndices.getIndex(triad.indexA)
+            triad.indexB = newIndices.getIndex(triad.indexB)
+            triad.indexC = newIndices.getIndex(triad.indexC)
+        }
+        // update groups
+        var group: ParticleGroup? = groupList
+        while (group != null) {
+            group.firstIndex = newIndices.getIndex(group.firstIndex)
+            group.lastIndex = newIndices.getIndex(group.lastIndex - 1) + 1
+            group = group.next
+        }
+    }
+
+    var particleRadius: Float
+        get() = particleDiameter / 2
+        set(radius) {
+            particleDiameter = 2 * radius
+            squaredDiameter = particleDiameter * particleDiameter
+            inverseDiameter = 1 / particleDiameter
+        }
+    var particleDensity: Float
+        get() = density
+        set(density) {
+            this.density = density
+            inverseDensity = 1 / this.density
+        }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> requestParticleBuffer(klass: Class<T>, buffer: Array<T?>?): Array<T?> {
+        var buffer = buffer
+        if (buffer == null) {
+            buffer = java.lang.reflect.Array.newInstance(klass, internalAllocatedCapacity) as Array<T?>
+        }
+        return buffer
+    }
+
+    fun getCriticalVelocity(step: TimeStep): Float {
+        return particleDiameter * step.inverseDt
+    }
+
+    fun getCriticalVelocitySquared(step: TimeStep): Float {
+        val velocity = getCriticalVelocity(step)
+        return velocity * velocity
+    }
+
+    fun getCriticalPressure(step: TimeStep): Float {
+        return density * getCriticalVelocitySquared(step)
+    }
+
+    val particleStride: Float
+        get() = Settings.particleStride * particleDiameter
+    val particleMass: Float
+        get() {
+            val stride = particleStride
+            return density * stride * stride
+        }
+    val particleInvMass: Float
+        get() = 1.777777f * inverseDensity * inverseDiameter * inverseDiameter
+    val particleFlagsBuffer: IntArray?
+        get() = flagsBuffer.data
+    val particlePositionBuffer: Array<Vec2>?
+        get() = positionBuffer.data as Array<Vec2>?
+    val particleVelocityBuffer: Array<Vec2>?
+        get() = velocityBuffer.data as Array<Vec2>?
+    val particleColorBuffer: Array<ParticleColor?>?
+        get() {
+            colorBuffer.data = requestParticleBuffer(
+                ParticleColor::class.java,
+                colorBuffer.data
+            )
+            return colorBuffer.data
+        }
+    val particleUserDataBuffer: Array<Any?>?
+        get() {
+            userDataBuffer.data = requestParticleBuffer(
+                Any::class.java,
+                userDataBuffer.data
+            )
+            return userDataBuffer.data
+        }
+    val particleGroupList: Array<ParticleGroup?>?
+        get() = groupBuffer
+
+    @Suppress("UNCHECKED_CAST")
+    fun setParticleFlagsBuffer(buffer: IntArray?, capacity: Int) {
+        setParticleBuffer(flagsBuffer, buffer, capacity)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun setParticlePositionBuffer(buffer: Array<Vec2>?, capacity: Int) {
+        setParticleBuffer(positionBuffer, buffer as Array<Vec2?>?, capacity)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun setParticleVelocityBuffer(buffer: Array<Vec2>?, capacity: Int) {
+        setParticleBuffer(velocityBuffer, buffer as Array<Vec2?>?, capacity)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun setParticleColorBuffer(buffer: Array<ParticleColor>?, capacity: Int) {
+        setParticleBuffer(colorBuffer, buffer as Array<ParticleColor?>?, capacity)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun setParticleUserDataBuffer(buffer: Array<Any>?, capacity: Int) {
+        setParticleBuffer(userDataBuffer, buffer as Array<Any?>?, capacity)
+    }
+
+    private fun <T> setParticleBuffer(buffer: ParticleBuffer<T>, newData: Array<T?>?, newCapacity: Int) {
+        assert(newData != null && newCapacity != 0)
+        buffer.data = newData
+        buffer.userSuppliedCapacity = newCapacity
+    }
+
+    private fun setParticleBuffer(buffer: ParticleBufferInt, newData: IntArray?, newCapacity: Int) {
+        assert(newData != null && newCapacity != 0)
+        buffer.data = newData
+        buffer.userSuppliedCapacity = newCapacity
+    }
+
+    private fun requestParticleBuffer(buffer: FloatArray?): FloatArray {
+        var buffer = buffer
+        if (buffer == null) {
+            buffer = FloatArray(internalAllocatedCapacity)
+        }
+        return buffer
+    }
+
+    private fun computeTag(x: Float, y: Float): Long {
+        val ix = x.toLong()
+        val iy = y.toLong()
+        return (iy shl 32) + ix
+    }
+
+    private fun computeRelativeTag(tag: Long, x: Int, y: Int): Long {
+        return tag + (y.toLong() shl 32) + x.toLong()
+    }
+
+    private class DestroyParticlesInShapeCallback : ParticleQueryCallback {
+        var system: ParticleSystem? = null
+        var shape: Shape? = null
+        var xf: Transform? = null
+        var callDestructionListener = false
+        var destroyed = 0
+        fun init(system: ParticleSystem, shape: Shape, xf: Transform, callDestructionListener: Boolean) {
+            this.system = system
+            this.shape = shape
+            this.xf = xf
+            this.callDestructionListener = callDestructionListener
+            destroyed = 0
+        }
+        override fun reportParticle(index: Int): Boolean {
+            if (shape!!.testPoint(xf!!, system!!.positionBuffer.data!![index]!!)) {
+                system!!.destroyParticle(index, callDestructionListener)
+                destroyed++
+            }
+            return true
+        }
+    }
+
+    private class CreateParticleGroupCallback : VoronoiDiagramCallback {
+        var system: ParticleSystem? = null
+        var def: ParticleGroupDef? = null
+        var firstIndex = 0
+        override fun callback(aTag: Int, bTag: Int, cTag: Int) {
+            val pa = system!!.positionBuffer.data!![aTag]!!
+            val pb = system!!.positionBuffer.data!![bTag]!!
+            val pc = system!!.positionBuffer.data!![cTag]!!
+            val mid = Vec2(pa).addLocal(pb).addLocal(pc).mulLocal(1.0f / 3.0f)
+            if (system!!.triadCount >= system!!.triadCapacity) {
+                val oldCapacity = system!!.triadCapacity
+                val newCapacity = if (system!!.triadCount != 0) 2 * system!!.triadCount else Settings.minParticleBufferCapacity
+                system!!.triadBuffer = BufferUtils.reallocateBuffer(Triad::class.java, system!!.triadBuffer, oldCapacity, newCapacity) as Array<Triad?>
+                system!!.triadCapacity = newCapacity
+            }
+            val triad = Triad()
+            triad.indexA = aTag
+            triad.indexB = bTag
+            triad.indexC = cTag
+            triad.flags = triadFlags
+            triad.strength = def!!.strength
+            triad.pa.set(pa).subLocal(mid)
+            triad.pb.set(pb).subLocal(mid)
+            triad.pc.set(pc).subLocal(mid)
+            triad.ka = -(triad.pa.x * triad.pa.y)
+            triad.kb = -(triad.pb.x * triad.pb.y)
+            triad.kc = -(triad.pc.x * triad.pc.y)
+            triad.s = Vec2.cross(triad.pa, triad.pb)
+            system!!.triadBuffer!![system!!.triadCount++] = triad
+        }
+    }
+
+    private class JoinParticleGroupsCallback : VoronoiDiagramCallback {
+        var system: ParticleSystem? = null
+        var groupA: ParticleGroup? = null
+        var groupB: ParticleGroup? = null
+        override fun callback(aTag: Int, bTag: Int, cTag: Int) {
+            val pa = system!!.positionBuffer.data!![aTag]!!
+            val pb = system!!.positionBuffer.data!![bTag]!!
+            val pc = system!!.positionBuffer.data!![cTag]!!
+            val mid = Vec2(pa).addLocal(pb).addLocal(pc).mulLocal(1.0f / 3.0f)
+            if (system!!.triadCount >= system!!.triadCapacity) {
+                val oldCapacity = system!!.triadCapacity
+                val newCapacity = if (system!!.triadCount != 0) 2 * system!!.triadCount else Settings.minParticleBufferCapacity
+                system!!.triadBuffer = BufferUtils.reallocateBuffer(Triad::class.java, system!!.triadBuffer, oldCapacity, newCapacity) as Array<Triad?>
+                system!!.triadCapacity = newCapacity
+            }
+            val triad = Triad()
+            triad.indexA = aTag
+            triad.indexB = bTag
+            triad.indexC = cTag
+            triad.flags = triadFlags
+            triad.strength = MathUtils.min(groupA!!.strength, groupB!!.strength)
+            triad.pa.set(pa).subLocal(mid)
+            triad.pb.set(pb).subLocal(mid)
+            triad.pc.set(pc).subLocal(mid)
+            triad.ka = -(triad.pa.x * triad.pa.y)
+            triad.kb = -(triad.pb.x * triad.pb.y)
+            triad.kc = -(triad.pc.x * triad.pc.y)
+            triad.s = Vec2.cross(triad.pa, triad.pb)
+            system!!.triadBuffer!![system!!.triadCount++] = triad
+        }
+    }
+
+    private class UpdateBodyContactsCallback : QueryCallback {
+        var system: ParticleSystem? = null
+        override fun reportFixture(fixture: Fixture): Boolean {
+            if (fixture.isSensor) return true
+            if (fixture.body.type != BodyType.DYNAMIC) return true
+            // Placeholder: Collision logic between particles and body fixture
+            // Usually this requires checking AABB overlap or more specific collision detection.
+            return true
+        }
+    }
+
+    private class SolveCollisionCallback : QueryCallback {
+        var system: ParticleSystem? = null
+        var step: TimeStep? = null
+        override fun reportFixture(fixture: Fixture): Boolean {
+            if (fixture.body.type == BodyType.DYNAMIC) return true
+            // Placeholder
+            return true
+        }
+    }
+
+    class ParticleBuffer<T>(val dataClass: Class<T>) {
+        var data: Array<T?>? = null
+        var userSuppliedCapacity = 0
+    }
+
+    class ParticleBufferInt {
+        var data: IntArray? = null
+        var userSuppliedCapacity = 0
+    }
+
+    /** Used for detecting particle contacts  */
+    class Proxy : Comparable<Proxy> {
+        var index = 0
+        var tag: Long = 0
+        override fun compareTo(other: Proxy): Int {
+            return if (tag - other.tag < 0) -1 else if (other.tag == tag) 0 else 1
+        }
+
+        override fun equals(obj: Any?): Boolean {
+            if (this === obj) return true
+            if (obj == null) return false
+            if (javaClass != obj.javaClass) return false
+            val other = obj as Proxy
+            return tag == other.tag
+        }
+    }
+
+    /**
+     * Connection between two particles.
+     *
+     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L120-L134
+     */
+    class Pair {
+        /**
+         * Index of the respective particle making a pair.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L123-L124
+         */
+        var indexA = 0
+
+        /**
+         * Index of the respective particle making a pair.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L123-L124
+         */
+        var indexB = 0
+
+        /**
+         * The logical sum of the particle flags. See the b2ParticleFlag enum.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L126-L127
+         */
+        var flags = 0
+
+        /**
+         * The strength of cohesion among the particles.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L129-L130
+         */
+        var strength = 0f
+
+        /**
+         * The initial distance of the particles.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L132-L133
+         */
+        var distance = 0f
+    }
+
+    /**
+     * Connection between three particles.
+     */
+    class Triad {
+        /**
+         * Index of the respective particle making triad.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L139-L140
+         */
+        var indexA = 0
+
+        /**
+         * Index of the respective particle making triad.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L139-L140
+         */
+        var indexB = 0
+
+        /**
+         * Index of the respective particle making triad.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L139-L140
+         */
+        var indexC = 0
+
+        /**
+         * The logical sum of the particle flags.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L142-L143
+         */
+        var flags = 0
+
+        /**
+         * The strength of cohesion among the particles.
+         *
+         * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.h#L145-L146
+         */
+        var strength = 0f
+        val pa = Vec2()
+        val pb = Vec2()
+        val pc = Vec2()
+        var ka = 0f
+        var kb = 0f
+        var kc = 0f
+        var s = 0f
+    }
+}

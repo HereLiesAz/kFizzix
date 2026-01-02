@@ -857,8 +857,8 @@ class ParticleSystem(var world: World) {
                 val fy = damping * w * vn * n.y
                 velA.x += fx
                 velA.y += fy
-                velB.x -= fx
-                velB.y -= fy
+                vb.x -= fx
+                vb.y -= fy
             }
         }
     }
@@ -1483,6 +1483,15 @@ class ParticleSystem(var world: World) {
         var buffer = buffer
         if (buffer == null) {
             buffer = java.lang.reflect.Array.newInstance(klass, internalAllocatedCapacity) as Array<T?>
+            for (i in 0 until internalAllocatedCapacity) {
+                try {
+                    if (!klass.isPrimitive) {
+                        buffer[i] = klass.getDeclaredConstructor().newInstance()
+                    }
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
         }
         return buffer
     }
@@ -1569,6 +1578,17 @@ class ParticleSystem(var world: World) {
         assert(newData != null && newCapacity != 0)
         buffer.data = newData
         buffer.userSuppliedCapacity = newCapacity
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> reallocateBuffer(buffer: ParticleBuffer<T>, oldCapacity: Int, newCapacity: Int, deferred: Boolean): Array<T?>? {
+        assert(newCapacity > oldCapacity)
+        return BufferUtils.reallocateBuffer(buffer.dataClass, buffer.data, buffer.userSuppliedCapacity, oldCapacity, newCapacity, deferred)
+    }
+
+    private fun reallocateBuffer(buffer: ParticleBufferInt, oldCapacity: Int, newCapacity: Int, deferred: Boolean): IntArray? {
+        assert(newCapacity > oldCapacity)
+        return BufferUtils.reallocateBuffer(buffer.data, buffer.userSuppliedCapacity, oldCapacity, newCapacity, deferred)
     }
 
     private fun requestParticleBuffer(buffer: FloatArray?): FloatArray {

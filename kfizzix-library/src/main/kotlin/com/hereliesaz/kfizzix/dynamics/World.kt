@@ -25,28 +25,43 @@ import com.hereliesaz.kfizzix.pooling.normal.DefaultWorldPool
 
 class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STACK_INIT_SIZE, Settings.CONTACT_STACK_INIT_SIZE) {
 
+    @JvmField
     var gravity = Vec2(gravity)
-        private set
 
+    @JvmField
     var allowSleep = true
+    @JvmField
     var warmStarting = true
+    @JvmField
     var continuousPhysics = true
+    @JvmField
     var subStepping = false
 
+    @JvmField
     var particleSystem: ParticleSystem = ParticleSystem(this)
+    @JvmField
     var particleDestructionListener: ParticleDestructionListener? = null
+    @JvmField
     var destructionListener: DestructionListener? = null
+    @JvmField
     var contactListener: ContactListener? = null
+    @JvmField
     var contactFilter: ContactFilter? = null
 
+    @JvmField
     var bodyList: Body? = null
+    @JvmField
     var jointList: Joint? = null
 
+    @JvmField
     var bodyCount = 0
+    @JvmField
     var jointCount = 0
 
     // Using DefaultBroadPhaseBuffer (DynamicTree) as default
+    @JvmField
     var broadPhase: BroadPhase = DefaultBroadPhaseBuffer(DynamicTree())
+    @JvmField
     var contactManager: ContactManager = ContactManager(this, broadPhase)
 
     fun getGravity(): Vec2 {

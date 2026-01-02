@@ -24,6 +24,7 @@
 package com.hereliesaz.kfizzix.pooling.arrays
 
 import java.util.HashMap
+import kotlin.FloatArray
 
 /**
  * Not thread safe float[] pooling

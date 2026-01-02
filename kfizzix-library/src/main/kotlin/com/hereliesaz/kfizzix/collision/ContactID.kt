@@ -28,6 +28,10 @@ package com.hereliesaz.kfizzix.collision
  * @author Daniel Murphy
  */
 class ContactID : Comparable<ContactID> {
+    enum class Type {
+        VERTEX, FACE
+    }
+
     var indexA: Byte = 0
     var indexB: Byte = 0
     var typeA: Byte = 0
@@ -47,6 +51,13 @@ class ContactID : Comparable<ContactID> {
         val tempType = typeA
         typeA = typeB
         typeB = tempType
+    }
+
+    fun zero() {
+        indexA = 0
+        indexB = 0
+        typeA = 0
+        typeB = 0
     }
 
     fun copy(): ContactID {

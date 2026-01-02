@@ -26,24 +26,15 @@ package com.hereliesaz.kfizzix.pooling.arrays
 import java.util.HashMap
 
 /**
- * Not thread safe int[] pooling
+ * Not thread safe float[] pooling
  *
  * @author Daniel Murphy
  */
-class IntArray {
-    private val map = HashMap<Int, kotlin.IntArray>()
+class FloatArrayPool {
+    private val map = HashMap<Int, FloatArray>()
 
-    operator fun get(argLength: Int): kotlin.IntArray {
+    fun get(argLength: Int): FloatArray {
         assert(argLength > 0)
-        if (!map.containsKey(argLength)) {
-            map[argLength] = getInitializedArray(argLength)
-        }
-        val array = map[argLength]!!
-        assert(array.size == argLength) { "Array not built of correct length" }
-        return array
-    }
-
-    protected fun getInitializedArray(argLength: Int): kotlin.IntArray {
-        return kotlin.IntArray(argLength)
+        return map.getOrPut(argLength) { FloatArray(argLength) }
     }
 }

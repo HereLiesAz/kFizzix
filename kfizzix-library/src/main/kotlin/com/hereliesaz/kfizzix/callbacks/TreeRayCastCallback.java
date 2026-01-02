@@ -18,32 +18,22 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.pooling.arrays
+package com.hereliesaz.kfizzix.callbacks
 
-import java.util.HashMap
+import com.hereliesaz.kfizzix.collision.RayCastInput
+import com.hereliesaz.kfizzix.collision.broadphase.DynamicTree
 
 /**
- * Not thread safe float[] pooling.
+ * callback for [DynamicTree]
  *
  * @author Daniel Murphy
  */
-class FloatArray {
-    private val map = HashMap<Int, kotlin.FloatArray>()
-
-    operator fun get(argLength: Int): kotlin.FloatArray {
-        assert(argLength > 0)
-        if (!map.containsKey(argLength)) {
-            map[argLength] = getInitializedArray(argLength)
-        }
-        val array = map[argLength]!!
-        assert(array.size == argLength) { "Array not built of correct length" }
-        return array
-    }
-
-    protected fun getInitializedArray(argLength: Int): kotlin.FloatArray {
-        return kotlin.FloatArray(argLength)
-    }
+interface TreeRayCastCallback {
+    /**
+     * @return The fraction to the node
+     */
+    fun raycastCallback(input: RayCastInput, nodeId: Int): Float
 }

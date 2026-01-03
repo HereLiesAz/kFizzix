@@ -31,8 +31,8 @@ import com.hereliesaz.kfizzix.common.Rot
 import com.hereliesaz.kfizzix.common.Settings
 import com.hereliesaz.kfizzix.common.Transform
 import com.hereliesaz.kfizzix.common.Vec2
-import com.hereliesaz.kfizzix.pooling.arrays.IntArrayPool
-import com.hereliesaz.kfizzix.pooling.arrays.Vec2Array
+// import com.hereliesaz.kfizzix.pooling.arrays.IntArray
+// import com.hereliesaz.kfizzix.pooling.arrays.Vec2Array
 
 /**
  * A convex polygon shape. Polygons have a maximum number of vertices equal to
@@ -102,29 +102,15 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
      * @warning collinear points are removed.
      */
     fun set(vertices: Array<Vec2>, count: Int) {
-        set(vertices, count, null, null)
-    }
-
-    /**
-     * Create a convex hull from the given array of points. The count must be in
-     * the range [3, Settings.maxPolygonVertices]. This method takes an
-     * arraypool for pooling.
-     *
-     * @warning the points may be re-ordered, even if they form a convex
-     * polygon.
-     * @warning collinear points are removed.
-     */
-    fun set(
-        verts: Array<Vec2>, num: Int,
-        vecPool: Vec2Array?, intPool: IntArrayPool?
-    ) {
-        assert(3 <= num && num <= Settings.maxPolygonVertices)
-        var n = MathUtils.min(num, Settings.maxPolygonVertices)
+        // Removed pooling for simplification as per memory constraints or lack of pooling classes
+        // set(vertices, count, null, null)
+        assert(3 <= count && count <= Settings.maxPolygonVertices)
+        var n = MathUtils.min(count, Settings.maxPolygonVertices)
         // Perform welding and copy vertices into local buffer.
-        val ps = if (vecPool != null) vecPool[Settings.maxPolygonVertices] else Array(Settings.maxPolygonVertices) { Vec2() }
+        val ps = Array(Settings.maxPolygonVertices) { Vec2() }
         var tempCount = 0
         for (i in 0 until n) {
-            val v = verts[i]
+            val v = vertices[i]
             var unique = true
             for (j in 0 until tempCount) {
                 if (MathUtils.distanceSquared(v, ps[j]) < 0.5f * Settings.linearSlop) {
@@ -155,7 +141,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
                 x0 = x
             }
         }
-        val hull = if (intPool != null) intPool.get(Settings.maxPolygonVertices) else IntArray(Settings.maxPolygonVertices)
+        val hull = IntArray(Settings.maxPolygonVertices)
         var m = 0
         var ih = i0
         while (true) {
@@ -183,23 +169,26 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
                 break
             }
         }
-        count = m
+        this.count = m
         // Copy vertices.
-        for (i in 0 until count) {
-            vertices[i].set(ps[hull[i]])
+        for (i in 0 until this.count) {
+            // if (vertices[i] == null) {
+            //     vertices[i] = Vec2()
+            // }
+            this.vertices[i].set(ps[hull[i]])
         }
         val edge = pool1
         // Compute normals. Ensure the edges have non-zero length.
-        for (i in 0 until count) {
+        for (i in 0 until this.count) {
             val i1 = i
-            val i2 = if (i + 1 < count) i + 1 else 0
-            edge.set(vertices[i2]).subLocal(vertices[i1])
+            val i2 = if (i + 1 < this.count) i + 1 else 0
+            edge.set(this.vertices[i2]).subLocal(this.vertices[i1])
             assert(edge.lengthSquared() > Settings.EPSILON * Settings.EPSILON)
             Vec2.crossToOutUnsafe(edge, 1f, normals[i])
             normals[i].normalize()
         }
         // Compute the polygon centroid.
-        computeCentroidToOut(vertices, count, centroid)
+        computeCentroidToOut(this.vertices, this.count, centroid)
     }
 
     /**
@@ -254,7 +243,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         get() = 1
 
     override fun testPoint(xf: Transform, p: Vec2): Boolean {
-        val pLocal = xf.q.mulT(p - xf.p)
+        val pLocal = xf.q.mulTrans(p - xf.p)
 
         if (debug) {
             println("--testPoint debug--")
@@ -266,7 +255,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         }
 
         for (i in 0 until count) {
-            val dot = Vec2.dot(normals[i], pLocal - vertices[i])
+            val dot = normals[i].dot(pLocal - vertices[i])
             if (dot > 0.0f) {
                 return false
             }
@@ -275,16 +264,16 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
     }
 
     override fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int) {
-        val v1 = Transform.mul(xf, vertices[0])
+        val v1 = xf.mul(vertices[0])
         aabb.lowerBound.set(v1)
         aabb.upperBound.set(v1)
 
         for (i in 1 until count) {
-            val v2 = Transform.mul(xf, vertices[i])
-            aabb.lowerBound.x = MathUtils.min(aabb.lowerBound.x, v2.x)
-            aabb.lowerBound.y = MathUtils.min(aabb.lowerBound.y, v2.y)
-            aabb.upperBound.x = MathUtils.max(aabb.upperBound.x, v2.x)
-            aabb.upperBound.y = MathUtils.max(aabb.upperBound.y, v2.y)
+            val v2 = xf.mul(vertices[i])
+            aabb.lowerBound.x = minOf(aabb.lowerBound.x, v2.x)
+            aabb.lowerBound.y = minOf(aabb.lowerBound.y, v2.y)
+            aabb.upperBound.x = maxOf(aabb.upperBound.x, v2.x)
+            aabb.upperBound.y = maxOf(aabb.upperBound.y, v2.y)
         }
 
         aabb.lowerBound.x -= radius
@@ -292,6 +281,12 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         aabb.upperBound.x += radius
         aabb.upperBound.y += radius
     }
+
+    /**
+     * Get the vertex count.
+     */
+    val vertexCount: Int
+        get() = count
 
     /**
      * Get a vertex by index.
@@ -303,13 +298,47 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         return vertices[index]
     }
 
+    fun computeDistanceToOut(xf: Transform, p: Vec2, childIndex: Int, normalOut: Vec2): Float {
+        val pLocal = xf.q.mulTrans(p - xf.p)
+        var maxDistance = -Float.MAX_VALUE
+        val normalForMaxDistance = Vec2()
+
+        for (i in 0 until count) {
+            val dot = normals[i].dot(pLocal - vertices[i])
+            if (dot > maxDistance) {
+                maxDistance = dot
+                normalForMaxDistance.set(normals[i])
+            }
+        }
+
+        return if (maxDistance > 0) {
+            var minDistance2 = Float.MAX_VALUE
+            val minDistanceVec = Vec2()
+
+            for (i in 0 until count) {
+                val distVec = pLocal - vertices[i]
+                val dist2 = distVec.lengthSquared()
+                if (minDistance2 > dist2) {
+                    minDistance2 = dist2
+                    minDistanceVec.set(distVec)
+                }
+            }
+            normalOut.set(xf.q.mul(minDistanceVec))
+            normalOut.normalize()
+            MathUtils.sqrt(minDistance2)
+        } else {
+            normalOut.set(xf.q.mul(normalForMaxDistance))
+            maxDistance
+        }
+    }
+
     override fun raycast(
         output: RayCastOutput, input: RayCastInput,
         xf: Transform, childIndex: Int
     ): Boolean {
         // Put the ray into the polygon's frame of reference.
-        val p1 = Rot.mulTrans(xf.q, input.p1 - xf.p)
-        val p2 = Rot.mulTrans(xf.q, input.p2 - xf.p)
+        val p1 = xf.q.mulTrans(input.p1 - xf.p)
+        val p2 = xf.q.mulTrans(input.p2 - xf.p)
         val d = p2 - p1
 
         var lower = 0f
@@ -318,8 +347,8 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         var index = -1
 
         for (i in 0 until count) {
-            val numerator = Vec2.dot(normals[i], vertices[i] - p1)
-            val denominator = Vec2.dot(normals[i], d)
+            val numerator = normals[i].dot(vertices[i] - p1)
+            val denominator = normals[i].dot(d)
 
             if (denominator == 0.0f) {
                 if (numerator < 0.0f) {
@@ -347,11 +376,11 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
             }
         }
 
-        // assert(lower in 0.0f..input.maxFraction)
+        assert(lower in 0.0f..input.maxFraction)
 
         if (index >= 0) {
             output.fraction = lower
-            Rot.mulToOutUnsafe(xf.q, normals[index], output.normal)
+            output.normal.set(xf.q.mul(normals[index]))
             return true
         }
         return false

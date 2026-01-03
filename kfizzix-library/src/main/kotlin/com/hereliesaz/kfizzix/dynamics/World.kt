@@ -49,6 +49,12 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
     var contactFilter: ContactFilter? = null
 
     @JvmField
+    var flags = 0
+
+    @JvmField
+    var isLocked = false
+
+    @JvmField
     var bodyList: Body? = null
     @JvmField
     var jointList: Joint? = null
@@ -73,7 +79,12 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
     }
 
     fun queryAABB(callback: QueryCallback, aabb: AABB) {
-        broadPhase.query(callback, aabb)
+        broadPhase.query(object : com.hereliesaz.kfizzix.callbacks.TreeCallback {
+            override fun treeCallback(proxyId: Int): Boolean {
+                val proxy = broadPhase.getUserData(proxyId) as FixtureProxy
+                return callback.reportFixture(proxy.fixture!!)
+            }
+        }, aabb)
     }
 
     fun raycast(callback: RayCastCallback, point1: Vec2, point2: Vec2) {
@@ -130,6 +141,15 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         if (step.dt > 0) {
              particleSystem.solve(step)
         }
+    }
+
+    fun createJoint(def: JointDef): Joint? {
+        // TODO implementation
+        return null
+    }
+
+    fun destroyJoint(joint: Joint) {
+        // TODO implementation
     }
 
     fun popContact(fA: Fixture, indexA: Int, fB: Fixture, indexB: Int): Contact? {
@@ -207,5 +227,11 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         // Simplified:
         // if (contact is CircleContact) getCircleContactStack().push(contact)
         // else ...
+    }
+
+    companion object {
+        const val NEW_FIXTURE = 0x0001
+        const val LOCKED = 0x0002
+        const val CLEAR_FORCES = 0x0004
     }
 }

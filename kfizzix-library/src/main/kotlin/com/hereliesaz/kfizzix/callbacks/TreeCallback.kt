@@ -18,19 +18,25 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.dynamics
+package com.hereliesaz.kfizzix.callbacks
 
-import com.hereliesaz.kfizzix.dynamics.contacts.Position
-import com.hereliesaz.kfizzix.dynamics.contacts.Velocity
+// import com.hereliesaz.kfizzix.collision.broadphase.DynamicTree
 
 /**
+ * callback for [DynamicTree]
+ *
  * @author Daniel Murphy
  */
-class SolverData {
-    var step: TimeStep? = null
-    var positions: Array<Position>? = null
-    var velocities: Array<Velocity>? = null
+interface TreeCallback {
+    /**
+     * Callback from a query request.
+     *
+     * @param proxyId The id of the proxy.
+     *
+     * @return if the query should be continued.
+     */
+    fun treeCallback(proxyId: Int): Boolean
 }

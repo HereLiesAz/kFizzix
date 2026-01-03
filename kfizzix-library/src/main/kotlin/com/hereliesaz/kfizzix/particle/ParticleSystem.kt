@@ -196,7 +196,7 @@ class ParticleSystem(var world: World) {
     fun destroyParticlesInShape(shape: Shape, xf: Transform, callDestructionListener: Boolean): Int {
         dpcallback.init(this, shape, xf, callDestructionListener)
         shape.computeAABB(temp, xf, 0)
-        world.queryAABB(null, dpcallback, temp)
+        this.queryAABB(dpcallback, temp)
         return dpcallback.destroyed
     }
 
@@ -901,8 +901,8 @@ class ParticleSystem(var world: World) {
                 val pa = positionBuffer.data!![a]!!
                 val pb = positionBuffer.data!![b]!!
                 val pc = positionBuffer.data!![c]!!
-                val px = 1f / 3 * (pa.x + pb.x + pc.x)
-                val py = 1f / 3 * (pa.y + pb.y + pc.y)
+                val px = 1f / 3f * (pa.x + pb.x + pc.x)
+                val py = 1f / 3f * (pa.y + pb.y + pc.y)
                 var rs = Vec2.cross(oa, pa) + Vec2.cross(ob, pb) + Vec2.cross(oc, pc)
                 var rc = Vec2.dot(oa, pa) + Vec2.dot(ob, pb) + Vec2.dot(oc, pc)
                 val r2 = rs * rs + rc * rc
@@ -1539,6 +1539,13 @@ class ParticleSystem(var world: World) {
         return buffer
     }
 
+    fun <T> requestParticleBuffer(clazz: Class<T>, buffer: Array<T?>?): Array<T?>? {
+        if (buffer == null) {
+            return BufferUtils.reallocateBuffer(clazz, null, 0, internalAllocatedCapacity)
+        }
+        return buffer
+    }
+
     class ParticleBuffer<T>(val dataClass: Class<T>) {
         var data: Array<T?>? = null
         var userSuppliedCapacity = 0
@@ -1688,8 +1695,8 @@ class ParticleSystem(var world: World) {
                         or system!!.flagsBuffer.data!![b]
                         or system!!.flagsBuffer.data!![c])
                 triad.strength = def!!.strength
-                val midPointx = 1f / 3 * (pa.x + pb.x + pc.x)
-                val midPointy = 1f / 3 * (pa.y + pb.y + pc.y)
+                val midPointx = 1f / 3f * (pa.x + pb.x + pc.x)
+                val midPointy = 1f / 3f * (pa.y + pb.y + pc.y)
                 triad.pa.x = pa.x - midPointx
                 triad.pa.y = pa.y - midPointy
                 triad.pb.x = pb.x - midPointx
@@ -1747,8 +1754,8 @@ class ParticleSystem(var world: World) {
                         triad.indexC = c
                         triad.flags = af or bf or cf
                         triad.strength = MathUtils.min(groupA!!.strength, groupB!!.strength)
-                        val midPointx = 1f / 3 * (pa.x + pb.x + pc.x)
-                        val midPointy = 1f / 3 * (pa.y + pb.y + pc.y)
+                        val midPointx = 1f / 3f * (pa.x + pb.x + pc.x)
+                        val midPointy = 1f / 3f * (pa.y + pb.y + pc.y)
                         triad.pa.x = pa.x - midPointx
                         triad.pa.y = pa.y - midPointy
                         triad.pb.x = pb.x - midPointx
@@ -1800,7 +1807,7 @@ class ParticleSystem(var world: World) {
     class UpdateBodyContactsCallback : QueryCallback {
         var system: ParticleSystem? = null
         private val tempVec = Vec2()
-        override fun reportFixture(fixture: Fixture): Boolean {
+        override fun reportFixture(fixture: com.hereliesaz.kfizzix.dynamics.Fixture): Boolean {
             if (fixture.isSensor) {
                 return true
             }
@@ -1821,12 +1828,12 @@ class ParticleSystem(var world: World) {
                 val firstProxy = lowerBound(
                     system!!.proxyBuffer,
                     system!!.proxyCount,
-                    computeTag(system!!.inverseDiameter * aabblowerBoundx, system!!.inverseDiameter * aabblowerBoundy)
+                    computeTag(system!!.inverseDiameter * aabblowerBoundx.toFloat(), system!!.inverseDiameter * aabblowerBoundy.toFloat())
                 )
                 val lastProxy = upperBound(
                     system!!.proxyBuffer,
                     system!!.proxyCount,
-                    computeTag(system!!.inverseDiameter * aabbupperBoundx, system!!.inverseDiameter * aabbupperBoundy)
+                    computeTag(system!!.inverseDiameter * aabbupperBoundx.toFloat(), system!!.inverseDiameter * aabbupperBoundy.toFloat())
                 )
                 var proxy = firstProxy
                 while (proxy != lastProxy) {
@@ -1875,7 +1882,7 @@ class ParticleSystem(var world: World) {
         private val output = RayCastOutput()
         private val tempVec = Vec2()
         private val tempVec2 = Vec2()
-        override fun reportFixture(fixture: Fixture): Boolean {
+        override fun reportFixture(fixture: com.hereliesaz.kfizzix.dynamics.Fixture): Boolean {
             if (fixture.isSensor) {
                 return true
             }
@@ -1891,12 +1898,12 @@ class ParticleSystem(var world: World) {
                 val firstProxy = lowerBound(
                     system!!.proxyBuffer,
                     system!!.proxyCount,
-                    computeTag(system!!.inverseDiameter * aabblowerBoundx, system!!.inverseDiameter * aabblowerBoundy)
+                    computeTag(system!!.inverseDiameter * aabblowerBoundx.toFloat(), system!!.inverseDiameter * aabblowerBoundy.toFloat())
                 )
                 val lastProxy = upperBound(
                     system!!.proxyBuffer,
                     system!!.proxyCount,
-                    computeTag(system!!.inverseDiameter * aabbupperBoundx, system!!.inverseDiameter * aabbupperBoundy)
+                    computeTag(system!!.inverseDiameter * aabbupperBoundx.toFloat(), system!!.inverseDiameter * aabbupperBoundy.toFloat())
                 )
                 var proxy = firstProxy
                 while (proxy != lastProxy) {
@@ -2058,15 +2065,6 @@ class ParticleSystem(var world: World) {
                 }
             }
             return left
-        }
-
-        fun <T> requestParticleBuffer(clazz: Class<T>, buffer: Array<T?>?): Array<T?>? {
-            if (buffer == null) {
-                @Suppress("UNCHECKED_CAST")
-                val newBuffer = java.lang.reflect.Array.newInstance(clazz, 0) as Array<T?>
-                return newBuffer
-            }
-            return buffer
         }
 
         fun setParticleBuffer(buffer: ParticleBufferInt, newData: IntArray?, newCapacity: Int) {

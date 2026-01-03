@@ -40,6 +40,13 @@ class ContactID : Comparable<ContactID> {
         typeB = c.typeB
     }
 
+    fun zero() {
+        indexA = 0
+        indexB = 0
+        typeA = 0
+        typeB = 0
+    }
+
     fun flip() {
         val tempIndex = indexA
         indexA = indexB

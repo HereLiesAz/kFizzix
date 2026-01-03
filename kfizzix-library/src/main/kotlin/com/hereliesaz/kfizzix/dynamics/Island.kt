@@ -168,7 +168,7 @@ class Island {
     var jointCapacity = 0
     private val contactSolver = ContactSolver()
     private val timer = Timer()
-    private val solverData = ContactSolver.SolverData()
+    private val solverData = SolverData()
     private val solverDef = ContactSolverDef()
     private val toiContactSolver = ContactSolver()
     private val toiSolverDef = ContactSolverDef()
@@ -269,9 +269,9 @@ class Island {
         // Solver data
         solverData.step = step
         @Suppress("UNCHECKED_CAST")
-        solverData.positions = positions as Array<Position>
+        solverData.positions = positions as Array<Position>?
         @Suppress("UNCHECKED_CAST")
-        solverData.velocities = velocities as Array<Velocity>
+        solverData.velocities = velocities as Array<Velocity>?
         // Initialize velocity constraints.
         solverDef.step = step
         solverDef.contacts = contacts?.filterNotNull()?.toTypedArray() ?: emptyArray()
@@ -537,7 +537,7 @@ class Island {
             return
         }
         for (i in 0 until contactCount) {
-            val c = contacts!![i]
+            val c = contacts!![i]!!
             val vc = constraints[i]
             impulse.count = vc.pointCount
             for (j in 0 until vc.pointCount) {

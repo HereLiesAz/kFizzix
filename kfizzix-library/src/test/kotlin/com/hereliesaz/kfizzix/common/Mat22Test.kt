@@ -244,7 +244,7 @@ class Mat22Test {
         val mat1 = Mat22(1f, 2f, 3f, 4f)
         val mat2 = Mat22(5f, 6f, 7f, 8f)
         val result = mat1.mulTrans(mat2)
-        val expected = Mat22(23f, 31f, 34f, 46f)
+        val expected = Mat22(26f, 30f, 38f, 44f)
         assertMat22Equals(expected, result, 1e-7f)
     }
 
@@ -254,7 +254,7 @@ class Mat22Test {
         val mat2 = Mat22(5f, 6f, 7f, 8f)
         val out = Mat22()
         mat1.mulTransToOut(mat2, out)
-        val expected = Mat22(23f, 31f, 34f, 46f)
+        val expected = Mat22(26f, 30f, 38f, 44f)
         assertMat22Equals(expected, out, 1e-7f)
     }
 
@@ -298,7 +298,7 @@ class Mat22Test {
         val mat1 = Mat22(1f, 2f, 3f, 4f)
         val mat2 = Mat22(5f, 6f, 7f, 8f)
         val result = Mat22.mulTrans(mat1, mat2)
-        val expected = Mat22(17f, 23f, 39f, 53f)
+        val expected = Mat22(26f, 30f, 38f, 44f)
         assertMat22Equals(expected, result, 1e-7f)
     }
 
@@ -308,7 +308,7 @@ class Mat22Test {
         val mat2 = Mat22(5f, 6f, 7f, 8f)
         val out = Mat22()
         Mat22.mulTransToOut(mat1, mat2, out)
-        val expected = Mat22(17f, 23f, 39f, 53f)
+        val expected = Mat22(26f, 30f, 38f, 44f)
         assertMat22Equals(expected, out, 1e-7f)
     }
 

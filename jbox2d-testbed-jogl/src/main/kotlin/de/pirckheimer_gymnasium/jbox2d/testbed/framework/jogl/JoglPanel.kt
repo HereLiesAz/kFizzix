@@ -82,7 +82,7 @@ class JoglPanel(model: TestbedModel, private val controller: TestbedController) 
         // coordinate system origin at lower left with width and height same as
         // the window
         val glu = GLU()
-        glu.gluOrtho2D(0.0f, width.toFloat(), 0.0f, height.toFloat())
+        glu.gluOrtho2D(0.0f.toDouble(), width.toDouble(), 0.0f.toDouble(), height.toDouble())
         gl2.glMatrixMode(GL2.GL_MODELVIEW)
         gl2.glLoadIdentity()
         gl2.glViewport(0, 0, width, height)

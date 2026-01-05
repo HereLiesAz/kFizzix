@@ -1,4 +1,4 @@
-package com.hereliesaz.kbox2d.serialization
+package com.hereliesaz.kfizzix.serialization
 
 /**
  * Used to hear when an object is unsupported by the serializer or the

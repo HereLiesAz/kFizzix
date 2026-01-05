@@ -137,7 +137,7 @@ class TimeOfImpact(private val pool: WorldPool) {
             // to get a separating axis
             distanceInput.transformA = xfA
             distanceInput.transformB = xfB
-            pool.distance.distance(distanceOutput, cache, distanceInput)
+            pool.getDistance().distance(distanceOutput, cache, distanceInput)
             // System.out.printf("Dist: %f at points %f, %f and %f, %f. %d
             // iterations\n",
             // distanceOutput.distance, distanceOutput.pointA.x,
@@ -170,7 +170,7 @@ class TimeOfImpact(private val pool: WorldPool) {
             while (true) {
                 // Find the deepest point at t2. Store the witness point
                 // indices.
-                val s2 = fcn.findMinSeparation(indexes, t2)
+                var s2 = fcn.findMinSeparation(indexes, t2)
                 // System.out.printf("s2: %f\n", s2);
                 // Is the final configuration separated?
                 if (s2 > target + tolerance) {
@@ -187,7 +187,7 @@ class TimeOfImpact(private val pool: WorldPool) {
                     break
                 }
                 // Compute the initial separation of the witness points.
-                val s1 = fcn.evaluate(indexes[0], indexes[1], t1)
+                var s1 = fcn.evaluate(indexes[0], indexes[1], t1)
                 // Check for initial overlap. This might happen if the root
                 // finder
                 // runs out of iterations.

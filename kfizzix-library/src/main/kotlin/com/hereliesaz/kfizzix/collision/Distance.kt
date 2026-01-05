@@ -457,7 +457,7 @@ class Distance {
         val vertices: Array<Vec2>
         var count: Int
         var radius: Float
-        val buffer: Array<Vec2>
+        val buffer: Array<Vec2?>
 
         init {
             vertices = Array(Settings.maxPolygonVertices) { Vec2() }
@@ -489,14 +489,14 @@ class Distance {
                 ShapeType.CHAIN -> {
                     val chain = shape as ChainShape
                     assert(0 <= index && index < chain.count)
-                    buffer[0] = chain.vertices[index]
-                    buffer[1] = if (index + 1 < chain.count) {
-                        chain.vertices[index + 1]
+                    buffer[0] = chain.vertices!![index]
+                    if (index + 1 < chain.count) {
+                        buffer[1] = chain.vertices!![index + 1]
                     } else {
-                        chain.vertices[0]
+                        buffer[1] = chain.vertices!![0]
                     }
-                    vertices[0].set(buffer[0])
-                    vertices[1].set(buffer[1])
+                    vertices[0].set(buffer[0]!!)
+                    vertices[1].set(buffer[1]!!)
                     count = 2
                     radius = chain.radius
                 }

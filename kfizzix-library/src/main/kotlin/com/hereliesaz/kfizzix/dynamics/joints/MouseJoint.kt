@@ -27,6 +27,7 @@ import com.hereliesaz.kfizzix.common.Mat22
 import com.hereliesaz.kfizzix.common.MathUtils
 import com.hereliesaz.kfizzix.common.Rot
 import com.hereliesaz.kfizzix.common.Settings
+import com.hereliesaz.kfizzix.common.Transform
 import com.hereliesaz.kfizzix.common.Vec2
 import com.hereliesaz.kfizzix.dynamics.SolverData
 import com.hereliesaz.kfizzix.pooling.WorldPool
@@ -90,6 +91,18 @@ class MouseJoint(argWorld: WorldPool, def: MouseJointDef) : Joint(argWorld, def)
 
     override fun getReactionTorque(invDt: Float): Float {
         return invDt * 0.0f
+    }
+
+    fun getMaxForce(): Float {
+        return maxForce
+    }
+
+    fun getFrequency(): Float {
+        return frequency
+    }
+
+    fun getDampingRatio(): Float {
+        return dampingRatio
     }
 
     fun setTarget(target: Vec2) {

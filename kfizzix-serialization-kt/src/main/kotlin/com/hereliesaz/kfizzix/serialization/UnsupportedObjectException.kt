@@ -18,14 +18,43 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.callbacks
+package com.hereliesaz.kfizzix.serialization
+
+import java.io.Serial
 
 /**
+ * Called when an object is unsupported by the serializer or deserializer.
+ * Pertains to shapes, joints and other objects that might not be in some
+ * versions of the engine.
+ *
  * @author Daniel Murphy
  */
-interface PairCallback {
-    fun addPair(userDataA: Any, userDataB: Any)
+class UnsupportedObjectException : RuntimeException {
+
+    enum class Type {
+        BODY, JOINT, SHAPE, OTHER
+    }
+
+    var type: Type? = null
+
+    constructor() : super()
+    constructor(argMessage: String?, argType: Type?) : super(argMessage) {
+        type = argType
+    }
+
+    constructor(argThrowable: Throwable?) : super(argThrowable)
+    constructor(argMessage: String?, argThrowable: Throwable?) : super(argMessage, argThrowable)
+
+    override fun getLocalizedMessage(): String {
+        return message + " [" + type + "]"
+
+    }
+
+    companion object {
+        @Serial
+        private const val serialVersionUID = 5915827472093183385L
+    }
 }

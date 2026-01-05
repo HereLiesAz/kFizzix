@@ -163,7 +163,7 @@ abstract class Contact(protected val pool: WorldPool) {
         if (sensor) {
             val shapeA = fixtureA!!.shape
             val shapeB = fixtureB!!.shape
-            touching = pool.getCollision().testOverlap(shapeA, indexA, shapeB,
+            touching = pool.getCollision().testOverlap(shapeA!!, indexA, shapeB!!,
                 indexB, xfA!!, xfB!!)
             // Sensors don't generate manifolds.
             manifold.pointCount = 0

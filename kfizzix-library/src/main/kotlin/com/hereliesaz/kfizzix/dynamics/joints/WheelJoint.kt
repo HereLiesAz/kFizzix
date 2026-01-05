@@ -70,12 +70,26 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     /**
      * The maximum motor torque, usually in N-m.
      */
+    private var _maxMotorTorque: Float = 0f
     var maxMotorTorque: Float
+        get() = _maxMotorTorque
+        set(torque) {
+            bodyA!!.isAwake = true
+            bodyB!!.isAwake = true
+            _maxMotorTorque = torque
+        }
 
     /**
      * The desired motor speed in radians per second.
      */
+    private var _motorSpeed: Float = 0f
     var motorSpeed: Float
+        get() = _motorSpeed
+        set(speed) {
+            bodyA!!.isAwake = true
+            bodyB!!.isAwake = true
+            _motorSpeed = speed
+        }
 
     /**
      * Suspension frequency, zero indicates no suspension
@@ -122,8 +136,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
         Vec2.crossToOutUnsafe(1.0f, localXAxisA, localYAxisA)
         motorMass = 0.0f
         motorImpulse = 0.0f
-        maxMotorTorque = def.maxMotorTorque
-        motorSpeed = def.motorSpeed
+        _maxMotorTorque = def.maxMotorTorque
+        _motorSpeed = def.motorSpeed
         enableMotor = def.enableMotor
         springFrequencyHz = def.frequencyHz
         springDampingRatio = def.dampingRatio
@@ -205,23 +219,6 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
         enableMotor = flag
     }
 
-    /**
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L571-L579
-     */
-    fun setMotorSpeed(speed: Float) {
-        bodyA!!.isAwake = true
-        bodyB!!.isAwake = true
-        motorSpeed = speed
-    }
-
-    /**
-     * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L581-L589
-     */
-    fun setMaxMotorTorque(torque: Float) {
-        bodyA!!.isAwake = true
-        bodyB!!.isAwake = true
-        maxMotorTorque = torque
-    }
 
     fun getMotorTorque(inv_dt: Float): Float {
         return motorImpulse * inv_dt

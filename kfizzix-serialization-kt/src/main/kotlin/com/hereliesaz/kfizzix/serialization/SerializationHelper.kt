@@ -18,33 +18,25 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT of the use of this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT of THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kfizzix.collision
+package com.hereliesaz.kfizzix.serialization
 
-import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.joints.JointType
 
 /**
- * A manifold point is a contact point belonging to a contact manifold. It holds
- * details related to the geometry and dynamics of the contact points. The local
- * point usage depends on the manifold type:
- *
- *  * circles: the local center of circleB
- *  * faceA: the local center of circleB or the clip point of polygonB
- *  * faceB: the clip point of polygonA
- *
- * This structure is stored across time steps, so we keep it small.<br></br>
- * Note: the impulses are used for internal caching and may not provide reliable
- * contact forces, especially for high speed collisions.
+ * A collection of helper functions for serialization.
  */
-data class ManifoldPoint(
-    /** usage depends on manifold type */
-    val localPoint: Vec2 = Vec2(),
-    /** the non-penetration impulse */
-    var normalImpulse: Float = 0f,
-    /** the friction impulse */
-    var tangentImpulse: Float = 0f,
-    /** uniquely identifies a contact point between two shapes */
-    var id: ContactID = ContactID()
-)
+object SerializationHelper {
+    /**
+     * Checks if a joint type is independent.
+     * Independent joints can be serialized without needing to reference other joints.
+     *
+     * @param type the joint type to check
+     * @return true if the joint type is independent, false otherwise
+     */
+    fun isIndependentJoint(type: JointType): Boolean {
+        return type != JointType.GEAR && type != JointType.CONSTANT_VOLUME
+    }
+}

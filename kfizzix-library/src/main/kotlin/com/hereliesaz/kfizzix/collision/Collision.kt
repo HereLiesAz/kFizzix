@@ -61,7 +61,7 @@ class Collision(private val pool: WorldPool) {
         input.transformB.set(xfB)
         input.useRadii = true
         cache.count = 0
-        pool.distance.distance(output, cache, input)
+        pool.getDistance().distance(output, cache, input)
         // djm note: anything significant about 10.0f?
         return output.distance < 10.0f * Settings.EPSILON
     }
@@ -1255,7 +1255,7 @@ class Collision(private val pool: WorldPool) {
             if (distance0 * distance1 < 0.0f) {
                 // Find intersection point of edge and plane
                 val interp = distance0 / (distance0 - distance1)
-                val v = Vec2(vIn0v).addLocal(interp * (vIn1v - vIn0v))
+                val v = Vec2(vIn0v).addLocal((vIn1v - vIn0v) * interp)
 
                 vOut[numOut] = ClipVertex(
                     v = v,

@@ -274,7 +274,7 @@ class Island {
         solverData.velocities = velocities as Array<Velocity>?
         // Initialize velocity constraints.
         solverDef.step = step
-        solverDef.contacts = contacts?.filterNotNull()?.toTypedArray() ?: emptyArray()
+        solverDef.contacts = contacts
         solverDef.count = contactCount
         @Suppress("UNCHECKED_CAST")
         solverDef.positions = positions as Array<Position>
@@ -405,7 +405,7 @@ class Island {
             velocities!![i]!!.v.y = bodies!![i]!!.linearVelocity.y
             velocities!![i]!!.w = bodies!![i]!!.angularVelocity
         }
-        toiSolverDef.contacts = contacts?.filterNotNull()?.toTypedArray() ?: emptyArray()
+        toiSolverDef.contacts = contacts
         toiSolverDef.count = contactCount
         toiSolverDef.step = subStep
         @Suppress("UNCHECKED_CAST")

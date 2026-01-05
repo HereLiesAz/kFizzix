@@ -85,7 +85,7 @@ class AABB {
         if (dy < 0) {
             return false
         }
-        return lowerBound.isValid && upperBound.isValid
+        return lowerBound.isValid() && upperBound.isValid()
     }
 
     /**
@@ -196,7 +196,7 @@ class AABB {
         var tmax = Float.MAX_VALUE
         val p = input.p1
         val d = input.p2.sub(input.p1)
-        val absD = MathUtils.abs(d)
+        val absD = Vec2.abs(d)
         val normal = output.normal
         if (absD.x < Settings.EPSILON) {
             // Parallel.

@@ -21,16 +21,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kbox2d.serialization.pb
+package com.hereliesaz.kfizzix.serialization.pb
 
-import com.hereliesaz.kbox2d.collision.shapes.*
-import com.hereliesaz.kbox2d.common.Vec2
-import com.hereliesaz.kbox2d.dynamics.*
-import com.hereliesaz.kbox2d.dynamics.joints.*
-import com.hereliesaz.kbox2d.serialization.JbDeserializer
-import com.hereliesaz.kbox2d.serialization.UnsupportedListener
-import com.hereliesaz.kbox2d.serialization.UnsupportedObjectException
-import com.hereliesaz.kbox2d.serialization.UnsupportedObjectException.Type
+import com.hereliesaz.kfizzix.collision.shapes.*
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.*
+import com.hereliesaz.kfizzix.dynamics.joints.*
+import com.hereliesaz.kfizzix.serialization.JbDeserializer
+import com.hereliesaz.kfizzix.serialization.UnsupportedListener
+import com.hereliesaz.kfizzix.serialization.UnsupportedObjectException
+import com.hereliesaz.kfizzix.serialization.UnsupportedObjectException.Type
 import org.box2d.proto.Box2D.*
 import java.io.IOException
 import java.io.InputStream
@@ -74,9 +74,9 @@ class PbDeserializer : JbDeserializer {
     fun deserializeWorld(pbWorld: PbWorld): World {
         val world = World(pbToVec(pbWorld.gravity))
         world.isAutoClearForces = pbWorld.autoClearForces
-        world.isContinuousPhysics = pbWorld.continuousPhysics
-        world.isWarmStarting = pbWorld.warmStarting
-        world.isSubStepping = pbWorld.subStepping
+        world.continuousPhysics = pbWorld.continuousPhysics
+        world.warmStarting = pbWorld.warmStarting
+        world.subStepping = pbWorld.subStepping
         val bodyMap = HashMap<Int, Body>()
         val jointMap = HashMap<Int, Joint>()
         for (i in 0 until pbWorld.bodiesCount) {
@@ -176,9 +176,9 @@ class PbDeserializer : JbDeserializer {
         fd.shape = deserializeShape(argFixture.shape)
         val fixture = argBody.createFixture(fd)
         if (listener != null && argFixture.hasTag()) {
-            listener!!.processFixture(fixture, argFixture.tag)
+            listener!!.processFixture(fixture!!, argFixture.tag)
         }
-        return fixture
+        return fixture!!
     }
 
     @Throws(IOException::class)
@@ -211,23 +211,23 @@ class PbDeserializer : JbDeserializer {
                 edge.vertex1.set(pbToVec(argShape.v1))
                 edge.vertex2.set(pbToVec(argShape.v2))
                 edge.vertex3.set(pbToVec(argShape.v3))
-                edge.m_hasVertex0 = argShape.has0
-                edge.m_hasVertex3 = argShape.has3
+                edge.hasVertex0 = argShape.has0
+                edge.hasVertex3 = argShape.has3
                 shape = edge
             }
             PbShapeType.CHAIN -> {
                 val chain = ChainShape()
-                chain.m_count = argShape.pointsCount
-                chain.m_vertices = Array(chain.m_count) { Vec2() }
-                for (i in 0 until chain.m_count) {
+                chain.count = argShape.pointsCount
+                chain.vertices = Array(chain.count) { Vec2() }
+                for (i in 0 until chain.count) {
 
-                    chain.m_vertices!![i] = Vec2(pbToVec(argShape.getPoints(i)))
+                    chain.vertices!![i] = Vec2(pbToVec(argShape.getPoints(i)))
 
                 }
-                chain.m_hasPrevVertex = argShape.has0
-                chain.m_hasNextVertex = argShape.has3
-                chain.m_prevVertex.set(pbToVec(argShape.prev))
-                chain.m_nextVertex.set(pbToVec(argShape.next))
+                chain.hasPrevVertex = argShape.has0
+                chain.hasNextVertex = argShape.has3
+                chain.prevVertex.set(pbToVec(argShape.prev))
+                chain.nextVertex.set(pbToVec(argShape.next))
                 shape = chain
             }
             else -> {
@@ -389,7 +389,7 @@ class PbDeserializer : JbDeserializer {
                         throw IllegalArgumentException(
                                 "Joints for constant volume joint must be distance joints")
                     }
-                    def.addBodyAndJoint(argBodyMap[body],
+                    def.addBodyAndJoint(argBodyMap[body]!!,
                             djoint as DistanceJoint)
                 }
             }
@@ -425,9 +425,9 @@ class PbDeserializer : JbDeserializer {
         jd.bodyB = argBodyMap[joint.bodyB]
         val realJoint = argWorld.createJoint(jd)
         if (listener != null && joint.hasTag()) {
-            listener!!.processJoint(realJoint, joint.tag)
+            listener!!.processJoint(realJoint!!, joint.tag)
         }
-        return realJoint
+        return realJoint!!
     }
 
     private fun pbToVec(argVec: PbVec2): Vec2 {

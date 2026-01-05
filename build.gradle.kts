@@ -23,8 +23,8 @@ allprojects {
 configure(listOf(
     project(":kfizzix-library"),
     project(":kfizzix-serialization-kt"),
-    project(":jbox2d-testbed-jogl"),
-    project(":kfizzix-testbed-javafx-kt")
+    //project(":jbox2d-testbed-jogl"),
+    //project(":kfizzix-testbed-javafx-kt")
 )) {
     apply(plugin = "java-library")
     apply(plugin = "org.jetbrains.kotlin.jvm")

@@ -38,28 +38,19 @@ import com.hereliesaz.kfizzix.common.Vec2
  * @author Daniel Murphy
  */
 class DynamicTreeFlatNodes : BroadPhaseStrategy {
-    var root: Int
-    var memberAabb: Array<AABB?>
-    var userData: Array<Any?>
-    var parent: IntArray
-    var child1: IntArray
-    var child2: IntArray
-    var nodeHeight: IntArray
-    private var nodeCount: Int
-    private var nodeCapacity: Int
-    private var freeList: Int
+    var root: Int = NULL_NODE
+    var memberAabb: Array<AABB?> = emptyArray()
+    var userData: Array<Any?> = emptyArray()
+    var parent: IntArray = IntArray(0)
+    var child1: IntArray = IntArray(0)
+    var child2: IntArray = IntArray(0)
+    var nodeHeight: IntArray = IntArray(0)
+    private var nodeCount: Int = 0
+    private var nodeCapacity: Int = 16
+    private var freeList: Int = 0
     private val drawVecs = Array(4) { Vec2() }
 
     init {
-        root = NULL_NODE
-        nodeCount = 0
-        nodeCapacity = 16
-        memberAabb = emptyArray()
-        userData = emptyArray()
-        parent = IntArray(0)
-        child1 = IntArray(0)
-        child2 = IntArray(0)
-        nodeHeight = IntArray(0)
         expandBuffers(0, nodeCapacity)
     }
 
@@ -724,11 +715,11 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
         }
         assert(0 <= child1 && child1 < nodeCapacity)
         assert(child2 != child1 && 0 <= child2 && child2 < nodeCapacity)
-        val height1 = height[child1]
-        val height2 = height[child2]
+        val height1 = nodeHeight[child1]
+        val height2 = nodeHeight[child2]
         val height: Int
         height = 1 + MathUtils.max(height1, height2)
-        assert(this.height[node] == height)
+        assert(this.nodeHeight[node] == height)
         val aabb = AABB()
         aabb.combine(memberAabb[child1]!!, memberAabb[child2]!!)
         assert(aabb.lowerBound == memberAabb[node]!!.lowerBound)

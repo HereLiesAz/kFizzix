@@ -19,6 +19,7 @@ import com.hereliesaz.kfizzix.dynamics.contacts.Contact
 import com.hereliesaz.kfizzix.dynamics.contacts.ContactEdge
 import com.hereliesaz.kfizzix.dynamics.contacts.ContactRegister
 import com.hereliesaz.kfizzix.dynamics.joints.Joint
+import com.hereliesaz.kfizzix.dynamics.joints.JointDef
 import com.hereliesaz.kfizzix.particle.ParticleSystem
 import com.hereliesaz.kfizzix.pooling.WorldPool
 import com.hereliesaz.kfizzix.pooling.normal.DefaultWorldPool
@@ -50,6 +51,16 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
 
     @JvmField
     var flags = 0
+
+    var isAutoClearForces: Boolean
+        get() = (flags and CLEAR_FORCES) == CLEAR_FORCES
+        set(flag) {
+            if (flag) {
+                flags = flags or CLEAR_FORCES
+            } else {
+                flags = flags and CLEAR_FORCES.inv()
+            }
+        }
 
     @JvmField
     var isLocked = false

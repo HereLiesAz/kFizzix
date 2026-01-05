@@ -40,7 +40,7 @@ class ContactSolver {
     var velocities: Array<Velocity>? = null
     var positionConstraints: Array<ContactPositionConstraint>
     var velocityConstraints: Array<ContactVelocityConstraint>
-    var contacts: Array<Contact>? = null
+    var contacts: Array<Contact?>? = null
     var count: Int = 0
 
     init {
@@ -67,7 +67,7 @@ class ContactSolver {
         velocities = def.velocities
         contacts = def.contacts
         for (i in 0 until count) {
-            val contact = contacts!![i]
+            val contact = contacts!![i]!!
             val fixtureA = contact.fixtureA
             val fixtureB = contact.fixtureB
             val shapeA = fixtureA!!.shape
@@ -172,7 +172,7 @@ class ContactSolver {
             val pc = positionConstraints[i]
             val radiusA = pc.radiusA
             val radiusB = pc.radiusB
-            val manifold = contacts!![vc.contactIndex].manifold
+            val manifold = contacts!![vc.contactIndex]!!.manifold
             val indexA = vc.indexA
             val indexB = vc.indexB
             val mA = vc.invMassA
@@ -436,7 +436,7 @@ class ContactSolver {
     fun storeImpulses() {
         for (i in 0 until count) {
             val vc = velocityConstraints[i]
-            val manifold = contacts!![vc.contactIndex].manifold
+            val manifold = contacts!![vc.contactIndex]!!.manifold
             for (j in 0 until vc.pointCount) {
                 manifold!!.points[j].normalImpulse = vc.points[j].normalImpulse
                 manifold.points[j].tangentImpulse = vc.points[j].tangentImpulse
@@ -580,7 +580,7 @@ class ContactSolver {
 
     class ContactSolverDef {
         var step: TimeStep? = null
-        var contacts: Array<Contact>? = null
+        var contacts: Array<Contact?>? = null
         var count: Int = 0
         var positions: Array<Position>? = null
         var velocities: Array<Velocity>? = null

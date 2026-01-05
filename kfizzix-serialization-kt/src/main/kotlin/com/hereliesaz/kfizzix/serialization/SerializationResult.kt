@@ -18,25 +18,31 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT of THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kbox2d.serialization
+package com.hereliesaz.kfizzix.serialization
 
-import com.hereliesaz.kbox2d.dynamics.joints.JointType
+import java.io.IOException
+import java.io.OutputStream
 
 /**
- * A collection of helper functions for serialization.
+ * Container for holding serialization results. Use [.getValue] to get
+ * the implementation-specific result.
+ *
+ * @author Daniel Murphy
  */
-object SerializationHelper {
+interface SerializationResult {
     /**
-     * Checks if a joint type is independent.
-     * Independent joints can be serialized without needing to reference other joints.
+     * The implementation-specific serialization result.
      *
-     * @param type the joint type to check
-     * @return true if the joint type is independent, false otherwise
+     * @return serialization result
      */
-    fun isIndependentJoint(type: JointType): Boolean {
-        return type != JointType.GEAR && type != JointType.CONSTANT_VOLUME
-    }
+    fun getValue(): Any
+
+    /**
+     * Writes the result to the given output stream.
+     */
+    @Throws(IOException::class)
+    fun writeTo(argOutputStream: OutputStream)
 }

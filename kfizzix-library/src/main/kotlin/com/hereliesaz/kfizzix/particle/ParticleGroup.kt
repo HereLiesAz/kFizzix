@@ -40,11 +40,48 @@ class ParticleGroup {
     var prev: ParticleGroup? = null
     var next: ParticleGroup? = null
     var timestamp = 0
-    var mass = 0f
-    var inertia = 0f
-    val center = Vec2()
-    val linearVelocity = Vec2()
-    var angularVelocity = 0f
+    private var _mass = 0f
+    var mass: Float
+        get() {
+            updateStatistics()
+            return _mass
+        }
+        set(value) {
+            _mass = value
+        }
+    private var _inertia = 0f
+    var inertia: Float
+        get() {
+            updateStatistics()
+            return _inertia
+        }
+        set(value) {
+            _inertia = value
+        }
+
+    private val _center = Vec2()
+    val center: Vec2
+        get() {
+            updateStatistics()
+            return _center
+        }
+
+    private val _linearVelocity = Vec2()
+    val linearVelocity: Vec2
+        get() {
+            updateStatistics()
+            return _linearVelocity
+        }
+
+    private var _angularVelocity = 0f
+    var angularVelocity: Float
+        get() {
+            updateStatistics()
+            return _angularVelocity
+        }
+        set(value) {
+            _angularVelocity = value
+        }
     val transform = Transform()
     var destroyAutomatically = false
     var toBeDestroyed = false
@@ -62,9 +99,9 @@ class ParticleGroup {
         groupFlags = 0
         strength = 1.0f
         timestamp = -1
-        mass = 0f
-        inertia = 0f
-        angularVelocity = 0f
+        _mass = 0f
+        _inertia = 0f
+        _angularVelocity = 0f
         transform.setIdentity()
         destroyAutomatically = true
         toBeDestroyed = false
@@ -91,65 +128,6 @@ class ParticleGroup {
     val bufferIndex: Int
         get() = firstIndex
 
-    /**
-     * Get the total mass of the group: the sum of all particles in it.
-     *
-     * @return The total mass of the group: the sum of all particles in it.
-     *
-     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleGroup.h#L203-L204
-     */
-    fun getMass(): Float {
-        updateStatistics()
-        return mass
-    }
-
-    /**
-     * Get the moment of inertia for the group.
-     *
-     * @return The moment of inertia for the group.
-     *
-     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleGroup.h#L206-L207
-     */
-    fun getInertia(): Float {
-        updateStatistics()
-        return inertia
-    }
-
-    /**
-     * Get the center of gravity for the group.
-     *
-     * @return The center of gravity for the group.
-     *
-     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleGroup.h#L209-L210
-     */
-    fun getCenter(): Vec2 {
-        updateStatistics()
-        return center
-    }
-
-    /**
-     * Get the linear velocity of the group.
-     *
-     * @return The linear velocity of the group.
-     *
-     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleGroup.h#L212-L213
-     */
-    fun getLinearVelocity(): Vec2 {
-        updateStatistics()
-        return linearVelocity
-    }
-
-    /**
-     * Get the angular velocity of the group.
-     *
-     * @return The angular velocity of the group.
-     *
-     * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleGroup.h#L215-L216
-     */
-    fun getAngularVelocity(): Float {
-        updateStatistics()
-        return angularVelocity
-    }
 
     /**
      * Get the position of the particle group as a whole. Used only with groups
@@ -175,38 +153,38 @@ class ParticleGroup {
     fun updateStatistics() {
         if (timestamp != system!!.timestamp) {
             val m = system!!.particleMass
-            mass = 0f
-            center.setZero()
-            linearVelocity.setZero()
+            _mass = 0f
+            _center.setZero()
+            _linearVelocity.setZero()
             for (i in firstIndex until lastIndex) {
-                mass += m
+                _mass += m
                 val pos = system!!.positionBuffer.data!![i]!!
-                center.x += m * pos.x
-                center.y += m * pos.y
+                _center.x += m * pos.x
+                _center.y += m * pos.y
                 val vel = system!!.velocityBuffer.data!![i]!!
-                linearVelocity.x += m * vel.x
-                linearVelocity.y += m * vel.y
+                _linearVelocity.x += m * vel.x
+                _linearVelocity.y += m * vel.y
             }
-            if (mass > 0) {
-                center.x *= 1 / mass
-                center.y *= 1 / mass
-                linearVelocity.x *= 1 / mass
-                linearVelocity.y *= 1 / mass
+            if (_mass > 0) {
+                _center.x *= 1 / _mass
+                _center.y *= 1 / _mass
+                _linearVelocity.x *= 1 / _mass
+                _linearVelocity.y *= 1 / _mass
             }
-            inertia = 0f
-            angularVelocity = 0f
+            _inertia = 0f
+            _angularVelocity = 0f
             for (i in firstIndex until lastIndex) {
                 val pos = system!!.positionBuffer.data!![i]!!
                 val vel = system!!.velocityBuffer.data!![i]!!
-                val px = pos.x - center.x
-                val py = pos.y - center.y
-                val vx = vel.x - linearVelocity.x
-                val vy = vel.y - linearVelocity.y
-                inertia += m * (px * px + py * py)
-                angularVelocity += m * (px * vy - py * vx)
+                val px = pos.x - _center.x
+                val py = pos.y - _center.y
+                val vx = vel.x - _linearVelocity.x
+                val vy = vel.y - _linearVelocity.y
+                _inertia += m * (px * px + py * py)
+                _angularVelocity += m * (px * vy - py * vx)
             }
-            if (inertia > 0) {
-                angularVelocity *= 1 / inertia
+            if (_inertia > 0) {
+                _angularVelocity *= 1 / _inertia
             }
             timestamp = system!!.timestamp
         }

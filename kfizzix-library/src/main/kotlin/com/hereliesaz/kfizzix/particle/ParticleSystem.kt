@@ -819,8 +819,8 @@ class ParticleSystem(var world: World) {
                 val a = contact.indexA
                 val b = contact.indexB
                 val w = contact.weight
-                val va = velocityBuffer.data!![a]!!
-                val vb = velocityBuffer.data!![b]!!
+                val va: Vec2 = velocityBuffer.data!![a]!!
+                val vb: Vec2 = velocityBuffer.data!![b]!!
                 val vx = vb.x - va.x
                 val vy = vb.y - va.y
                 val fx = viscousStrength * w * vx

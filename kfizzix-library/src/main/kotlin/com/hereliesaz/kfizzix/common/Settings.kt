@@ -41,10 +41,10 @@ object Settings {
     var FAST_FLOOR = true
     var FAST_CEIL = true
     var FAST_ROUND = true
-    var FAST_ATAN2 = true
+    var FAST_ATAN2 = false
     var FAST_POW = true
     var CONTACT_STACK_INIT_SIZE = 10
-    var SINCOS_LUT_ENABLED = true
+    var SINCOS_LUT_ENABLED = false
 
     /**
      * smaller the precision, the larger the table. If a small table is used

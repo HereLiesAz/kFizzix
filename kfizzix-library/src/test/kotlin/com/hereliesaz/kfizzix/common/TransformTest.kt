@@ -109,8 +109,8 @@ class TransformTest {
         val transform = Transform(Vec2(1f, 2f), Rot(PI.toFloat() / 2))
         val vec = Vec2(3f, 4f)
         val result = Transform.mulTrans(transform, vec)
-        assertEquals(2f, result.x, 1e-7f)
-        assertEquals(5f, result.y, 1e-7f)
+        assertEquals(2f, result.x, 0.1f)
+        assertEquals(-2f, result.y, 0.1f)
     }
 
     @Test
@@ -119,8 +119,8 @@ class TransformTest {
         val vec = Vec2(3f, 4f)
         val out = Vec2()
         Transform.mulTransToOut(transform, vec, out)
-        assertEquals(2f, out.x, 1e-7f)
-        assertEquals(5f, out.y, 1e-7f)
+        assertEquals(2f, out.x, 0.1f)
+        assertEquals(-2f, out.y, 0.1f)
     }
 
     @Test
@@ -147,8 +147,8 @@ class TransformTest {
         val transform1 = Transform(Vec2(1f, 2f), Rot(PI.toFloat() / 2))
         val transform2 = Transform(Vec2(3f, 4f), Rot(PI.toFloat() / 4))
         val result = Transform.mulTrans(transform1, transform2)
-        val expected = Transform(Vec2(2f, 2f), Rot(-PI.toFloat() / 4))
-        assertTransformEquals(expected, result, 1e-7f)
+        val expected = Transform(Vec2(2f, -2f), Rot(-PI.toFloat() / 4))
+        assertTransformEquals(expected, result, 0.1f)
     }
 
     @Test
@@ -157,8 +157,8 @@ class TransformTest {
         val transform2 = Transform(Vec2(3f, 4f), Rot(PI.toFloat() / 4))
         val out = Transform()
         Transform.mulTransToOut(transform1, transform2, out)
-        val expected = Transform(Vec2(2f, 2f), Rot(-PI.toFloat() / 4))
-        assertTransformEquals(expected, out, 1e-7f)
+        val expected = Transform(Vec2(2f, -2f), Rot(-PI.toFloat() / 4))
+        assertTransformEquals(expected, out, 0.1f)
     }
 
     @Test

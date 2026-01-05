@@ -89,13 +89,27 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
     /**
      * The desired motor speed. Usually in radians per second.
      */
+    private var _motorSpeed: Float = 0f
     var motorSpeed: Float
+        get() = _motorSpeed
+        set(speed) {
+            bodyA!!.isAwake = true
+            bodyB!!.isAwake = true
+            _motorSpeed = speed
+        }
 
     /**
      * The maximum motor torque used to achieve the desired motor speed. Usually
      * in N-m.
      */
+    private var _maxMotorTorque: Float = 0f
     var maxMotorTorque: Float
+        get() = _maxMotorTorque
+        set(torque) {
+            bodyA!!.isAwake = true
+            bodyB!!.isAwake = true
+            _maxMotorTorque = torque
+        }
 
     private var motorImpulse: Float
     private val impulse = Vec3()
@@ -128,8 +142,8 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
         motorImpulse = 0f
         lowerAngle = def.lowerAngle
         upperAngle = def.upperAngle
-        maxMotorTorque = def.maxMotorTorque
-        motorSpeed = def.motorSpeed
+        _maxMotorTorque = def.maxMotorTorque
+        _motorSpeed = def.motorSpeed
         enableLimit = def.enableLimit
         enableMotor = def.enableMotor
         limitState = LimitState.INACTIVE
@@ -460,17 +474,6 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
         return motorImpulse * inv_dt
     }
 
-    fun setMotorSpeed(speed: Float) {
-        bodyA!!.isAwake = true
-        bodyB!!.isAwake = true
-        motorSpeed = speed
-    }
-
-    fun setMaxMotorTorque(torque: Float) {
-        bodyA!!.isAwake = true
-        bodyB!!.isAwake = true
-        maxMotorTorque = torque
-    }
 
     fun isLimitEnabled(): Boolean {
         return enableLimit

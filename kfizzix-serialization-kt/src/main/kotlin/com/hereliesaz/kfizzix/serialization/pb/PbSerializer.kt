@@ -21,14 +21,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.hereliesaz.kbox2d.serialization.pb
+package com.hereliesaz.kfizzix.serialization.pb
 
-import com.hereliesaz.kbox2d.collision.shapes.*
-import com.hereliesaz.kbox2d.common.Vec2
-import com.hereliesaz.kbox2d.dynamics.*
-import com.hereliesaz.kbox2d.dynamics.joints.*
-import com.hereliesaz.kbox2d.serialization.*
-import com.hereliesaz.kbox2d.serialization.UnsupportedObjectException.Type
+import com.hereliesaz.kfizzix.collision.shapes.*
+import com.hereliesaz.kfizzix.common.Vec2
+import com.hereliesaz.kfizzix.dynamics.*
+import com.hereliesaz.kfizzix.dynamics.joints.*
+import com.hereliesaz.kfizzix.serialization.*
+import com.hereliesaz.kfizzix.serialization.UnsupportedObjectException.Type
 import org.box2d.proto.Box2D.*
 import java.io.IOException
 import java.io.OutputStream
@@ -88,10 +88,10 @@ class PbSerializer : JbSerializer {
         }
         builder.setGravity(vecToPb(argWorld.gravity))
         builder.autoClearForces = argWorld.isAutoClearForces
-        builder.allowSleep = argWorld.isAllowSleep
-        builder.isContinuousPhysics = argWorld.isContinuousPhysics
-        builder.isWarmStarting = argWorld.isWarmStarting
-        builder.isSubStepping = argWorld.isSubStepping
+        builder.allowSleep = argWorld.allowSleep
+        builder.continuousPhysics = argWorld.continuousPhysics
+        builder.warmStarting = argWorld.warmStarting
+        builder.subStepping = argWorld.subStepping
         var cbody = argWorld.bodyList
         var cnt = 0
         val bodies = HashMap<Body, Int>()
@@ -172,7 +172,7 @@ class PbSerializer : JbSerializer {
         builder.bullet = argBody.isBullet
         builder.allowSleep = argBody.isSleepingAllowed
         builder.awake = argBody.isAwake
-        builder.isActive = argBody.isActive
+        builder.active = argBody.isActive
         builder.fixedRotation = argBody.isFixedRotation
         var curr = argBody.fixtureList
         while (curr != null) {
@@ -208,8 +208,8 @@ class PbSerializer : JbSerializer {
         builder.friction = argFixture.friction
         builder.restitution = argFixture.restitution
         builder.sensor = argFixture.isSensor
-        builder.setShape(serializeShape(argFixture.shape))
-        builder.setFilter(serializeFilter(argFixture.filter))
+        builder.setShape(serializeShape(argFixture.shape!!))
+        builder.setFilter(serializeFilter(argFixture.filter!!))
         return builder
     }
 
@@ -260,19 +260,19 @@ class PbSerializer : JbSerializer {
                 builder.setV1(vecToPb(e.vertex1))
                 builder.setV2(vecToPb(e.vertex2))
                 builder.setV3(vecToPb(e.vertex3))
-                builder.setHas0(e.m_hasVertex0)
-                builder.setHas3(e.m_hasVertex3)
+                builder.setHas0(e.hasVertex0)
+                builder.setHas3(e.hasVertex3)
             }
             ShapeType.CHAIN -> {
                 val h = argShape as ChainShape
                 builder.type = PbShapeType.CHAIN
-                for (i in 0 until h.m_count) {
-                    builder.addPoints(vecToPb(h.m_vertices!![i]))
+                for (i in 0 until h.count) {
+                    builder.addPoints(vecToPb(h.vertices!![i]))
                 }
-                builder.setPrev(vecToPb(h.m_prevVertex))
-                builder.setNext(vecToPb(h.m_nextVertex))
-                builder.setHas0(h.m_hasPrevVertex)
-                builder.setHas3(h.m_hasNextVertex)
+                builder.setPrev(vecToPb(h.prevVertex))
+                builder.setNext(vecToPb(h.nextVertex))
+                builder.setHas0(h.hasPrevVertex)
+                builder.setHas3(h.hasNextVertex)
             }
             else -> {
                 val ex = UnsupportedObjectException(
@@ -336,10 +336,10 @@ class PbSerializer : JbSerializer {
                 builder.setLocalAnchorA(vecToPb(j.localAnchorA))
                 builder.setLocalAnchorB(vecToPb(j.localAnchorB))
                 builder.refAngle = j.referenceAngle
-                builder.enableLimit = j.isLimitEnabled
-                builder.lowerLimit = j.lowerLimit
-                builder.upperLimit = j.upperLimit
-                builder.enableMotor = j.isMotorEnabled
+                builder.enableLimit = j.isLimitEnabled()
+                builder.lowerLimit = j.getLowerLimit()
+                builder.upperLimit = j.getUpperLimit()
+                builder.enableMotor = j.isMotorEnabled()
                 builder.motorSpeed = j.motorSpeed
                 builder.maxMotorTorque = j.maxMotorTorque
             }
@@ -348,12 +348,12 @@ class PbSerializer : JbSerializer {
                 builder.type = PbJointType.PRISMATIC
                 builder.setLocalAnchorA(vecToPb(j.localAnchorA))
                 builder.setLocalAnchorB(vecToPb(j.localAnchorB))
-                builder.setLocalAxisA(vecToPb(j.localAxisA))
+                builder.setLocalAxisA(vecToPb(j.localXAxisA))
                 builder.refAngle = j.referenceAngle
-                builder.enableLimit = j.isLimitEnabled
-                builder.lowerLimit = j.lowerLimit
-                builder.upperLimit = j.upperLimit
-                builder.enableMotor = j.isMotorEnabled
+                builder.enableLimit = j.isLimitEnabled()
+                builder.lowerLimit = j.getLowerLimit()
+                builder.upperLimit = j.getUpperLimit()
+                builder.enableMotor = j.isMotorEnabled()
                 builder.maxMotorForce = j.maxMotorForce
                 builder.motorSpeed = j.motorSpeed
             }
@@ -380,10 +380,10 @@ class PbSerializer : JbSerializer {
             JointType.MOUSE -> {
                 val j = joint as MouseJoint
                 builder.type = PbJointType.MOUSE
-                builder.setTarget(vecToPb(j.target))
-                builder.maxForce = j.maxForce
-                builder.frequency = j.frequency
-                builder.dampingRatio = j.dampingRatio
+                builder.setTarget(vecToPb(j.getTarget()))
+                builder.maxForce = j.getMaxForce()
+                builder.frequency = j.getFrequency()
+                builder.dampingRatio = j.getDampingRatio()
             }
             JointType.GEAR -> {
                 val j = joint as GearJoint
@@ -405,8 +405,8 @@ class PbSerializer : JbSerializer {
                 builder.type = PbJointType.FRICTION
                 builder.setLocalAnchorA(vecToPb(j.localAnchorA))
                 builder.setLocalAnchorB(vecToPb(j.localAnchorB))
-                builder.maxForce = j.maxForce
-                builder.maxTorque = j.maxTorque
+                builder.maxForce = j.getMaxForce()
+                builder.maxTorque = j.getMaxTorque()
             }
             JointType.CONSTANT_VOLUME -> {
                 val j = joint as ConstantVolumeJoint
@@ -430,8 +430,8 @@ class PbSerializer : JbSerializer {
                 builder.type = PbJointType.WHEEL
                 builder.setLocalAnchorA(vecToPb(j.localAnchorA))
                 builder.setLocalAnchorB(vecToPb(j.localAnchorB))
-                builder.setLocalAxisA(vecToPb(j.localAxisA))
-                builder.enableMotor = j.isMotorEnabled
+                builder.setLocalAxisA(vecToPb(j.localXAxisA))
+                builder.enableMotor = j.isMotorEnabled()
                 builder.maxMotorTorque = j.maxMotorTorque
                 builder.motorSpeed = j.motorSpeed
                 builder.frequency = j.springFrequencyHz

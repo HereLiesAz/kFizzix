@@ -74,7 +74,19 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L86-L87
      */
-    var angularVelocity = 0f
+    private var _angularVelocity = 0f
+    var angularVelocity: Float
+        get() = _angularVelocity
+        set(w) {
+            if (type == BodyType.STATIC) {
+                return
+            }
+            if (w * w > 0f) {
+                isAwake = true
+            }
+            _angularVelocity = w
+        }
+
     val force = Vec2()
     var torque = 0f
 
@@ -205,7 +217,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
         prev = null
         next = null
         linearVelocity.set(bd.linearVelocity)
-        angularVelocity = bd.angularVelocity
+        _angularVelocity = bd.angularVelocity
         linearDamping = bd.linearDamping
         angularDamping = bd.angularDamping
         gravityScale = bd.gravityScale
@@ -434,21 +446,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
             isAwake = true
         }
         linearVelocity.set(v)
-    }
-
-    /**
-     * Set the angular velocity.
-     *
-     * @param w The new angular velocity in radians/second.
-     */
-    fun setAngularVelocity(w: Float) {
-        if (type == BodyType.STATIC) {
-            return
-        }
-        if (w * w > 0f) {
-            isAwake = true
-        }
-        angularVelocity = w
     }
 
     /**

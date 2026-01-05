@@ -47,4 +47,11 @@ data class ManifoldPoint(
     var tangentImpulse: Float = 0f,
     /** uniquely identifies a contact point between two shapes */
     var id: ContactID = ContactID()
-)
+) {
+    fun set(cp: ManifoldPoint) {
+        localPoint.set(cp.localPoint)
+        normalImpulse = cp.normalImpulse
+        tangentImpulse = cp.tangentImpulse
+        id.set(cp.id)
+    }
+}

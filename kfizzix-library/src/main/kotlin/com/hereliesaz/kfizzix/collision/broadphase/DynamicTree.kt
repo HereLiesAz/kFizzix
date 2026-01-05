@@ -67,7 +67,7 @@ class DynamicTree : BroadPhaseStrategy {
     }
 
     override fun createProxy(aabb: AABB, userData: Any): Int {
-        assert(aabb.isValid)
+        assert(aabb.isValid())
         val node = allocateNode()
         val proxyId = node.id
         // Fatten the aabb
@@ -90,7 +90,7 @@ class DynamicTree : BroadPhaseStrategy {
     }
 
     override fun moveProxy(proxyId: Int, aabb: AABB, displacement: Vec2): Boolean {
-        assert(aabb.isValid)
+        assert(aabb.isValid())
         assert(0 <= proxyId && proxyId < nodeCapacity)
         val node = nodes[proxyId]
         assert(node.child1 == null)
@@ -134,7 +134,7 @@ class DynamicTree : BroadPhaseStrategy {
     }
 
     override fun query(callback: TreeCallback, aabb: AABB) {
-        assert(aabb.isValid)
+        assert(aabb.isValid())
         nodeStackIndex = 0
         nodeStack[nodeStackIndex++] = root
         while (nodeStackIndex > 0) {
@@ -362,7 +362,8 @@ class DynamicTree : BroadPhaseStrategy {
                 val aabbi = this.nodes[nodes[i]].aabb
                 for (j in i + 1 until count) {
                     val aabbj = this.nodes[nodes[j]].aabb
-                    val b = AABB.combine(aabbi, aabbj)
+                    val b = AABB()
+                    b.combine(aabbi, aabbj)
                     val cost = b.perimeter
                     if (cost < minCost) {
                         iMin = i
@@ -379,7 +380,7 @@ class DynamicTree : BroadPhaseStrategy {
             parent.child1 = child1
             parent.child2 = child2
             parent.height = 1 + MathUtils.max(child1.height, child2.height)
-            parent.aabb = AABB.combine(child1.aabb, child2.aabb)
+            parent.aabb.combine(child1.aabb, child2.aabb)
             parent.parent = null
             child1.parent = parent
             child2.parent = parent
@@ -445,9 +446,9 @@ class DynamicTree : BroadPhaseStrategy {
             val child2 = node.child2
 
             val area = node.aabb.perimeter
-            val combinedAABB = combinedAABB
-            AABB.combine(node.aabb, leafAABB, combinedAABB)
-            val combinedArea = combinedAABB.perimeter
+            val tempAABB = combinedAABB
+            tempAABB.combine(node.aabb, leafAABB)
+            val combinedArea = tempAABB.perimeter
 
             // Cost of creating a new parent for this node and the new leaf
             val cost = 2.0f * combinedArea
@@ -458,7 +459,7 @@ class DynamicTree : BroadPhaseStrategy {
             // Cost of descending into child1
             val cost1: Float
             val combinedAABB1 = combinedAABB
-            AABB.combine(leafAABB, child1!!.aabb, combinedAABB1)
+            combinedAABB1.combine(leafAABB, child1!!.aabb)
             cost1 = if (child1.child1 == null) {
                 combinedAABB1.perimeter + inheritanceCost
             } else {
@@ -470,7 +471,7 @@ class DynamicTree : BroadPhaseStrategy {
             // Cost of descending into child2
             val cost2: Float
             val combinedAABB2 = combinedAABB
-            AABB.combine(leafAABB, child2!!.aabb, combinedAABB2)
+            combinedAABB2.combine(leafAABB, child2!!.aabb)
             cost2 = if (child2.child1 == null) {
                 combinedAABB2.perimeter + inheritanceCost
             } else {
@@ -497,7 +498,7 @@ class DynamicTree : BroadPhaseStrategy {
         val newParent = allocateNode()
         newParent.parent = oldParent
         newParent.userData = null
-        AABB.combine(leafAABB, sibling.aabb, newParent.aabb)
+        newParent.aabb.combine(leafAABB, sibling.aabb)
         newParent.height = sibling.height + 1
 
         if (oldParent != null) {
@@ -526,16 +527,16 @@ class DynamicTree : BroadPhaseStrategy {
         while (index != null) {
             index = balance(index)
 
-            val child1 = index.child1
-            val child2 = index.child2
+            val child1 = index!!.child1
+            val child2 = index!!.child2
 
             assert(child1 != null)
             assert(child2 != null)
 
-            index.height = 1 + MathUtils.max(child1!!.height, child2!!.height)
-            AABB.combine(child1.aabb, child2.aabb, index.aabb)
+            index!!.height = 1 + MathUtils.max(child1!!.height, child2!!.height)
+            index!!.aabb.combine(child1.aabb, child2.aabb)
 
-            index = index.parent
+            index = index!!.parent
         }
         // validate();
     }
@@ -566,11 +567,11 @@ class DynamicTree : BroadPhaseStrategy {
             var index = grandParent
             while (index != null) {
                 index = balance(index)
-                val child1 = index.child1
-                val child2 = index.child2
-                AABB.combine(child1!!.aabb, child2!!.aabb, index.aabb)
-                index.height = 1 + MathUtils.max(child1.height, child2.height)
-                index = index.parent
+                val child1 = index!!.child1
+                val child2 = index!!.child2
+                index!!.aabb.combine(child1!!.aabb, child2!!.aabb)
+                index!!.height = 1 + MathUtils.max(child1.height, child2.height)
+                index = index!!.parent
             }
         } else {
             root = sibling
@@ -587,11 +588,11 @@ class DynamicTree : BroadPhaseStrategy {
         if (iA!!.child1 == null || iA.height < 2) {
             return iA
         }
-        val iB = iA.child1
-        val iC = iA.child2
+        val iB = iA!!.child1
+        val iC = iA!!.child2
         assert(0 <= iB!!.id && iB.id < nodeCapacity)
         assert(0 <= iC!!.id && iC.id < nodeCapacity)
-        val balance = iC.height - iB.height
+        val balance = iC!!.height - iB!!.height
         // Rotate C up
         if (balance > 1) {
             val iF = iC.child1
@@ -616,33 +617,33 @@ class DynamicTree : BroadPhaseStrategy {
                 root = iC
             }
             // Rotate
-            if (iF.height > iG.height) {
+            if (iF!!.height > iG!!.height) {
                 iC.child2 = iF
                 iA.child2 = iG
-                iG.parent = iA
-                AABB.combine(iB.aabb, iG.aabb, iA.aabb)
-                AABB.combine(iA.aabb, iF.aabb, iC.aabb)
-                iA.height = 1 + MathUtils.max(iB.height, iG.height)
-                iC.height = 1 + MathUtils.max(iA.height, iF.height)
+                iG!!.parent = iA
+                iA.aabb.combine(iB!!.aabb, iG!!.aabb)
+                iC.aabb.combine(iA.aabb, iF!!.aabb)
+                iA.height = 1 + MathUtils.max(iB!!.height, iG!!.height)
+                iC.height = 1 + MathUtils.max(iA.height, iF!!.height)
             } else {
                 iA.child2 = iF
-                iF.parent = iA
-                AABB.combine(iB.aabb, iF.aabb, iA.aabb)
-                AABB.combine(iA.aabb, iG.aabb, iC.aabb)
-                iA.height = 1 + MathUtils.max(iB.height, iF.height)
-                iC.height = 1 + MathUtils.max(iA.height, iG.height)
+                iF!!.parent = iA
+                iA.aabb.combine(iB!!.aabb, iF!!.aabb)
+                iC.aabb.combine(iA.aabb, iG!!.aabb)
+                iA.height = 1 + MathUtils.max(iB!!.height, iF!!.height)
+                iC.height = 1 + MathUtils.max(iA.height, iG!!.height)
             }
             return iC
         }
         // Rotate B up
         if (balance < -1) {
-            val iD = iB.child1
-            val iE = iB.child2
+            val iD = iB!!.child1
+            val iE = iB!!.child2
             assert(0 <= iD!!.id && iD.id < nodeCapacity)
             assert(0 <= iE!!.id && iE.id < nodeCapacity)
             // Swap A and B
             iB.child1 = iA
-            iB.parent = iA.parent
+            iB.parent = iA!!.parent
             iA.parent = iB
             // A's old parent should point to B
             if (iB.parent != null) {
@@ -656,22 +657,22 @@ class DynamicTree : BroadPhaseStrategy {
                 root = iB
             }
             // Rotate
-            if (iD.height > iE.height) {
+            if (iD!!.height > iE!!.height) {
                 iB.child2 = iD
                 iA.child1 = iE
-                iE.parent = iA
-                AABB.combine(iC.aabb, iE.aabb, iA.aabb)
-                AABB.combine(iA.aabb, iD.aabb, iB.aabb)
-                iA.height = 1 + MathUtils.max(iC.height, iE.height)
-                iB.height = 1 + MathUtils.max(iA.height, iD.height)
+                iE!!.parent = iA
+                iA.aabb.combine(iC!!.aabb, iE!!.aabb)
+                iB.aabb.combine(iA.aabb, iD!!.aabb)
+                iA.height = 1 + MathUtils.max(iC!!.height, iE!!.height)
+                iB.height = 1 + MathUtils.max(iA.height, iD!!.height)
             } else {
                 iB.child2 = iE
                 iA.child1 = iD
-                iD.parent = iA
-                AABB.combine(iC.aabb, iD.aabb, iA.aabb)
-                AABB.combine(iA.aabb, iE.aabb, iB.aabb)
-                iA.height = 1 + MathUtils.max(iC.height, iD.height)
-                iB.height = 1 + MathUtils.max(iA.height, iE.height)
+                iD!!.parent = iA
+                iA.aabb.combine(iC!!.aabb, iD!!.aabb)
+                iB.aabb.combine(iA.aabb, iE!!.aabb)
+                iA.height = 1 + MathUtils.max(iC!!.height, iD!!.height)
+                iB.height = 1 + MathUtils.max(iA.height, iE!!.height)
             }
             return iB
         }
@@ -691,10 +692,10 @@ class DynamicTree : BroadPhaseStrategy {
             assert(node.height == 0)
             return
         }
-        assert(0 <= child1!!.id && child1.id < nodeCapacity)
-        assert(child2 != null && 0 <= child2.id && child2.id < nodeCapacity)
-        assert(child1.parent === node)
-        assert(child2.parent === node)
+        assert(0 <= child1!!.id && child1!!.id < nodeCapacity)
+        assert(child2 != null && 0 <= child2!!.id && child2!!.id < nodeCapacity)
+        assert(child1!!.parent === node)
+        assert(child2!!.parent === node)
         validateStructure(child1)
         validateStructure(child2)
     }
@@ -710,10 +711,10 @@ class DynamicTree : BroadPhaseStrategy {
             assert(node.height == 0)
             return
         }
-        assert(0 <= child1!!.id && child1.id < nodeCapacity)
-        assert(child2 != null && 0 <= child2.id && child2.id < nodeCapacity)
-        val height1 = child1.height
-        val height2 = child2.height
+        assert(0 <= child1!!.id && child1!!.id < nodeCapacity)
+        assert(child2 != null && 0 <= child2!!.id && child2!!.id < nodeCapacity)
+        val height1 = child1!!.height
+        val height2 = child2!!.height
         val height: Int
         height = 1 + MathUtils.max(height1, height2)
         assert(node.height == height)

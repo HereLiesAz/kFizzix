@@ -18,8 +18,8 @@ rootProject.name = "KFizzix"
 include(
     ":kfizzix-library",
     ":kfizzix-serialization-kt",
-    ":kfizzix-testbed-javafx-kt",
-    ":jbox2d-testbed-jogl",
+    //":kfizzix-testbed-javafx-kt",
+    //":jbox2d-testbed-jogl",
     //":kfizzix-magic-eight-ball",
     //":kfizzix-8-ball",
     //":kfizzix-dam-breaker"

@@ -41,8 +41,8 @@ open class ContactFilter {
      *     to overlap.
      */
     fun shouldCollide(fixtureA: Fixture, fixtureB: Fixture): Boolean {
-        val filterA = fixtureA.filterData
-        val filterB = fixtureB.filterData
+        val filterA = fixtureA.filter
+        val filterB = fixtureB.filter
         if (filterA.groupIndex == filterB.groupIndex && filterA.groupIndex != 0) {
             return filterA.groupIndex > 0
         }

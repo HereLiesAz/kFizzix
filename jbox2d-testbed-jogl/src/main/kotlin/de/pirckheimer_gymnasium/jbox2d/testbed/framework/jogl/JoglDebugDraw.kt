@@ -56,6 +56,16 @@ class JoglDebugDraw(private val panel: JoglPanel) : DebugDraw() {
         super.setViewportTransform(viewportTransform)
     }
 
+    fun worldToScreen(argWorld: Vec2): Vec2 {
+        val screen = Vec2()
+        viewportTransform.getWorldToScreen(argWorld, screen)
+        return screen
+    }
+
+    fun worldToScreenToOut(argWorld: Vec2, argScreen: Vec2) {
+        viewportTransform.getWorldToScreen(argWorld, argScreen)
+    }
+
     fun transformViewport(gl: GL2, center: Vec2) {
         val e = viewportTransform.extents
         val vc = viewportTransform.center

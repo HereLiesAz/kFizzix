@@ -277,4 +277,20 @@ class AABB {
     override fun toString(): String {
         return "AABB[$lowerBound . $upperBound]"
     }
+
+    companion object {
+        fun testOverlap(a: AABB, b: AABB): Boolean {
+            if (b.lowerBound.x - a.upperBound.x > 0.0f || b.lowerBound.y - a.upperBound.y > 0.0f) {
+                return false
+            }
+            if (a.lowerBound.x - b.upperBound.x > 0.0f || a.lowerBound.y - b.upperBound.y > 0.0f) {
+                return false
+            }
+            return true
+        }
+
+        fun combine(aabb1: AABB, aabb2: AABB, out: AABB) {
+            out.combine(aabb1, aabb2)
+        }
+    }
 }

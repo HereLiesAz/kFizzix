@@ -28,6 +28,10 @@ package com.hereliesaz.kfizzix.collision
  * @author Daniel Murphy
  */
 class ContactID : Comparable<ContactID> {
+    enum class Type {
+        VERTEX, FACE
+    }
+
     var indexA: Byte = 0
     var indexB: Byte = 0
     var typeA: Byte = 0
@@ -38,6 +42,14 @@ class ContactID : Comparable<ContactID> {
         indexB = c.indexB
         typeA = c.typeA
         typeB = c.typeB
+    }
+
+    // Default arguments in constructor or dedicated method
+    constructor(indexA: Byte = 0, indexB: Byte = 0, typeA: Byte = 0, typeB: Byte = 0) {
+        this.indexA = indexA
+        this.indexB = indexB
+        this.typeA = typeA
+        this.typeB = typeB
     }
 
     fun zero() {

@@ -313,18 +313,18 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
     override val height: Int
         get() = if (root == NULL_NODE) {
             0
-        } else height[root]
+        } else nodeHeight[root]
     override val maxBalance: Int
         get() {
             var maxBalance = 0
             for (i in 0 until nodeCapacity) {
-                if (height[i] <= 1) {
+                if (nodeHeight[i] <= 1) {
                     continue
                 }
                 assert(child1[i] != NULL_NODE)
                 val child1 = child1[i]
                 val child2 = child2[i]
-                val balance = MathUtils.abs(height[child2] - height[child1])
+                val balance = MathUtils.abs(nodeHeight[child2] - nodeHeight[child1])
                 maxBalance = MathUtils.max(maxBalance, balance)
             }
             return maxBalance
@@ -338,7 +338,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
             val rootArea = memberAabb[root]!!.perimeter
             var totalArea = 0.0f
             for (i in 0 until nodeCapacity) {
-                if (height[i] < 0) {
+                if (nodeHeight[i] < 0) {
                     // Free node in pool
                     continue
                 }
@@ -424,7 +424,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
         freeList = parent[node]
         parent[node] = NULL_NODE
         child1[node] = NULL_NODE
-        height[node] = 0
+        nodeHeight[node] = 0
         ++nodeCount
         return node
     }
@@ -436,7 +436,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
         assert(node != NULL_NODE)
         assert(0 < nodeCount)
         parent[node] = if (freeList != NULL_NODE) freeList else NULL_NODE
-        height[node] = -1
+        nodeHeight[node] = -1
         freeList = node
         nodeCount--
     }
@@ -513,7 +513,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
         parent[newParent] = oldParent
         userData[newParent] = null
         AABB.combine(leafAABB, memberAabb[sibling]!!, memberAabb[newParent]!!)
-        height[newParent] = height[sibling] + 1
+        nodeHeight[newParent] = nodeHeight[sibling] + 1
 
         if (oldParent != NULL_NODE) {
             // The sibling was not the root.
@@ -543,7 +543,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
             val child2 = child2[index]
             assert(child1 != NULL_NODE)
             assert(child2 != NULL_NODE)
-            height[index] = 1 + MathUtils.max(height[child1], height[child2])
+            nodeHeight[index] = 1 + MathUtils.max(nodeHeight[child1], nodeHeight[child2])
             AABB.combine(memberAabb[child1]!!, memberAabb[child2]!!, memberAabb[index]!!)
             index = parent[index]
         }
@@ -581,7 +581,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
                 val child1 = child1[index]
                 val child2 = child2[index]
                 AABB.combine(memberAabb[child1]!!, memberAabb[child2]!!, memberAabb[index]!!)
-                height[index] = 1 + MathUtils.max(height[child1], height[child2])
+                nodeHeight[index] = 1 + MathUtils.max(nodeHeight[child1], nodeHeight[child2])
                 index = this.parent[index]
             }
         } else {
@@ -596,14 +596,14 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
     // Returns the new root index.
     private fun balance(iA: Int): Int {
         assert(iA != NULL_NODE)
-        if (child1[iA] == NULL_NODE || height[iA] < 2) {
+        if (child1[iA] == NULL_NODE || nodeHeight[iA] < 2) {
             return iA
         }
         val iB = child1[iA]
         val iC = child2[iA]
         assert(0 <= iB && iB < nodeCapacity)
         assert(0 <= iC && iC < nodeCapacity)
-        val balance = height[iC] - height[iB]
+        val balance = nodeHeight[iC] - nodeHeight[iB]
         // Rotate C up
         if (balance > 1) {
             val iF = child1[iC]
@@ -628,22 +628,22 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
                 root = iC
             }
             // Rotate
-            if (height[iF] > height[iG]) {
+            if (nodeHeight[iF] > nodeHeight[iG]) {
                 child2[iC] = iF
                 child2[iA] = iG
                 parent[iG] = iA
                 AABB.combine(memberAabb[iB]!!, memberAabb[iG]!!, memberAabb[iA]!!)
                 AABB.combine(memberAabb[iA]!!, memberAabb[iF]!!, memberAabb[iC]!!)
-                height[iA] = 1 + MathUtils.max(height[iB], height[iG])
-                height[iC] = 1 + MathUtils.max(height[iA], height[iF])
+                nodeHeight[iA] = 1 + MathUtils.max(nodeHeight[iB], nodeHeight[iG])
+                nodeHeight[iC] = 1 + MathUtils.max(nodeHeight[iA], nodeHeight[iF])
             } else {
                 child2[iC] = iG
                 child2[iA] = iF
                 parent[iF] = iA
                 AABB.combine(memberAabb[iB]!!, memberAabb[iF]!!, memberAabb[iA]!!)
                 AABB.combine(memberAabb[iA]!!, memberAabb[iG]!!, memberAabb[iC]!!)
-                height[iA] = 1 + MathUtils.max(height[iB], height[iF])
-                height[iC] = 1 + MathUtils.max(height[iA], height[iG])
+                nodeHeight[iA] = 1 + MathUtils.max(nodeHeight[iB], nodeHeight[iF])
+                nodeHeight[iC] = 1 + MathUtils.max(nodeHeight[iA], nodeHeight[iG])
             }
             return iC
         }
@@ -669,22 +669,22 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
                 root = iB
             }
             // Rotate
-            if (height[iD] > height[iE]) {
+            if (nodeHeight[iD] > nodeHeight[iE]) {
                 child2[iB] = iD
                 child1[iA] = iE
                 parent[iE] = iA
                 AABB.combine(memberAabb[iC]!!, memberAabb[iE]!!, memberAabb[iA]!!)
                 AABB.combine(memberAabb[iA]!!, memberAabb[iD]!!, memberAabb[iB]!!)
-                height[iA] = 1 + MathUtils.max(height[iC], height[iE])
-                height[iB] = 1 + MathUtils.max(height[iA], height[iD])
+                nodeHeight[iA] = 1 + MathUtils.max(nodeHeight[iC], nodeHeight[iE])
+                nodeHeight[iB] = 1 + MathUtils.max(nodeHeight[iA], nodeHeight[iD])
             } else {
                 child2[iB] = iE
                 child1[iA] = iD
                 parent[iD] = iA
                 AABB.combine(memberAabb[iC]!!, memberAabb[iD]!!, memberAabb[iA]!!)
                 AABB.combine(memberAabb[iA]!!, memberAabb[iE]!!, memberAabb[iB]!!)
-                height[iA] = 1 + MathUtils.max(height[iC], height[iD])
-                height[iB] = 1 + MathUtils.max(height[iA], height[iE])
+                nodeHeight[iA] = 1 + MathUtils.max(nodeHeight[iC], nodeHeight[iD])
+                nodeHeight[iB] = 1 + MathUtils.max(nodeHeight[iA], nodeHeight[iE])
             }
             return iB
         }
@@ -700,7 +700,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
         val child2 = child2[node]
         if (child1 == NULL_NODE) {
             assert(child2 == NULL_NODE)
-            assert(height[node] == 0)
+            assert(nodeHeight[node] == 0)
             return
         }
         assert(0 <= child1 && child1 < nodeCapacity)
@@ -719,7 +719,7 @@ class DynamicTreeFlatNodes : BroadPhaseStrategy {
         val child2 = child2[node]
         if (child1 == NULL_NODE) {
             assert(child2 == NULL_NODE)
-            assert(height[node] == 0)
+            assert(nodeHeight[node] == 0)
             return
         }
         assert(0 <= child1 && child1 < nodeCapacity)

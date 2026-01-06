@@ -18,6 +18,7 @@ rootProject.name = "KFizzix"
 include(
     ":kfizzix-library",
     ":kfizzix-serialization-kt",
+    ":kfizzix-android-showcase"
     //":kfizzix-testbed-javafx-kt",
     //":jbox2d-testbed-jogl",
     //":kfizzix-magic-eight-ball",

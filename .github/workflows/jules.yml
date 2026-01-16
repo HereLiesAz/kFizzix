@@ -1,0 +1,61 @@
+name: Jules Agent
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  jules:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for context
+
+      - name: Invoke Jules
+        uses: google-labs-code/jules-invoke@v1
+        with:
+          jules_api_key: ${{ secrets.JULES_API_KEY }}
+          include_commit_log: true
+          prompt: |
+            You are Jules, an expert software engineer and autonomous agent.
+            Your mission is to manage the lifecycle of this code branch.
+
+            CONTEXT:
+            - A branch has been pushed or updated, or a review has been submitted.
+
+            TASKS:
+            1. **Create Pull Request**:
+               - If this is a feature branch and NO Pull Request exists for it yet, CREATE one targeting the default branch.
+               - Title it descriptively based on the commits.
+               - Provide a summary description.
+
+            2. **Examine and Evaluate**:
+               - Examine and evaluate the validity and necessity of the changes.
+               - If the changes are invalid or unnecessary, comment explaining why and potentially close the PR.
+
+            3. **Review and Fix**:
+               - Review the code changes for bugs, style issues, and best practices.
+               - If you find issues, FIX them immediately by modifying the code and pushing commits.
+               - If other human reviewers have left comments or requested changes, ADDRESS them by fixing the code.
+
+            4. **Handle Conflicts**:
+               - If there are merge conflicts with the base branch, RESOLVE them.
+
+            5. **Merge**:
+               - If the Pull Request is valid, passes all your internal checks, has no outstanding requests for changes (or you fixed them), and CI is passing:
+               - MERGE the Pull Request.
+               - CLOSE the Pull Request.
+               - DELETE the head branch.
+
+            Act autonomously to move the PR forward to completion.

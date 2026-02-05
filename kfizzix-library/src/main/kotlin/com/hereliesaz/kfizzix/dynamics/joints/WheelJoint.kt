@@ -74,8 +74,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     var maxMotorTorque: Float
         get() = _maxMotorTorque
         set(torque) {
-            bodyA!!.isAwake = true
-            bodyB!!.isAwake = true
+            bodyA.isAwake = true
+            bodyB.isAwake = true
             _maxMotorTorque = torque
         }
 
@@ -86,8 +86,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     var motorSpeed: Float
         get() = _motorSpeed
         set(speed) {
-            bodyA!!.isAwake = true
-            bodyB!!.isAwake = true
+            bodyA.isAwake = true
+            bodyB.isAwake = true
             _motorSpeed = speed
         }
 
@@ -146,24 +146,24 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L446-L449
      */
-    override fun getAnchorA(argOut: Vec2) {
-        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    override fun getAnchorA(out: Vec2) {
+        bodyA.getWorldPointToOut(localAnchorA, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L451-L454
      */
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB.getWorldPointToOut(localAnchorB, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L456-L459
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) {
         val temp = pool.popVec2()
         temp.set(ay).mulLocal(impulse)
-        argOut.set(ax).mulLocal(springImpulse).addLocal(temp).mulLocal(invDt)
+        out.set(ax).mulLocal(springImpulse).addLocal(temp).mulLocal(invDt)
         pool.pushVec2(1)
     }
 
@@ -178,8 +178,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L466-L478
      */
     fun getJointTranslation(): Float {
-        val b1 = bodyA!!
-        val b2 = bodyB!!
+        val b1 = bodyA
+        val b2 = bodyB
         val p1 = pool.popVec2()
         val p2 = pool.popVec2()
         val axis = pool.popVec2()
@@ -200,7 +200,7 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     }
 
     fun getJointSpeed(): Float {
-        return bodyA!!.angularVelocity - bodyB!!.angularVelocity
+        return bodyA.angularVelocity - bodyB.angularVelocity
     }
 
     /**
@@ -214,8 +214,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L561-L569
      */
     fun enableMotor(flag: Boolean) {
-        bodyA!!.isAwake = true
-        bodyB!!.isAwake = true
+        bodyA.isAwake = true
+        bodyB.isAwake = true
         enableMotor = flag
     }
 
@@ -228,14 +228,14 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L89-L235
      */
     override fun initVelocityConstraints(data: SolverData) {
-        indexA = bodyA!!.islandIndex
-        indexB = bodyB!!.islandIndex
-        localCenterA.set(bodyA!!.sweep.localCenter)
-        localCenterB.set(bodyB!!.sweep.localCenter)
-        invMassA = bodyA!!.invMass
-        invMassB = bodyB!!.invMass
-        invIA = bodyA!!.invI
-        invIB = bodyB!!.invI
+        indexA = bodyA.islandIndex
+        indexB = bodyB.islandIndex
+        localCenterA.set(bodyA.sweep.localCenter)
+        localCenterB.set(bodyB.sweep.localCenter)
+        invMassA = bodyA.invMass
+        invMassB = bodyB.invMass
+        invIA = bodyA.invI
+        invIB = bodyB.invI
         val mA = invMassA
         val mB = invMassB
         val iA = invIA
@@ -357,12 +357,12 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
         // Solve spring constraint
         run {
             val Cdot = Vec2.dot(ax, temp.set(vB).subLocal(vA)) + sBx * wB - sAx * wA
-            val impulse = -springMass * (Cdot + bias + gamma * springImpulse)
-            springImpulse = springImpulse + impulse
-            P.x = impulse * ax.x
-            P.y = impulse * ax.y
-            val LA = impulse * sAx
-            val LB = impulse * sBx
+            val impulseVec = -springMass * (Cdot + bias + gamma * springImpulse)
+            springImpulse = springImpulse + impulseVec
+            P.x = impulseVec * ax.x
+            P.y = impulseVec * ax.y
+            val LA = impulseVec * sAx
+            val LB = impulseVec * sBx
             vA.x -= mA * P.x
             vA.y -= mA * P.y
             wA -= iA * LA
@@ -373,10 +373,10 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
         // Solve rotational motor constraint
         run {
             val Cdot = wB - wA - motorSpeed
-            val impulse = -motorMass * Cdot
+            val impulseVec = -motorMass * Cdot
             val oldImpulse = motorImpulse
             val maxImpulse = data.step!!.dt * maxMotorTorque
-            motorImpulse = MathUtils.clamp(motorImpulse + impulse, -maxImpulse, maxImpulse)
+            motorImpulse = MathUtils.clamp(motorImpulse + impulseVec, -maxImpulse, maxImpulse)
             val incImpulse = motorImpulse - oldImpulse
             wA -= iA * incImpulse
             wB += iB * incImpulse
@@ -384,12 +384,12 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
         // Solve point to line constraint
         run {
             val Cdot = Vec2.dot(ay, temp.set(vB).subLocal(vA)) + sBy * wB - sAy * wA
-            val impulse = -mass * Cdot
-            this.impulse = this.impulse + impulse
-            P.x = impulse * ay.x
-            P.y = impulse * ay.y
-            val LA = impulse * sAy
-            val LB = impulse * sBy
+            val impulseVec = -mass * Cdot
+            this.impulse = this.impulse + impulseVec
+            P.x = impulseVec * ay.x
+            P.y = impulseVec * ay.y
+            val LA = impulseVec * sAy
+            val LB = impulseVec * sBy
             vA.x -= mA * P.x
             vA.y -= mA * P.y
             wA -= iA * LA

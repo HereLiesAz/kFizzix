@@ -172,7 +172,7 @@ class ParticleSystem(var world: World) {
     }
 
     private val capacity: Int
-        private get() {
+        get() {
             var capacity = if (count != 0) 2 * count else Settings.minParticleBufferCapacity
             capacity = limitCapacity(capacity, maxCount)
             capacity = limitCapacity(capacity, flagsBuffer.userSuppliedCapacity)
@@ -782,7 +782,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3260-L3304
      */
-    fun solveDamping(step: TimeStep) {
+    fun solveDamping(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
         // reduces the normal velocity of each contact
         val damping = dampingStrength
         for (k in 0 until bodyContactCount) {
@@ -836,7 +836,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3506-L3515
      */
-    fun solveWall(step: TimeStep) {
+    fun solveWall(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
         for (i in 0 until count) {
             if (flagsBuffer.data!![i] and ParticleType.wallParticle != 0) {
                 val r = velocityBuffer.data!![i]!!
@@ -1019,7 +1019,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3660-L3694
      */
-    fun solveViscous(step: TimeStep) {
+    fun solveViscous(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
         val viscousStrength = viscousStrength
         for (k in 0 until bodyContactCount) {
             val contact = bodyContactBuffer!![k]
@@ -1146,7 +1146,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3774-L3796
      */
-    fun solveColorMixing(step: TimeStep) {
+    fun solveColorMixing(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
         // mixes color between contacting particles
         colorBuffer.data = requestParticleBuffer(
             ParticleColor::class.java,
@@ -1330,8 +1330,8 @@ class ParticleSystem(var world: World) {
             var firstIndex = newCount
             var lastIndex = 0
             var modified = false
-            for (i in group.firstIndex until group.lastIndex) {
-                j = newIndices[i]
+            for (k in group.firstIndex until group.lastIndex) {
+                j = newIndices[k]
                 if (j >= 0) {
                     firstIndex = MathUtils.min(firstIndex, j)
                     lastIndex = MathUtils.max(lastIndex, j + 1)
@@ -1531,8 +1531,8 @@ class ParticleSystem(var world: World) {
         setParticleBuffer(userDataBuffer, buffer, capacity)
     }
 
-    private fun requestParticleBuffer(buffer: FloatArray?): FloatArray {
-        var buffer = buffer
+    private fun requestParticleBuffer(argBuffer: FloatArray?): FloatArray {
+        var buffer = argBuffer
         if (buffer == null) {
             buffer = FloatArray(internalAllocatedCapacity)
         }
@@ -1666,7 +1666,10 @@ class ParticleSystem(var world: World) {
      * Callback used with VoronoiDiagram.
      */
     class CreateParticleGroupCallback : VoronoiDiagramCallback {
-        override fun callback(a: Int, b: Int, c: Int) {
+        override fun callback(aTag: Int, bTag: Int, cTag: Int) {
+            val a = aTag
+            val b = bTag
+            val c = cTag
             val pa = system!!.positionBuffer.data!![a]!!
             val pb = system!!.positionBuffer.data!![b]!!
             val pc = system!!.positionBuffer.data!![c]!!
@@ -1718,7 +1721,10 @@ class ParticleSystem(var world: World) {
 
     // Callback used with VoronoiDiagram.
     class JoinParticleGroupsCallback : VoronoiDiagramCallback {
-        override fun callback(a: Int, b: Int, c: Int) {
+        override fun callback(aTag: Int, bTag: Int, cTag: Int) {
+            val a = aTag
+            val b = bTag
+            val c = cTag
             // Create a triad if it will contain particles from both groups.
             val countA = ((if (a < groupB!!.firstIndex) 1 else 0)
                     + (if (b < groupB!!.firstIndex) 1 else 0)
@@ -2031,9 +2037,9 @@ class ParticleSystem(var world: World) {
             )
         }
 
-        private fun lowerBound(ray: Array<Proxy?>?, length: Int, tag: Long): Int {
+        private fun lowerBound(ray: Array<Proxy?>?, argLength: Int, tag: Long): Int {
             var left = 0
-            var length = length
+            var length = argLength
             var step: Int
             var curr: Int
             while (length > 0) {
@@ -2049,9 +2055,9 @@ class ParticleSystem(var world: World) {
             return left
         }
 
-        private fun upperBound(ray: Array<Proxy?>?, length: Int, tag: Long): Int {
+        private fun upperBound(ray: Array<Proxy?>?, argLength: Int, tag: Long): Int {
             var left = 0
-            var length = length
+            var length = argLength
             var step: Int
             var curr: Int
             while (length > 0) {
@@ -2068,13 +2074,13 @@ class ParticleSystem(var world: World) {
         }
 
         fun setParticleBuffer(buffer: ParticleBufferInt, newData: IntArray?, newCapacity: Int) {
-            assert(newData != null && newCapacity >= newData!!.size)
+            assert(newData != null && newCapacity >= newData.size)
             buffer.data = newData
             buffer.userSuppliedCapacity = newCapacity
         }
 
         fun <T> setParticleBuffer(buffer: ParticleBuffer<T>, newData: Array<T?>?, newCapacity: Int) {
-            assert(newData != null && newCapacity >= newData!!.size)
+            assert(newData != null && newCapacity >= newData.size)
             buffer.data = newData
             buffer.userSuppliedCapacity = newCapacity
         }
@@ -2137,11 +2143,11 @@ class ParticleSystem(var world: World) {
         }
     }
 
-    fun raycast(callback: ParticleRaycastCallback, point1: Vec2, point2: Vec2) {
+    fun raycast(@Suppress("UNUSED_PARAMETER") callback: ParticleRaycastCallback, @Suppress("UNUSED_PARAMETER") point1: Vec2, @Suppress("UNUSED_PARAMETER") point2: Vec2) {
         // Simple check
-        val p = tempVec
+        // val p = tempVec
         for (i in 0 until count) {
-            val pos = positionBuffer.data!![i]!!
+            // val pos = positionBuffer.data!![i]!!
             // Check distance to segment?
             // Stub: do nothing or iterate all
         }

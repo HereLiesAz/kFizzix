@@ -53,12 +53,12 @@ class PbDeserializer : JbDeserializer {
         listener = argObjectListener
     }
 
-    override fun setObjectListener(argListener: JbDeserializer.ObjectListener) {
-        listener = argListener
+    override fun setObjectListener(listener: JbDeserializer.ObjectListener) {
+        this.listener = listener
     }
 
-    override fun setUnsupportedListener(argListener: UnsupportedListener) {
-        unsupportedlistener = argListener
+    override fun setUnsupportedListener(listener: UnsupportedListener) {
+        this.unsupportedlistener = listener
     }
 
     private fun isIndependentJoint(argType: PbJointType): Boolean {
@@ -66,8 +66,8 @@ class PbDeserializer : JbDeserializer {
     }
 
     @Throws(IOException::class)
-    override fun deserializeWorld(argInput: InputStream): World {
-        val world = PbWorld.parseFrom(argInput)
+    override fun deserializeWorld(input: InputStream): World {
+        val world = PbWorld.parseFrom(input)
         return deserializeWorld(world)
     }
 
@@ -112,9 +112,9 @@ class PbDeserializer : JbDeserializer {
     }
 
     @Throws(IOException::class)
-    override fun deserializeBody(argWorld: World, argInput: InputStream): Body {
-        val body = PbBody.parseFrom(argInput)
-        return deserializeBody(argWorld, body)
+    override fun deserializeBody(world: World, input: InputStream): Body {
+        val body = PbBody.parseFrom(input)
+        return deserializeBody(world, body)
     }
 
     fun deserializeBody(argWorld: World, argBody: PbBody): Body {
@@ -159,9 +159,9 @@ class PbDeserializer : JbDeserializer {
     }
 
     @Throws(IOException::class)
-    override fun deserializeFixture(argBody: Body, argInput: InputStream): Fixture {
-        val fixture = PbFixture.parseFrom(argInput)
-        return deserializeFixture(argBody, fixture)
+    override fun deserializeFixture(body: Body, input: InputStream): Fixture {
+        val fixture = PbFixture.parseFrom(input)
+        return deserializeFixture(body, fixture)
     }
 
     fun deserializeFixture(argBody: Body, argFixture: PbFixture): Fixture {
@@ -182,8 +182,8 @@ class PbDeserializer : JbDeserializer {
     }
 
     @Throws(IOException::class)
-    override fun deserializeShape(argInput: InputStream): Shape {
-        val s = PbShape.parseFrom(argInput)
+    override fun deserializeShape(input: InputStream): Shape {
+        val s = PbShape.parseFrom(input)
         return deserializeShape(s)
     }
 
@@ -248,10 +248,10 @@ class PbDeserializer : JbDeserializer {
     }
 
     @Throws(IOException::class)
-    override fun deserializeJoint(argWorld: World, argInput: InputStream,
-                                  argBodyMap: Map<Int, Body>, jointMap: Map<Int, Joint>): Joint {
-        val joint = PbJoint.parseFrom(argInput)
-        return deserializeJoint(argWorld, joint, argBodyMap, jointMap)
+    override fun deserializeJoint(world: World, input: InputStream,
+                                  bodyMap: Map<Int, Body>, jointMap: Map<Int, Joint>): Joint {
+        val joint = PbJoint.parseFrom(input)
+        return deserializeJoint(world, joint, bodyMap, jointMap)
     }
 
     fun deserializeJoint(argWorld: World, joint: PbJoint,
@@ -390,7 +390,7 @@ class PbDeserializer : JbDeserializer {
                                 "Joints for constant volume joint must be distance joints")
                     }
                     def.addBodyAndJoint(argBodyMap[body]!!,
-                            djoint as DistanceJoint)
+                            djoint)
                 }
             }
             PbJointType.LINE -> {

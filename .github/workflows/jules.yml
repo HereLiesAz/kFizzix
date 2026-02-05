@@ -37,24 +37,21 @@ jobs:
             - A branch has been pushed or updated, or a review has been submitted.
 
             TASKS:
-            1. **Create Pull Request**:
-               - If this is a feature branch and NO Pull Request exists for it yet, CREATE one targeting the default branch.
-               - Title it descriptively based on the commits.
-               - Provide a summary description.
 
-            2. **Examine and Evaluate**:
+
+            1. **Examine and Evaluate**:
                - Examine and evaluate the validity and necessity of the changes.
                - If the changes are invalid or unnecessary, comment explaining why and potentially close the PR.
 
-            3. **Review and Fix**:
+            2. **Review and Fix**:
                - Review the code changes for bugs, style issues, and best practices.
                - If you find issues, FIX them immediately by modifying the code and pushing commits.
                - If other human reviewers have left comments or requested changes, ADDRESS them by fixing the code.
 
-            4. **Handle Conflicts**:
+            3. **Handle Conflicts**:
                - If there are merge conflicts with the base branch, RESOLVE them.
 
-            5. **Merge**:
+            4. **Merge**:
                - If the Pull Request is valid, passes all your internal checks, has no outstanding requests for changes (or you fixed them), and CI is passing:
                - MERGE the Pull Request.
                - CLOSE the Pull Request.

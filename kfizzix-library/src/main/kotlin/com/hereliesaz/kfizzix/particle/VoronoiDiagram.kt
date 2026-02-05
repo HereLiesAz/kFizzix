@@ -179,7 +179,7 @@ class VoronoiDiagram(generatorCapacity: Int) {
                 0,
                 MathUtils.min(g.center.y.toInt(), countY - 1)
             )
-            queue.push(taskPool.pop()!!.set(x, y, x + y * countX, g))
+            queue.push(taskPool.pop().set(x, y, x + y * countX, g))
         }
         while (!queue.empty()) {
             val front = queue.pop()
@@ -190,16 +190,16 @@ class VoronoiDiagram(generatorCapacity: Int) {
             if (diagram!![i] == null) {
                 diagram!![i] = g
                 if (x > 0) {
-                    queue.push(taskPool.pop()!!.set(x - 1, y, i - 1, g))
+                    queue.push(taskPool.pop().set(x - 1, y, i - 1, g))
                 }
                 if (y > 0) {
-                    queue.push(taskPool.pop()!!.set(x, y - 1, i - countX, g))
+                    queue.push(taskPool.pop().set(x, y - 1, i - countX, g))
                 }
                 if (x < countX - 1) {
-                    queue.push(taskPool.pop()!!.set(x + 1, y, i + 1, g))
+                    queue.push(taskPool.pop().set(x + 1, y, i + 1, g))
                 }
                 if (y < countY - 1) {
-                    queue.push(taskPool.pop()!!.set(x, y + 1, i + countX, g))
+                    queue.push(taskPool.pop().set(x, y + 1, i + countX, g))
                 }
             }
             taskPool.push(front)
@@ -212,8 +212,8 @@ class VoronoiDiagram(generatorCapacity: Int) {
                     val a = diagram!![i]
                     val b = diagram!![i + 1]
                     if (a !== b) {
-                        queue.push(taskPool.pop()!!.set(x, y, i, b))
-                        queue.push(taskPool.pop()!!.set(x + 1, y, i + 1, a))
+                        queue.push(taskPool.pop().set(x, y, i, b))
+                        queue.push(taskPool.pop().set(x + 1, y, i + 1, a))
                     }
                 }
             }
@@ -223,8 +223,8 @@ class VoronoiDiagram(generatorCapacity: Int) {
                     val a = diagram!![i]
                     val b = diagram!![i + countX]
                     if (a !== b) {
-                        queue.push(taskPool.pop()!!.set(x, y, i, b))
-                        queue.push(taskPool.pop()!!.set(x, y + 1, i + countX, a))
+                        queue.push(taskPool.pop().set(x, y, i, b))
+                        queue.push(taskPool.pop().set(x, y + 1, i + countX, a))
                     }
                 }
             }
@@ -246,16 +246,16 @@ class VoronoiDiagram(generatorCapacity: Int) {
                     if (a2 > b2) {
                         diagram!![i] = k
                         if (x > 0) {
-                            queue.push(taskPool.pop()!!.set(x - 1, y, i - 1, k))
+                            queue.push(taskPool.pop().set(x - 1, y, i - 1, k))
                         }
                         if (y > 0) {
-                            queue.push(taskPool.pop()!!.set(x, y - 1, i - countX, k))
+                            queue.push(taskPool.pop().set(x, y - 1, i - countX, k))
                         }
                         if (x < countX - 1) {
-                            queue.push(taskPool.pop()!!.set(x + 1, y, i + 1, k))
+                            queue.push(taskPool.pop().set(x + 1, y, i + 1, k))
                         }
                         if (y < countY - 1) {
-                            queue.push(taskPool.pop()!!.set(x, y + 1, i + countX, k))
+                            queue.push(taskPool.pop().set(x, y + 1, i + countX, k))
                         }
                         updated = true
                     }

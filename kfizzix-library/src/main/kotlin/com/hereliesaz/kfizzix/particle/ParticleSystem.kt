@@ -172,7 +172,7 @@ class ParticleSystem(var world: World) {
     }
 
     private val capacity: Int
-        private get() {
+        get() {
             var capacity = if (count != 0) 2 * count else Settings.minParticleBufferCapacity
             capacity = limitCapacity(capacity, maxCount)
             capacity = limitCapacity(capacity, flagsBuffer.userSuppliedCapacity)
@@ -782,7 +782,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3260-L3304
      */
-    fun solveDamping(step: TimeStep) {
+    fun solveDamping(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
         // reduces the normal velocity of each contact
         val damping = dampingStrength
         for (k in 0 until bodyContactCount) {
@@ -836,7 +836,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3506-L3515
      */
-    fun solveWall(step: TimeStep) {
+    fun solveWall(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
         for (i in 0 until count) {
             if (flagsBuffer.data!![i] and ParticleType.wallParticle != 0) {
                 val r = velocityBuffer.data!![i]!!
@@ -1019,7 +1019,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3660-L3694
      */
-    fun solveViscous(step: TimeStep) {
+    fun solveViscous(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
         val viscousStrength = viscousStrength
         for (k in 0 until bodyContactCount) {
             val contact = bodyContactBuffer!![k]
@@ -1146,7 +1146,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3774-L3796
      */
-    fun solveColorMixing(step: TimeStep) {
+    fun solveColorMixing(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
         // mixes color between contacting particles
         colorBuffer.data = requestParticleBuffer(
             ParticleColor::class.java,
@@ -1330,8 +1330,8 @@ class ParticleSystem(var world: World) {
             var firstIndex = newCount
             var lastIndex = 0
             var modified = false
-            for (i in group.firstIndex until group.lastIndex) {
-                j = newIndices[i]
+            for (k in group.firstIndex until group.lastIndex) {
+                j = newIndices[k]
                 if (j >= 0) {
                     firstIndex = MathUtils.min(firstIndex, j)
                     lastIndex = MathUtils.max(lastIndex, j + 1)
@@ -1531,8 +1531,8 @@ class ParticleSystem(var world: World) {
         setParticleBuffer(userDataBuffer, buffer, capacity)
     }
 
-    private fun requestParticleBuffer(buffer: FloatArray?): FloatArray {
-        var buffer = buffer
+    private fun requestParticleBuffer(existingBuffer: FloatArray?): FloatArray {
+        var buffer = existingBuffer
         if (buffer == null) {
             buffer = FloatArray(internalAllocatedCapacity)
         }

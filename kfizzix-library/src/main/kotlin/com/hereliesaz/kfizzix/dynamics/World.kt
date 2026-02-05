@@ -24,6 +24,19 @@ import com.hereliesaz.kfizzix.particle.ParticleSystem
 import com.hereliesaz.kfizzix.pooling.WorldPool
 import com.hereliesaz.kfizzix.pooling.normal.DefaultWorldPool
 
+/**
+ * The World class manages all physics entities, dynamic simulation, and asynchronous queries.
+ * The world also contains efficient memory management facilities.
+ *
+ * **How to use:**
+ * 1. Create a World object with a gravity vector.
+ * 2. Create bodies with [createBody].
+ * 3. Create fixtures on those bodies with [Body.createFixture].
+ * 4. Call [step] in your game loop (e.g., 60 times per second).
+ *
+ * @param gravity The world gravity vector (e.g., (0, -10)).
+ * @author Daniel Murphy
+ */
 class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STACK_INIT_SIZE, Settings.CONTACT_STACK_INIT_SIZE) {
 
     @JvmField
@@ -106,6 +119,13 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         // Placeholder
     }
 
+    /**
+     * Create a rigid body given a definition. No reference to the definition is retained.
+     *
+     * @warning This function is locked during callbacks.
+     * @param def The body definition.
+     * @return The created body.
+     */
     fun createBody(def: BodyDef): Body {
         val b = Body(def, this)
         // Add to list...
@@ -134,6 +154,21 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         --bodyCount
     }
 
+    /**
+     * Take a time step. This performs collision detection, integration,
+     * and constraint solution.
+     *
+     * **The Algorithm:**
+     * 1. **Update Contacts:** Find new contacts, remove old ones.
+     * 2. **Integrate Velocities:** Apply gravity and forces to predict new velocities.
+     * 3. **Solve Velocity Constraints:** Solve the impulse solver (bounce, friction).
+     * 4. **Integrate Positions:** Move bodies based on their new velocities.
+     * 5. **Solve Position Constraints:** Fix overlap (slop) and joint limits.
+     *
+     * @param dt The amount of time to simulate, this should not vary. (e.g., 1/60s).
+     * @param velocityIterations For the velocity constraint solver. Suggested: 8.
+     * @param positionIterations For the position constraint solver. Suggested: 3.
+     */
     fun step(dt: Float, velocityIterations: Int, positionIterations: Int) {
         val step = TimeStep()
         step.dt = dt
@@ -269,6 +304,14 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         }
     }
 
+    /**
+     * Create a joint to constrain bodies together. No reference to the definition
+     * is retained. This may cause the connected bodies to cease colliding.
+     *
+     * @warning This function is locked during callbacks.
+     * @param def The joint definition.
+     * @return The created joint.
+     */
     fun createJoint(def: JointDef): Joint? {
         val j = Joint.create(this, def)
         if (j != null) {

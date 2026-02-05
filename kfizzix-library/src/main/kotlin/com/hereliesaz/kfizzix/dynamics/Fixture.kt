@@ -46,6 +46,22 @@ import kotlin.math.min
  *
  * @author Daniel Murphy
  */
+/**
+ * A fixture connects a shape to a body.
+ *
+ * While a [Body] defines the position and velocity, a [Fixture] defines the
+ * physical properties like size, shape, friction, and bounciness.
+ * A body can have multiple fixtures (e.g., a "dumbbell" made of two circles and a rectangle).
+ *
+ * **Key Properties:**
+ * *   [shape]: The geometry (Circle, Polygon, etc.).
+ * *   [density]: Used to calculate mass (mass = density * area).
+ * *   [friction]: Slippery (0.0) vs. Rough (1.0).
+ * *   [restitution]: Bounciness (0.0 = no bounce, 1.0 = perfect bounce).
+ * *   [isSensor]: If true, detects collision but doesn't physically react (ghost).
+ *
+ * @author Daniel Murphy
+ */
 class Fixture {
     var next: Fixture? = null
     var body: Body? = null
@@ -115,6 +131,16 @@ class Fixture {
      * time step when either parent body is awake. This automatically calls
      * refilter.
      */
+    /**
+     * Set the contact filtering data.
+     * This allows you to say "This fixture should collide with category A but not B".
+     *
+     * **Performance Note:**
+     * This is an expensive operation as it may need to update the BroadPhase.
+     * Do not call this every frame.
+     *
+     * @param filter The new filter definition.
+     */
     fun setFilterData(filter: Filter) {
         this.filter.set(filter)
         refilter()
@@ -153,6 +179,12 @@ class Fixture {
      *
      * @param p A point in the world coordinates.
      */
+    /**
+     * Check if a point is inside this fixture.
+     *
+     * @param p The point in World coordinates.
+     * @return True if the point is inside.
+     */
     fun testPoint(p: Vec2): Boolean {
         return shape!!.testPoint(body!!.xf, p)
     }
@@ -162,6 +194,14 @@ class Fixture {
      *
      * @param output The ray-cast results.
      * @param input The ray-cast input parameters.
+     */
+    /**
+     * Cast a ray against this specific fixture.
+     *
+     * @param output The results will be stored here if the ray hits.
+     * @param input The definition of the ray (start point, max fraction).
+     * @param childIndex The child index of the shape (0 for most shapes, index for Chains).
+     * @return True if the ray hits the fixture.
      */
     fun raycast(
         output: RayCastOutput, input: RayCastInput,

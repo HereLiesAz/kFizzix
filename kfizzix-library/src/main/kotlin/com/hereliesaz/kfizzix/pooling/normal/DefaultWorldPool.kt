@@ -117,8 +117,7 @@ class DefaultWorldPool(argSize: Int, argContainerSize: Int) : WorldPool {
             return ChainAndCircleContact(world)
         }
         override fun newArray(size: Int): Array<Contact> {
-            @Suppress("UNCHECKED_CAST")
-            return arrayOfNulls<Contact>(size) as Array<Contact>
+            return Array(size) { newInstance() }
         }
     }
 

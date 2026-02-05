@@ -25,17 +25,9 @@ import com.hereliesaz.kfizzix.pooling.WorldPool
 import com.hereliesaz.kfizzix.pooling.normal.DefaultWorldPool
 
 /**
- * The World class manages all physics entities, dynamic simulation, and asynchronous queries.
- * The world also contains efficient memory management facilities.
- *
- * **How to use:**
- * 1. Create a World object with a gravity vector.
- * 2. Create bodies with [createBody].
- * 3. Create fixtures on those bodies with [Body.createFixture].
- * 4. Call [step] in your game loop (e.g., 60 times per second).
- *
- * @param gravity The world gravity vector (e.g., (0, -10)).
- * @author Daniel Murphy
+ * The world class manages all physics entities, dynamic simulation,
+ * and asynchronous queries. The world also contains efficient memory
+ * management facilities.
  */
 class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STACK_INIT_SIZE, Settings.CONTACT_STACK_INIT_SIZE) {
 
@@ -174,11 +166,11 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
     }
 
     /**
-     * Create a rigid body given a definition. No reference to the definition is retained.
+     * Create a rigid body given a definition. No reference to the definition
+     * is retained.
      *
-     * @warning This function is locked during callbacks.
-     * @param def The body definition.
-     * @return The created body.
+     * @param def defines the body properties.
+     * @return the created body.
      */
     fun createBody(def: BodyDef): Body {
         // Create the body.
@@ -219,16 +211,9 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
      * Take a time step. This performs collision detection, integration,
      * and constraint solution.
      *
-     * **The Algorithm:**
-     * 1. **Update Contacts:** Find new contacts, remove old ones.
-     * 2. **Integrate Velocities:** Apply gravity and forces to predict new velocities.
-     * 3. **Solve Velocity Constraints:** Solve the impulse solver (bounce, friction).
-     * 4. **Integrate Positions:** Move bodies based on their new velocities.
-     * 5. **Solve Position Constraints:** Fix overlap (slop) and joint limits.
-     *
-     * @param dt The amount of time to simulate, this should not vary. (e.g., 1/60s).
-     * @param velocityIterations For the velocity constraint solver. Suggested: 8.
-     * @param positionIterations For the position constraint solver. Suggested: 3.
+     * @param dt the amount of time to simulate, this should not vary.
+     * @param velocityIterations for the velocity constraint solver.
+     * @param positionIterations for the position constraint solver.
      */
     fun step(dt: Float, velocityIterations: Int, positionIterations: Int) {
         val step = TimeStep()
@@ -242,14 +227,12 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         }
         step.dtRatio = 0.0f // dt * invDt0 ... needs history
         step.warmStarting = warmStarting
-        // 1. Initialize Step: Setup time step parameters and warm starting flags.
 
         // ... update contacts ...
         // Find new contacts that need to be created.
         contactManager.findNewContacts()
-        // 2. Find New Contacts: Broad-phase collision detection to find potential pairs.
+        // Process collisions (narrow phase).
         contactManager.collide()
-        // 3. Collide: Narrow-phase collision detection to generate contact manifolds.
 
         // ... solve ...
         // Note: Rigid body solver implementation appears to be missing here.
@@ -260,7 +243,7 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         // 4. Integrating positions.
 
         if (step.dt > 0) {
-        // 4. Particle Solve: Advance the particle system simulation.
+             // Step the particle system.
              particleSystem.solve(step)
         }
     }
@@ -383,16 +366,12 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
     /**
      * Create a joint to constrain bodies together. No reference to the definition
      * is retained. This may cause the connected bodies to cease colliding.
-     *
-     * @warning This function is locked during callbacks.
-     * @param def The joint definition.
-     * @return The created joint.
+     * @param def the joint definition.
+     * @return the created joint.
      */
     fun createJoint(def: JointDef): Joint? {
         val j = Joint.create(this, def)
-        // 1. Allocate Joint: Use the factory to create the specific joint type.
         if (j != null) {
-            // 2. Add to World List: Insert the joint into the world's doubly-linked list.
             j.prev = null
             j.next = jointList
             if (jointList != null) {
@@ -402,7 +381,6 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
             ++jointCount
 
             j.edgeA.joint = j
-            // 3. Connect Body A: Add the joint edge to Body A's joint list.
             j.edgeA.other = j.bodyB
             j.edgeA.prev = null
             j.edgeA.next = j.bodyA.jointList
@@ -412,7 +390,6 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
             j.bodyA.jointList = j.edgeA
 
             j.edgeB.joint = j
-            // 4. Connect Body B: Add the joint edge to Body B's joint list.
             j.edgeB.other = j.bodyA
             j.edgeB.prev = null
             j.edgeB.next = j.bodyB.jointList
@@ -426,7 +403,6 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
 
             // If the joint prevents collisions, then flag any contacts for filtering.
             if (!def.collideConnected) {
-            // 5. Handle CollideConnected: If the joint prevents collision, flag existing contacts for filtering.
                 var edge = bodyB.contactList
                 while (edge != null) {
                     if (edge.other === bodyA) {
@@ -449,7 +425,6 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
      */
     fun destroyJoint(joint: Joint) {
         val collideConnected = joint.collideConnected
-        // 1. Remove from World List: Unlink from the global joint list.
 
         // Remove from the world list.
         if (joint.prev != null) {
@@ -464,7 +439,6 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
 
         // Disconnect from island graph.
         val bodyA = joint.bodyA
-        // 2. Wake Bodies: Destroying a constraint changes the physical state, so we must wake the bodies.
         val bodyB = joint.bodyB
 
         // Wake up connected bodies.
@@ -473,7 +447,6 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
 
         // Remove from body 1.
         if (joint.edgeA.prev != null) {
-        // 3. Disconnect Body A: Remove the joint edge from Body A.
             joint.edgeA.prev!!.next = joint.edgeA.next
         }
         if (joint.edgeA.next != null) {
@@ -487,7 +460,6 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
 
         // Remove from body 2
         if (joint.edgeB.prev != null) {
-        // 4. Disconnect Body B: Remove the joint edge from Body B.
             joint.edgeB.prev!!.next = joint.edgeB.next
         }
         if (joint.edgeB.next != null) {
@@ -500,7 +472,6 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         joint.edgeB.next = null
 
         Joint.destroy(joint)
-        // 5. Free Memory: Return the joint to the pool.
 
         assert(jointCount > 0)
         --jointCount

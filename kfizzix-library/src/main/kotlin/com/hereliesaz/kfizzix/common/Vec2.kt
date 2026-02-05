@@ -33,8 +33,8 @@ import java.io.Serializable
  * velocity, force, and impulses.
  *
  * **Performance Note:**
- * Many methods have a standard version (e.g., [add]) which creates a new [Vec2] object,
- * and a "Local" or "ToOut" version (e.g., [addLocal], [addToOut]) which modifies an existing object.
+ * Many methods have a standard version (e.g., [plus]) which creates a new [Vec2] object,
+ * and a "Local" or "ToOut" version (e.g., [addLocal]) which modifies an existing object.
  * In a physics engine, avoiding garbage collection (GC) is critical. Prefer using the "Local"
  * or "ToOut" methods in tight loops to reuse objects.
  *
@@ -155,10 +155,10 @@ class Vec2(
     }
 
     /**
-     * Adds two vectors and stores the result in this vector (mutation).
-     * this += v.
-     * @param v The vector to add.
-     * @return This vector (for chaining).
+     * Subtracts a vector from this one and returns a new vector.
+     * Result = this - v.
+     * @param v The vector to subtract.
+     * @return A new vector containing the difference.
      */
     operator fun minus(v: Vec2): Vec2 {
         // Create and return a new Vec2 where each component is the difference.
@@ -166,10 +166,10 @@ class Vec2(
     }
 
     /**
-     * Adds specific x and y values to this vector (mutation).
-     * @param x The x amount to add.
-     * @param y The y amount to add.
-     * @return This vector (for chaining).
+     * Multiplies this vector by a scalar and returns a new vector.
+     * Result = this * a.
+     * @param a The scalar to multiply by.
+     * @return A new vector containing the scaled result.
      */
     operator fun times(a: Float): Vec2 {
         // Create and return a new Vec2 where each component is scaled by 'a'.
@@ -177,10 +177,9 @@ class Vec2(
     }
 
     /**
-     * Subtracts a vector from this one and returns a new vector.
-     * Result = this - v.
-     * @param v The vector to subtract.
-     * @return A new vector containing the difference.
+     * Negates this vector and returns a new vector.
+     * Result = -this.
+     * @return A new vector with negated components.
      */
     operator fun unaryMinus(): Vec2 {
         // Create and return a new Vec2 with negated components.
@@ -188,9 +187,8 @@ class Vec2(
     }
 
     /**
-     * Subtracts a vector from this one and stores the result in this vector (mutation).
-     * this -= v.
-     * @param v The vector to subtract.
+     * Negates this vector in place (mutation).
+     * this = -this.
      * @return This vector (for chaining).
      */
     fun negateLocal(): Vec2 {
@@ -203,10 +201,10 @@ class Vec2(
     }
 
     /**
-     * Multiplies this vector by a scalar and returns a new vector.
-     * Result = this * a.
-     * @param a The scalar value.
-     * @return A new scaled vector.
+     * Adds another vector to this vector (mutation).
+     * this += v.
+     * @param v The vector to add.
+     * @return This vector (for chaining).
      */
     fun addLocal(v: Vec2): Vec2 {
         // Add the source vector's x to this vector's x.
@@ -218,9 +216,10 @@ class Vec2(
     }
 
     /**
-     * Multiplies this vector by a scalar and stores the result in this vector (mutation).
-     * this *= a.
-     * @param a The scalar value.
+     * Adds specified x and y values to this vector (mutation).
+     * this += (x, y).
+     * @param x The x value to add.
+     * @param y The y value to add.
      * @return This vector (for chaining).
      */
     fun addLocal(x: Float, y: Float): Vec2 {
@@ -233,9 +232,10 @@ class Vec2(
     }
 
     /**
-     * Negates this vector and returns a new vector.
-     * Result = -this.
-     * @return A new vector (-x, -y).
+     * Subtracts another vector from this vector (mutation).
+     * this -= v.
+     * @param v The vector to subtract.
+     * @return This vector (for chaining).
      */
     fun subLocal(v: Vec2): Vec2 {
         // Subtract the source vector's x from this vector's x.
@@ -247,8 +247,9 @@ class Vec2(
     }
 
     /**
-     * Negates this vector in place (mutation).
-     * this = -this.
+     * Multiplies this vector by a scalar (mutation).
+     * this *= a.
+     * @param a The scalar to multiply by.
      * @return This vector (for chaining).
      */
     fun mulLocal(a: Float): Vec2 {
@@ -360,12 +361,11 @@ class Vec2(
     }
 
     /**
-     * Calculates the dot product with another vector.
-     * Dot product = x1*x2 + y1*y2.
-     * Geometric meaning: |a||b|cos(theta).
-     * If dot > 0, angle is acute. If dot < 0, angle is obtuse. If dot == 0, vectors are perpendicular.
+     * Subtracts another vector from this one and returns a new vector.
+     * Result = this - v.
+     * Equivalent to [minus].
      * @param v The other vector.
-     * @return The scalar dot product.
+     * @return A new vector (this - v).
      */
     fun sub(v: Vec2): Vec2 {
         // Create and return a new vector representing (this - v).
@@ -380,34 +380,6 @@ class Vec2(
     fun dot(v: Vec2): Float {
         // The dot product is the sum of the products of corresponding components.
         return x * v.x + y * v.y
-    }
-
-
-    operator fun plus(v: Vec2) = add(v)
-    operator fun minus(v: Vec2) = sub(v)
-    operator fun times(a: Float) = mul(a)
-    operator fun unaryMinus() = negate()
-
-    override fun toString(): String {
-        return "($x,$y)"
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Vec2
-
-        if (x != other.x) return false
-        if (y != other.y) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = x.hashCode()
-        result = 31 * result + y.hashCode()
-        return result
     }
 
     companion object {

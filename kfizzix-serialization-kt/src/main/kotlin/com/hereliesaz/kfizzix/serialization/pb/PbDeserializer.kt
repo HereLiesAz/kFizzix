@@ -40,8 +40,8 @@ class PbDeserializer : JbDeserializer {
     private var unsupportedlistener: UnsupportedListener? = null
 
     constructor()
-    constructor(listener: UnsupportedListener?) {
-        unsupportedlistener = listener
+    constructor(unsupportedListener: UnsupportedListener?) {
+        this.unsupportedlistener = unsupportedListener
     }
 
     constructor(objectListener: JbDeserializer.ObjectListener?) {

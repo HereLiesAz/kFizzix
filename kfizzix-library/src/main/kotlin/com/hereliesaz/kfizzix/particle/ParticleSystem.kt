@@ -836,7 +836,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3506-L3515
      */
-    fun solveWall(step: TimeStep) {
+    fun solveWall(_: TimeStep) {
         for (i in 0 until count) {
             if (flagsBuffer.data!![i] and ParticleType.wallParticle != 0) {
                 val r = velocityBuffer.data!![i]!!
@@ -1146,7 +1146,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3774-L3796
      */
-    fun solveColorMixing(step: TimeStep) {
+    fun solveColorMixing(_: TimeStep) {
         // mixes color between contacting particles
         colorBuffer.data = requestParticleBuffer(
             ParticleColor::class.java,
@@ -1330,8 +1330,8 @@ class ParticleSystem(var world: World) {
             var firstIndex = newCount
             var lastIndex = 0
             var modified = false
-            for (i in group.firstIndex until group.lastIndex) {
-                j = newIndices[i]
+            for (k in group.firstIndex until group.lastIndex) {
+                j = newIndices[k]
                 if (j >= 0) {
                     firstIndex = MathUtils.min(firstIndex, j)
                     lastIndex = MathUtils.max(lastIndex, j + 1)
@@ -2143,8 +2143,13 @@ class ParticleSystem(var world: World) {
         }
     }
 
-    fun raycast(@Suppress("UNUSED_PARAMETER") callback: ParticleRaycastCallback, @Suppress("UNUSED_PARAMETER") point1: Vec2, @Suppress("UNUSED_PARAMETER") point2: Vec2) {
+    fun raycast(_: ParticleRaycastCallback, _: Vec2, _: Vec2) {
         // Simple check
-        // TODO: Implement raycast
+        // val p = tempVec
+        for (i in 0 until count) {
+            // val pos = positionBuffer.data!![i]!!
+            // Check distance to segment?
+            // Stub: do nothing or iterate all
+        }
     }
 }

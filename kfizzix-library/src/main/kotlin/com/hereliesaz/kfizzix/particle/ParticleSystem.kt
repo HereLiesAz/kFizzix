@@ -836,7 +836,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3506-L3515
      */
-    fun solveWall(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
+    fun solveWall(_: TimeStep) {
         for (i in 0 until count) {
             if (flagsBuffer.data!![i] and ParticleType.wallParticle != 0) {
                 val r = velocityBuffer.data!![i]!!

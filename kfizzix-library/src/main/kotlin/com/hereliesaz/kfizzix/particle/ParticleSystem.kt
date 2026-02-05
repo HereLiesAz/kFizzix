@@ -2143,7 +2143,7 @@ class ParticleSystem(var world: World) {
         }
     }
 
-    fun raycast(@Suppress("UNUSED_PARAMETER") callback: ParticleRaycastCallback, @Suppress("UNUSED_PARAMETER") point1: Vec2, @Suppress("UNUSED_PARAMETER") point2: Vec2) {
+    fun raycast(_: ParticleRaycastCallback, _: Vec2, _: Vec2) {
         // Simple check
         // val p = tempVec
         for (i in 0 until count) {

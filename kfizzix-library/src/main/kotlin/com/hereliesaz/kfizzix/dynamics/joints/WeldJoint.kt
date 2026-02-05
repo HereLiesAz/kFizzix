@@ -99,23 +99,23 @@ class WeldJoint(argWorld: WorldPool, def: WeldJointDef) : Joint(argWorld, def) {
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L308-L311
      */
-    override fun getAnchorA(argOut: Vec2) {
-        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    override fun getAnchorA(out: Vec2) {
+        bodyA.getWorldPointToOut(localAnchorA, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L313-L316
      */
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB.getWorldPointToOut(localAnchorB, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L318-L322
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
-        argOut.set(impulse.x, impulse.y)
-        argOut.mulLocal(invDt)
+    override fun getReactionForce(invDt: Float, out: Vec2) {
+        out.set(impulse.x, impulse.y)
+        out.mulLocal(invDt)
     }
 
     /**
@@ -129,14 +129,14 @@ class WeldJoint(argWorld: WorldPool, def: WeldJointDef) : Joint(argWorld, def) {
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L62-L167
      */
     override fun initVelocityConstraints(data: SolverData) {
-        indexA = bodyA!!.islandIndex
-        indexB = bodyB!!.islandIndex
-        localCenterA.set(bodyA!!.sweep.localCenter)
-        localCenterB.set(bodyB!!.sweep.localCenter)
-        invMassA = bodyA!!.invMass
-        invMassB = bodyB!!.invMass
-        invIA = bodyA!!.invI
-        invIB = bodyB!!.invI
+        indexA = bodyA.islandIndex
+        indexB = bodyB.islandIndex
+        localCenterA.set(bodyA.sweep.localCenter)
+        localCenterB.set(bodyB.sweep.localCenter)
+        invMassA = bodyA.invMass
+        invMassB = bodyB.invMass
+        invIA = bodyA.invI
+        invIB = bodyB.invI
         // Vec2 cA = data.positions[indexA].c;
         val aA = data.positions!![indexA].a
         val vA = data.velocities!![indexA].v

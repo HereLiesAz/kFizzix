@@ -47,23 +47,23 @@ object Settings {
     /** Pi. (3.14159...) */
     const val PI = Math.PI.toFloat()
 
-    // --- Optimization Settings ---
+    // JBox2D specific settings
 
-    /** Use a faster but less accurate absolute value function? */
+    // Uses a lookup table for MathUtils.abs, might be faster on some JVMs.
     var FAST_ABS = true
-    /** Use a faster but less accurate floor function? */
+    // Uses a lookup table or optimized logic for MathUtils.floor.
     var FAST_FLOOR = true
-    /** Use a faster but less accurate ceil function? */
+    // Uses a lookup table or optimized logic for MathUtils.ceil.
     var FAST_CEIL = true
-    /** Use a faster but less accurate round function? */
+    // Uses a lookup table or optimized logic for MathUtils.round.
     var FAST_ROUND = true
-    /** Use a faster approximation for atan2? (Significantly affects accuracy) */
+    // Uses a fast approximation for atan2. Defaults to false for precision.
     var FAST_ATAN2 = false
-    /** Use a faster approximation for power functions? */
+    // Uses a fast approximation for power functions.
     var FAST_POW = true
-    /** Initial size of the contact stack. */
+    // Initial size of contact listener stacks.
     var CONTACT_STACK_INIT_SIZE = 10
-    /** Enable Sin/Cos Lookup Table? (Faster trig, less memory efficient) */
+    // Enable/Disable Sin/Cos Lookup Table. Defaults to false.
     var SINCOS_LUT_ENABLED = false
 
     /**
@@ -85,18 +85,17 @@ object Settings {
      */
     var SINCOS_LUT_LERP = false
 
-    // --- Collision Settings ---
+    // Collision
 
     /**
      * The maximum number of contact points between two convex shapes.
-     * Box2D supports up to 2 contact points for 2D convex polygons.
+     * Box2D supports up to 2 points for polygon-polygon (edge-edge) collisions.
      */
     var maxManifoldPoints = 2
 
     /**
      * The maximum number of vertices on a convex polygon.
-     * You cannot create a polygon with more than this many vertices.
-     * If you need more, use a ChainShape or multiple PolygonShapes.
+     * Changing this requires recompiling the library.
      */
     var maxPolygonVertices = 8
 
@@ -114,16 +113,9 @@ object Settings {
     var aabbMultiplier = 2.0f
 
     /**
-     * **Linear Slop**
-     *
-     * A small length (meters) used as a collision and constraint tolerance.
-     * Usually it is chosen to be numerically significant, but visually insignificant.
-     *
-     * *Why do we need this?*
-     * Ideally, objects would touch exactly at the surface (distance = 0).
-     * However, numerical errors cause objects to slightly penetrate or float.
-     * The "slop" allows shapes to penetrate slightly (by this amount) without
-     * the physics engine trying to push them apart violently. This improves stability.
+     * A small length used as a collision and constraint tolerance. Usually it
+     * is chosen to be numerically significant, but visually insignificant.
+     * If objects overlap by less than this, the solver considers them "touching" but not "penetrating".
      */
     var linearSlop = 0.005f
 
@@ -136,19 +128,22 @@ object Settings {
     var angularSlop = 2.0f / 180.0f * PI
 
     /**
-     * The "Skin" of a polygon.
-     * Polygons are actually slightly smaller than defined, with a "skin" of this radius
-     * added around them. This creates rounded corners which prevents objects from
-     * getting snagged on sharp edges.
+     * The radius of the polygon/edge shape skin. This should not be modified.
+     * Making this smaller means polygons will have and insufficient for
+     * continuous collision. Making it larger may create artifacts for vertex
+     * collision.
+     *
+     * Polygons are actually treated as a core polygon + a radius (skin).
      */
     var polygonRadius = 2.0f * linearSlop
 
     /**
-     * Maximum number of sub-steps per contact in continuous physics simulation (TOI).
+     * Maximum number of sub-steps per contact in continuous physics simulation.
+     * Higher values are more expensive but handle fast moving objects better.
      */
     var maxSubSteps = 8
 
-    // --- Dynamics Settings ---
+    // Dynamics
 
     /**
      * Maximum number of contacts to be handled to solve a TOI (Time of Impact) island.
@@ -156,13 +151,9 @@ object Settings {
     var maxTOIContacts = 32
 
     /**
-     * Velocity threshold for elastic collisions (m/s).
-     * Any collision with a relative linear velocity below this threshold will be
-     * treated as inelastic (bounciness = 0).
-     *
-     * *Why?*
-     * To prevent "jitter" when objects are resting on the ground. Without this,
-     * a ball would bounce infinitely with tiny micro-bounces.
+     * A velocity threshold for elastic collisions. Any collision with a
+     * relative linear velocity below this threshold will be treated as
+     * inelastic. This prevents "jittering" for objects resting on the floor.
      */
     var velocityThreshold = 1.0f
 
@@ -210,7 +201,7 @@ object Settings {
     // Baumgarte factor for Time of Impact (TOI) solving.
     var toiBaugarte = 0.75f
 
-    // --- Sleep Settings ---
+    // Sleep
 
     /**
      * The time (seconds) that a body must be still before it will go to sleep.
@@ -228,9 +219,11 @@ object Settings {
      */
     var angularSleepTolerance = 2.0f / 180.0f * PI
 
-    // --- Particle Settings (LiquidFun) ---
+    // Particle
 
-    /** A symbolic constant that stands for particle allocation error. */
+    /**
+     * A symbolic constant that stands for particle allocation error.
+     */
     const val invalidParticleIndex = -1
 
     /** The standard distance between particles, divided by the particle radius. */
@@ -252,9 +245,8 @@ object Settings {
     const val minParticleBufferCapacity = 256
 
     /**
-     * Friction mixing law.
-     * Determines how friction combines when two fixtures touch.
-     * Default: sqrt(f1 * f2).
+     * Friction mixing law. Feel free to customize this.
+     * By default, it uses the geometric mean: sqrt(f1 * f2).
      */
     fun mixFriction(friction1: Float, friction2: Float): Float {
         // Return geometric mean.
@@ -262,9 +254,8 @@ object Settings {
     }
 
     /**
-     * Restitution (Bounciness) mixing law.
-     * Determines how bounciness combines.
-     * Default: max(r1, r2). If one object is bouncy, the collision is bouncy.
+     * Restitution mixing law. Feel free to customize this.
+     * By default, it uses the maximum of the two values.
      */
     fun mixRestitution(restitution1: Float, restitution2: Float): Float {
         // Return max.

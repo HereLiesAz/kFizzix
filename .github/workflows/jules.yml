@@ -28,7 +28,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           jules_api_key: ${{ secrets.JULES_API_KEY }}
-          include_commit_log: true
+          include_commit_log: false
           prompt: |
             You are Jules, an expert software engineer and autonomous agent.
             Your mission is to manage the lifecycle of this code branch.

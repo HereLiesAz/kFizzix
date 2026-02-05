@@ -51,32 +51,56 @@ class Vec2(
     @JvmField var y: Float = 0f
 ) : Serializable {
 
-    /**
-     * Copy constructor. Creates a new vector with the same values as the input vector.
-     * @param v The vector to copy.
-     */
+    // Copy constructor: creates a new Vec2 from an existing one.
     constructor(v: Vec2) : this(v.x, v.y)
 
-    /** Destructuring declaration for 'x' component. Allows `val (x, y) = vec`. */
+    // Destructuring declaration for the x component.
+    // Allows usage like: val (x, y) = vec2
     operator fun component1() = x
-    /** Destructuring declaration for 'y' component. Allows `val (x, y) = vec`. */
+
+    // Destructuring declaration for the y component.
     operator fun component2() = y
 
-    /**
-     * Creates a copy of this vector.
-     * @param x New x value (optional).
-     * @param y New y value (optional).
-     * @return A new Vec2 instance.
-     */
+    // Creates a copy of this vector, optionally modifying components.
     fun copy(x: Float = this.x, y: Float = this.y) = Vec2(x, y)
 
-    /**
-     * Clones this vector.
-     * @return A new Vec2 with the same values.
-     */
+    // Clones the vector.
     fun clone(): Vec2 {
         // Return a new instance with the same values.
         return Vec2(x, y)
+    }
+
+    // Checks equality with another object.
+    override fun equals(other: Any?): Boolean {
+        // If they are the same instance in memory, they are equal.
+        if (this === other) return true
+        // If the other object is null or a different class, they are not equal.
+        if (javaClass != other?.javaClass) return false
+
+        // Cast the other object to Vec2.
+        other as Vec2
+
+        // Compare the x components.
+        if (x != other.x) return false
+        // Compare the y components.
+        if (y != other.y) return false
+
+        // If both components match, the vectors are equal.
+        return true
+    }
+
+    // Computes a hash code for the vector.
+    override fun hashCode(): Int {
+        // Start with the hash of x.
+        var result = x.hashCode()
+        // Combine with the hash of y using a prime multiplier (31).
+        result = 31 * result + y.hashCode()
+        return result
+    }
+
+    // Returns a string representation of the vector.
+    override fun toString(): String {
+        return "Vec2(x=$x, y=$y)"
     }
 
     /**
@@ -125,7 +149,8 @@ class Vec2(
      * @param v The vector to add.
      * @return A new vector containing the sum.
      */
-    fun add(v: Vec2): Vec2 {
+    operator fun plus(v: Vec2): Vec2 {
+        // Create and return a new Vec2 where each component is the sum of the inputs.
         return Vec2(x + v.x, y + v.y)
     }
 
@@ -135,10 +160,9 @@ class Vec2(
      * @param v The vector to add.
      * @return This vector (for chaining).
      */
-    fun addLocal(v: Vec2): Vec2 {
-        x += v.x
-        y += v.y
-        return this
+    operator fun minus(v: Vec2): Vec2 {
+        // Create and return a new Vec2 where each component is the difference.
+        return Vec2(x - v.x, y - v.y)
     }
 
     /**
@@ -147,10 +171,9 @@ class Vec2(
      * @param y The y amount to add.
      * @return This vector (for chaining).
      */
-    fun addLocal(x: Float, y: Float): Vec2 {
-        this.x += x
-        this.y += y
-        return this
+    operator fun times(a: Float): Vec2 {
+        // Create and return a new Vec2 where each component is scaled by 'a'.
+        return Vec2(x * a, y * a)
     }
 
     /**
@@ -159,8 +182,9 @@ class Vec2(
      * @param v The vector to subtract.
      * @return A new vector containing the difference.
      */
-    fun sub(v: Vec2): Vec2 {
-        return Vec2(x - v.x, y - v.y)
+    operator fun unaryMinus(): Vec2 {
+        // Create and return a new Vec2 with negated components.
+        return Vec2(-x, -y)
     }
 
     /**
@@ -169,9 +193,12 @@ class Vec2(
      * @param v The vector to subtract.
      * @return This vector (for chaining).
      */
-    fun subLocal(v: Vec2): Vec2 {
-        x -= v.x
-        y -= v.y
+    fun negateLocal(): Vec2 {
+        // Negate the x component in place.
+        x = -x
+        // Negate the y component in place.
+        y = -y
+        // Return this instance.
         return this
     }
 
@@ -181,8 +208,13 @@ class Vec2(
      * @param a The scalar value.
      * @return A new scaled vector.
      */
-    fun mul(a: Float): Vec2 {
-        return Vec2(x * a, y * a)
+    fun addLocal(v: Vec2): Vec2 {
+        // Add the source vector's x to this vector's x.
+        x += v.x
+        // Add the source vector's y to this vector's y.
+        y += v.y
+        // Return this instance.
+        return this
     }
 
     /**
@@ -191,9 +223,12 @@ class Vec2(
      * @param a The scalar value.
      * @return This vector (for chaining).
      */
-    fun mulLocal(a: Float): Vec2 {
-        x *= a
-        y *= a
+    fun addLocal(x: Float, y: Float): Vec2 {
+        // Add the given x value to this vector's x.
+        this.x += x
+        // Add the given y value to this vector's y.
+        this.y += y
+        // Return this instance.
         return this
     }
 
@@ -202,8 +237,13 @@ class Vec2(
      * Result = -this.
      * @return A new vector (-x, -y).
      */
-    fun negate(): Vec2 {
-        return Vec2(-x, -y)
+    fun subLocal(v: Vec2): Vec2 {
+        // Subtract the source vector's x from this vector's x.
+        x -= v.x
+        // Subtract the source vector's y from this vector's y.
+        y -= v.y
+        // Return this instance.
+        return this
     }
 
     /**
@@ -211,9 +251,12 @@ class Vec2(
      * this = -this.
      * @return This vector (for chaining).
      */
-    fun negateLocal(): Vec2 {
-        x = -x
-        y = -y
+    fun mulLocal(a: Float): Vec2 {
+        // Scale the x component by 'a'.
+        x *= a
+        // Scale the y component by 'a'.
+        y *= a
+        // Return this instance.
         return this
     }
 
@@ -324,6 +367,16 @@ class Vec2(
      * @param v The other vector.
      * @return The scalar dot product.
      */
+    fun sub(v: Vec2): Vec2 {
+        // Create and return a new vector representing (this - v).
+        return Vec2(x - v.x, y - v.y)
+    }
+
+    /**
+     * Computes the dot product of this vector with another.
+     * @param v The other vector.
+     * @return The dot product.
+     */
     fun dot(v: Vec2): Float {
         // The dot product is the sum of the products of corresponding components.
         return x * v.x + y * v.y
@@ -398,13 +451,12 @@ class Vec2(
         }
 
         /**
-         * Computes the 2D Cross Product of two vectors.
-         * In 2D, the cross product is a scalar (the Z-component of the 3D cross product).
-         * Cross(a, b) = a.x * b.y - a.y * b.x.
-         * Geometric meaning: |a||b|sin(theta). Represents the signed area of the parallelogram formed by a and b.
-         * @param a First vector.
-         * @param b Second vector.
-         * @return Scalar result.
+         * Computes the cross product of two vectors.
+         * In 2D, this is a scalar representing the z-component of the 3D cross product.
+         *
+         * @param a the first vector
+         * @param b the second vector
+         * @return the cross product
          */
         @JvmStatic
         fun cross(a: Vec2, b: Vec2): Float {
@@ -413,12 +465,12 @@ class Vec2(
         }
 
         /**
-         * Computes the Cross Product of a vector 'a' and a scalar 's'.
-         * This effectively rotates the vector -90 degrees and scales it.
-         * Result = (s * a.y, -s * a.x).
-         * @param a The vector.
-         * @param s The scalar.
-         * @return New vector result.
+         * Computes the cross product of a vector and a scalar.
+         * This yields a vector perpendicular to 'a' scaled by 's'.
+         *
+         * @param a the vector
+         * @param s the scalar
+         * @return a new vector containing the result
          */
         @JvmStatic
         fun cross(a: Vec2, s: Float): Vec2 {
@@ -460,12 +512,12 @@ class Vec2(
         }
 
         /**
-         * Computes the Cross Product of a scalar 's' and a vector 'a'.
-         * This effectively rotates the vector +90 degrees and scales it.
-         * Result = (-s * a.y, s * a.x).
-         * @param s The scalar.
-         * @param a The vector.
-         * @return New vector result.
+         * Computes the cross product of a scalar and a vector.
+         * This yields a vector perpendicular to 'a' scaled by 's' (opposite direction to cross(a, s)).
+         *
+         * @param s the scalar
+         * @param a the vector
+         * @return a new vector containing the result
          */
         @JvmStatic
         fun cross(s: Float, a: Vec2): Vec2 {

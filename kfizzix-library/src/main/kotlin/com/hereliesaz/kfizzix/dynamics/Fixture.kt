@@ -126,6 +126,7 @@ class Fixture {
         proxyCount = 0
         // Initialize shape to null.
         shape = null
+        // Create a new default filter.
         // 2. Clean Up: Nullify references to help GC.
         filter = Filter()
     }

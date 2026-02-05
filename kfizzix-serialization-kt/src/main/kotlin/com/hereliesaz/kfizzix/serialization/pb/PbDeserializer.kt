@@ -175,8 +175,8 @@ class PbDeserializer : JbDeserializer {
         fd.restitution = pbFixture.restitution
         fd.shape = deserializeShape(pbFixture.shape)
         val fixture = body.createFixture(fd)
-        if (listener != null && pbFixture.hasTag()) {
-            listener!!.processFixture(fixture!!, pbFixture.tag)
+        if (fixture != null && listener != null && pbFixture.hasTag()) {
+            listener!!.processFixture(fixture, pbFixture.tag)
         }
         return fixture!!
     }

@@ -1666,7 +1666,10 @@ class ParticleSystem(var world: World) {
      * Callback used with VoronoiDiagram.
      */
     class CreateParticleGroupCallback : VoronoiDiagramCallback {
-        override fun callback(a: Int, b: Int, c: Int) {
+        override fun callback(aTag: Int, bTag: Int, cTag: Int) {
+            val a = aTag
+            val b = bTag
+            val c = cTag
             val pa = system!!.positionBuffer.data!![a]!!
             val pb = system!!.positionBuffer.data!![b]!!
             val pc = system!!.positionBuffer.data!![c]!!
@@ -1718,7 +1721,10 @@ class ParticleSystem(var world: World) {
 
     // Callback used with VoronoiDiagram.
     class JoinParticleGroupsCallback : VoronoiDiagramCallback {
-        override fun callback(a: Int, b: Int, c: Int) {
+        override fun callback(aTag: Int, bTag: Int, cTag: Int) {
+            val a = aTag
+            val b = bTag
+            val c = cTag
             // Create a triad if it will contain particles from both groups.
             val countA = ((if (a < groupB!!.firstIndex) 1 else 0)
                     + (if (b < groupB!!.firstIndex) 1 else 0)
@@ -2068,13 +2074,13 @@ class ParticleSystem(var world: World) {
         }
 
         fun setParticleBuffer(buffer: ParticleBufferInt, newData: IntArray?, newCapacity: Int) {
-            assert(newData != null && newCapacity >= newData!!.size)
+            assert(newData != null && newCapacity >= newData.size)
             buffer.data = newData
             buffer.userSuppliedCapacity = newCapacity
         }
 
         fun <T> setParticleBuffer(buffer: ParticleBuffer<T>, newData: Array<T?>?, newCapacity: Int) {
-            assert(newData != null && newCapacity >= newData!!.size)
+            assert(newData != null && newCapacity >= newData.size)
             buffer.data = newData
             buffer.userSuppliedCapacity = newCapacity
         }
@@ -2137,11 +2143,11 @@ class ParticleSystem(var world: World) {
         }
     }
 
-    fun raycast(callback: ParticleRaycastCallback, point1: Vec2, point2: Vec2) {
+    fun raycast(@Suppress("UNUSED_PARAMETER") callback: ParticleRaycastCallback, @Suppress("UNUSED_PARAMETER") point1: Vec2, @Suppress("UNUSED_PARAMETER") point2: Vec2) {
         // Simple check
-        val p = tempVec
+        // val p = tempVec
         for (i in 0 until count) {
-            val pos = positionBuffer.data!![i]!!
+            // val pos = positionBuffer.data!![i]!!
             // Check distance to segment?
             // Stub: do nothing or iterate all
         }

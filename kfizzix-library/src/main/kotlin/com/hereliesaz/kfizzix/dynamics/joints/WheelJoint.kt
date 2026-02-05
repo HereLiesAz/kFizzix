@@ -74,8 +74,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     var maxMotorTorque: Float
         get() = _maxMotorTorque
         set(torque) {
-            bodyA!!.isAwake = true
-            bodyB!!.isAwake = true
+            bodyA.isAwake = true
+            bodyB.isAwake = true
             _maxMotorTorque = torque
         }
 
@@ -86,8 +86,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     var motorSpeed: Float
         get() = _motorSpeed
         set(speed) {
-            bodyA!!.isAwake = true
-            bodyB!!.isAwake = true
+            bodyA.isAwake = true
+            bodyB.isAwake = true
             _motorSpeed = speed
         }
 
@@ -146,24 +146,24 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L446-L449
      */
-    override fun getAnchorA(argOut: Vec2) {
-        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    override fun getAnchorA(out: Vec2) {
+        bodyA.getWorldPointToOut(localAnchorA, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L451-L454
      */
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB.getWorldPointToOut(localAnchorB, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L456-L459
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) {
         val temp = pool.popVec2()
         temp.set(ay).mulLocal(impulse)
-        argOut.set(ax).mulLocal(springImpulse).addLocal(temp).mulLocal(invDt)
+        out.set(ax).mulLocal(springImpulse).addLocal(temp).mulLocal(invDt)
         pool.pushVec2(1)
     }
 
@@ -178,8 +178,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L466-L478
      */
     fun getJointTranslation(): Float {
-        val b1 = bodyA!!
-        val b2 = bodyB!!
+        val b1 = bodyA
+        val b2 = bodyB
         val p1 = pool.popVec2()
         val p2 = pool.popVec2()
         val axis = pool.popVec2()
@@ -200,7 +200,7 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     }
 
     fun getJointSpeed(): Float {
-        return bodyA!!.angularVelocity - bodyB!!.angularVelocity
+        return bodyA.angularVelocity - bodyB.angularVelocity
     }
 
     /**
@@ -214,8 +214,8 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L561-L569
      */
     fun enableMotor(flag: Boolean) {
-        bodyA!!.isAwake = true
-        bodyB!!.isAwake = true
+        bodyA.isAwake = true
+        bodyB.isAwake = true
         enableMotor = flag
     }
 
@@ -228,14 +228,14 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L89-L235
      */
     override fun initVelocityConstraints(data: SolverData) {
-        indexA = bodyA!!.islandIndex
-        indexB = bodyB!!.islandIndex
-        localCenterA.set(bodyA!!.sweep.localCenter)
-        localCenterB.set(bodyB!!.sweep.localCenter)
-        invMassA = bodyA!!.invMass
-        invMassB = bodyB!!.invMass
-        invIA = bodyA!!.invI
-        invIB = bodyB!!.invI
+        indexA = bodyA.islandIndex
+        indexB = bodyB.islandIndex
+        localCenterA.set(bodyA.sweep.localCenter)
+        localCenterB.set(bodyB.sweep.localCenter)
+        invMassA = bodyA.invMass
+        invMassB = bodyB.invMass
+        invIA = bodyA.invI
+        invIB = bodyB.invI
         val mA = invMassA
         val mB = invMassB
         val iA = invIA

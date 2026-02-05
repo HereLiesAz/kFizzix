@@ -57,8 +57,8 @@ class PbDeserializer : JbDeserializer {
         this.listener = listener
     }
 
-    override fun setUnsupportedListener(listener: UnsupportedListener) {
-        unsupportedlistener = listener
+    override fun setUnsupportedListener(unsupportedListener: UnsupportedListener) {
+        this.unsupportedlistener = unsupportedListener
     }
 
     private fun isIndependentJoint(argType: PbJointType): Boolean {

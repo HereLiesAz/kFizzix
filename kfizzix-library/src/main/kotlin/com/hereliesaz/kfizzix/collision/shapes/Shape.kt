@@ -34,13 +34,21 @@ import com.hereliesaz.kfizzix.common.Vec2
  * Shapes used for simulation in World are created automatically when a Fixture
  * is created. Shapes may encapsulate a one or more child shapes.
  */
-abstract class Shape(val type: ShapeType) {
+abstract class Shape(
+    // The type of this shape (e.g., CIRCLE, POLYGON).
+    val type: ShapeType
+) {
+    // The "skin" radius of the shape.
+    // For circles, this is the actual radius.
+    // For polygons, this is a small buffer around the shape to prevent tunneling.
     var radius: Float = 0f
 
     /**
-     * Get the number of child primitives
+     * Get the number of child primitives.
+     * For Circle and Polygon, this is 1.
+     * For Chain, this is the number of edge segments.
      *
-     * @return
+     * @return the number of child shapes.
      */
     abstract val childCount: Int
 
@@ -49,6 +57,7 @@ abstract class Shape(val type: ShapeType) {
      *
      * @param xf the shape world transform.
      * @param p a point in world coordinates.
+     * @return true if the point is inside the shape.
      */
     abstract fun testPoint(xf: Transform, p: Vec2): Boolean
 
@@ -59,7 +68,7 @@ abstract class Shape(val type: ShapeType) {
      * @param input the ray-cast input parameters.
      * @param transform the transform to be applied to the shape.
      * @param childIndex the child shape index
-     * @return if hit
+     * @return true if hit, false otherwise.
      */
     abstract fun raycast(output: RayCastOutput, input: RayCastInput, transform: Transform, childIndex: Int): Boolean
 
@@ -68,6 +77,7 @@ abstract class Shape(val type: ShapeType) {
      *
      * @param aabb returns the axis aligned box.
      * @param xf the world transform of the shape.
+     * @param childIndex the child shape index.
      */
     abstract fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int)
 
@@ -80,5 +90,9 @@ abstract class Shape(val type: ShapeType) {
      */
     abstract fun computeMass(massData: MassData, density: Float)
 
+    /**
+     * Clone the concrete shape.
+     * @return a deep copy of the shape.
+     */
     abstract fun clone(): Shape
 }

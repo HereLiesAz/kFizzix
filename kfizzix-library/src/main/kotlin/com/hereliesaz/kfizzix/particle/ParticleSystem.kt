@@ -2039,17 +2039,17 @@ class ParticleSystem(var world: World) {
 
         private fun lowerBound(ray: Array<Proxy?>?, length: Int, tag: Long): Int {
             var left = 0
-            var length = length
+            var len = length
             var step: Int
             var curr: Int
-            while (length > 0) {
-                step = length / 2
+            while (len > 0) {
+                step = len / 2
                 curr = left + step
                 if (ray!![curr]!!.tag < tag) {
                     left = curr + 1
-                    length -= step + 1
+                    len -= step + 1
                 } else {
-                    length = step
+                    len = step
                 }
             }
             return left
@@ -2057,17 +2057,17 @@ class ParticleSystem(var world: World) {
 
         private fun upperBound(ray: Array<Proxy?>?, length: Int, tag: Long): Int {
             var left = 0
-            var length = length
+            var len = length
             var step: Int
             var curr: Int
-            while (length > 0) {
-                step = length / 2
+            while (len > 0) {
+                step = len / 2
                 curr = left + step
                 if (ray!![curr]!!.tag <= tag) {
                     left = curr + 1
-                    length -= step + 1
+                    len -= step + 1
                 } else {
-                    length = step
+                    len = step
                 }
             }
             return left

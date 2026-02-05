@@ -63,8 +63,12 @@ abstract class Joint protected constructor(protected var pool: WorldPool, def: J
      * Get the type of the concrete joint.
      */
     val type: JointType
+
+    // Links to the world joint list.
     var prev: Joint? = null
     var next: Joint? = null
+
+    // Graph edge structures for the two bodies.
     var edgeA: JointEdge
     var edgeB: JointEdge
 
@@ -77,6 +81,8 @@ abstract class Joint protected constructor(protected var pool: WorldPool, def: J
      * Get the second body attached to this joint.
      */
     var bodyB: Body
+
+    // Flag used by the island solver to traverse the graph.
     var islandFlag = false
 
     /**
@@ -94,35 +100,35 @@ abstract class Joint protected constructor(protected var pool: WorldPool, def: J
      */
     var userData: Any?
 
-    // Cache here per time step to reduce cache misses.
-    // final Vec2 localCenterA, localCenterB;
-    // float invMassA, invIA;
-    // float invMassB, invIB;
     init {
+        // Safety check: a joint cannot connect a body to itself.
         assert(def.bodyA !== def.bodyB)
         type = def.type
         prev = null
         next = null
+        // Ensure bodies are not null.
         bodyA = def.bodyA!!
         bodyB = def.bodyB!!
         collideConnected = def.collideConnected
         userData = def.userData
+
+        // Initialize edges.
         edgeA = JointEdge()
-        edgeA.joint = null
+        edgeA.joint = null // Set later.
         edgeA.other = null
         edgeA.prev = null
         edgeA.next = null
+
         edgeB = JointEdge()
         edgeB.joint = null
         edgeB.other = null
         edgeB.prev = null
         edgeB.next = null
-        // localCenterA = new Vec2();
-        // localCenterB = new Vec2();
     }
 
     /**
      * Get the anchor point on bodyA in world coordinates.
+     * This is useful for visualization and game logic.
      */
     abstract fun getAnchorA(out: Vec2)
 
@@ -133,6 +139,7 @@ abstract class Joint protected constructor(protected var pool: WorldPool, def: J
 
     /**
      * Get the reaction force on body2 at the joint anchor in Newtons.
+     * This describes the force the joint applies to enforce the constraint.
      */
     abstract fun getReactionForce(invDt: Float, out: Vec2)
 
@@ -148,28 +155,33 @@ abstract class Joint protected constructor(protected var pool: WorldPool, def: J
         get() = bodyA.isActive && bodyB.isActive
 
     /**
-     * Internal
+     * Internal: Initialize velocity constraints.
+     * This computes the Jacobian and effective mass for the constraint solver.
      */
     abstract fun initVelocityConstraints(data: SolverData)
 
     /**
-     * Internal
+     * Internal: Solve velocity constraints.
+     * This applies impulses to the bodies to satisfy the velocity constraint.
      */
     abstract fun solveVelocityConstraints(data: SolverData)
 
     /**
      * This returns true if the position errors are within tolerance. Internal.
+     * This applies pseudo-impulses to correct position drift (baumgarte stabilization).
      */
     abstract fun solvePositionConstraints(data: SolverData): Boolean
 
     /**
-     * Override to handle destruction of joint
+     * Override to handle destruction of joint.
+     * Useful for returning pooled objects.
      */
     open fun destructor() {}
 
     companion object {
+        // Factory method to create a joint based on the definition type.
         fun create(world: World, def: JointDef): Joint? {
-            // Joint joint = null;
+            // Check the type and instantiate the appropriate subclass.
             return when (def.type) {
                 JointType.MOUSE -> MouseJoint(world, def as MouseJointDef)
                 JointType.DISTANCE -> DistanceJoint(world, def as DistanceJointDef)
@@ -191,6 +203,7 @@ abstract class Joint protected constructor(protected var pool: WorldPool, def: J
             }
         }
 
+        // Destroy a joint.
         fun destroy(joint: Joint) {
             joint.destructor()
         }

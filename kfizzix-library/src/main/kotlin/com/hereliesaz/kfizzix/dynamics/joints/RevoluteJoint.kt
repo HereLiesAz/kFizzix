@@ -90,6 +90,8 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
      * The desired motor speed. Usually in radians per second.
      */
     private var _motorSpeed: Float = 0f
+
+    // Property for motor speed to ensure bodies are woken up when changed.
     var motorSpeed: Float
         get() = _motorSpeed
         set(speed) {
@@ -103,6 +105,8 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
      * in N-m.
      */
     private var _maxMotorTorque: Float = 0f
+
+    // Property for max motor torque.
     var maxMotorTorque: Float
         get() = _maxMotorTorque
         set(torque) {
@@ -111,14 +115,17 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
             _maxMotorTorque = torque
         }
 
+    // Accumulated impulse for the motor constraint.
     private var motorImpulse: Float
+    // Accumulated impulse for the point-to-point and angular limit constraints.
+    // x, y: point-to-point; z: angular limit.
     private val impulse = Vec3()
 
-    // Solver temp
+    // Solver temp variables (cached to avoid re-fetching from bodies during iteration).
     private var indexA: Int = 0
     private var indexB: Int = 0
-    private val rA = Vec2()
-    private val rB = Vec2()
+    private val rA = Vec2() // Vector from center of mass A to anchor A in world frame.
+    private val rB = Vec2() // Vector from center of mass B to anchor B in world frame.
     private val localCenterA = Vec2()
     private val localCenterB = Vec2()
     private var invMassA: Float = 0.0f
@@ -158,33 +165,46 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
         invMassB = bodyB!!.invMass
         invIA = bodyA!!.invI
         invIB = bodyB!!.invI
+
+        // Get current positions and velocities.
         val aA = data.positions!![indexA].a
         val vA = data.velocities!![indexA].v
         var wA = data.velocities!![indexA].w
         val aB = data.positions!![indexB].a
         val vB = data.velocities!![indexB].v
         var wB = data.velocities!![indexB].w
+
         val qA = pool.popRot()
         val qB = pool.popRot()
         val temp = pool.popVec2()
         qA.set(aA)
         qB.set(aB)
-        // Compute the effective masses.
+
+        // Compute rA and rB.
+        // r = Rot(q) * (localAnchor - localCenter)
         Rot.mulToOutUnsafe(qA, temp.set(localAnchorA).subLocal(localCenterA), rA)
         Rot.mulToOutUnsafe(qB, temp.set(localAnchorB).subLocal(localCenterB), rB)
+
+        // Compute the effective masses.
+        // The Jacobian J for the point-to-point constraint (2 rows) and the angular constraint (1 row) is:
         // J = [-I -r1_skew I r2_skew]
-        // [ 0 -1 0 1]
+        //     [ 0 -1       0 1      ]
+        //
         // r_skew = [-ry; rx]
-        // Matlab
-        // K = [ mA+r1y^2*iA+mB+r2y^2*iB, -r1y*iA*r1x-r2y*iB*r2x,
-        // -r1y*iA-r2y*iB]
-        // [ -r1y*iA*r1x-r2y*iB*r2x, mA+r1x^2*iA+mB+r2x^2*iB, r1x*iA+r2x*iB]
-        // [ -r1y*iA-r2y*iB, r1x*iA+r2x*iB, iA+iB]
+        //
+        // The effective mass matrix K = J * M^-1 * J^T
+        //
+        // K = [ mA+r1y^2*iA+mB+r2y^2*iB, -r1y*iA*r1x-r2y*iB*r2x, -r1y*iA-r2y*iB]
+        //     [ -r1y*iA*r1x-r2y*iB*r2x, mA+r1x^2*iA+mB+r2x^2*iB, r1x*iA+r2x*iB ]
+        //     [ -r1y*iA-r2y*iB,         r1x*iA+r2x*iB,           iA+iB         ]
+
         val mA = invMassA
         val mB = invMassB
         val iA = invIA
         val iB = invIB
         val fixedRotation = iA + iB == 0.0f
+
+        // Fill the 3x3 effective mass matrix.
         mass.ex.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB
         mass.ey.x = -rA.y * rA.x * iA - rB.y * rB.x * iB
         mass.ez.x = -rA.y * iA - rB.y * iB
@@ -194,20 +214,25 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
         mass.ex.z = mass.ez.x
         mass.ey.z = mass.ez.y
         mass.ez.z = iA + iB
+
+        // Motor mass is the effective mass for the angular constraint alone (scalar).
         motorMass = iA + iB
         if (motorMass > 0.0f) {
             motorMass = 1.0f / motorMass
         }
+
         if (!enableMotor || fixedRotation) {
             motorImpulse = 0.0f
         }
+
+        // Calculate limit state.
         if (enableLimit && !fixedRotation) {
             val jointAngle = aB - aA - referenceAngle
             if (MathUtils.abs(upperAngle - lowerAngle) < 2.0f * Settings.angularSlop) {
                 limitState = LimitState.EQUAL
             } else if (jointAngle <= lowerAngle) {
                 if (limitState != LimitState.AT_LOWER) {
-                    impulse.z = 0.0f
+                    impulse.z = 0.0f // Reset angular impulse if state changed.
                 }
                 limitState = LimitState.AT_LOWER
             } else if (jointAngle >= upperAngle) {
@@ -222,29 +247,44 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
         } else {
             limitState = LimitState.INACTIVE
         }
+
+        // Warm starting: Apply accumulated impulses from the previous step.
         if (data.step!!.warmStarting) {
             val P = pool.popVec2()
             // Scale impulses to support a variable time step.
             impulse.x *= data.step!!.dtRatio
             impulse.y *= data.step!!.dtRatio
             motorImpulse *= data.step!!.dtRatio
+
+            // Linear impulse.
             P.x = impulse.x
             P.y = impulse.y
+
+            // Apply linear and angular impulses.
+            // v -= mA * P
             vA.x = vA.x - mA * P.x
             vA.y = vA.y - mA * P.y
+            // w -= iA * (cross(rA, P) + motorImpulse + limitImpulse)
             wA = wA - iA * (Vec2.cross(rA, P) + motorImpulse + impulse.z)
+
             vB.x = vB.x + mB * P.x
             vB.y = vB.y + mB * P.y
             wB = wB + iB * (Vec2.cross(rB, P) + motorImpulse + impulse.z)
+
             pool.pushVec2(1)
         } else {
             impulse.setZero()
             motorImpulse = 0.0f
         }
-        // data.velocities[indexA].v.set(vA);
+
+        // Store updated velocities back to the solver data.
+        // data.velocities[indexA].v.set(vA); // Not needed as vA is a reference? No, Vec2 is a class, but vA was retrieved via `val vA = ...`. Wait, if vA is a reference to the array element, it works. If it's a copy, it doesn't.
+        // In Kotlin, `val vA = data.velocities!![indexA].v` assigns the reference.
+        // However, wA is a Float (primitive), so it must be explicitly assigned back.
         data.velocities!![indexA].w = wA
         // data.velocities[indexB].v.set(vB);
         data.velocities!![indexB].w = wB
+
         pool.pushVec2(1)
         pool.pushRot(2)
     }
@@ -259,36 +299,49 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
         val iA = invIA
         val iB = invIB
         val fixedRotation = iA + iB == 0.0f
+
         // Solve motor constraint.
         if (enableMotor && limitState != LimitState.EQUAL && !fixedRotation) {
+            // Cdot = wB - wA - motorSpeed
             val Cdot = wB - wA - motorSpeed
             val impulse = -motorMass * Cdot
             val oldImpulse = motorImpulse
             val maxImpulse = data.step!!.dt * maxMotorTorque
+            // Clamp impulse.
             motorImpulse = MathUtils.clamp(motorImpulse + impulse, -maxImpulse, maxImpulse)
             val incImpulse = motorImpulse - oldImpulse
+
             wA = wA - iA * incImpulse
             wB = wB + iB * incImpulse
         }
+
         val temp = pool.popVec2()
+
         // Solve limit constraint.
         if (enableLimit && limitState != LimitState.INACTIVE && !fixedRotation) {
             val Cdot1 = pool.popVec2()
             val Cdot = pool.popVec3()
             // Solve point-to-point constraint
+            // Cdot1 = vB + cross(wB, rB) - vA - cross(wA, rA)
             Vec2.crossToOutUnsafe(wA, rA, temp)
             Vec2.crossToOutUnsafe(wB, rB, Cdot1)
             Cdot1.addLocal(vB).subLocal(vA).subLocal(temp)
             val Cdot2 = wB - wA
             Cdot.set(Cdot1.x, Cdot1.y, Cdot2)
+
             val impulse = pool.popVec3()
             mass.solve33ToOut(Cdot, impulse)
             impulse.negateLocal()
+
             if (limitState == LimitState.EQUAL) {
                 this.impulse.addLocal(impulse)
             } else if (limitState == LimitState.AT_LOWER) {
                 val newImpulse = this.impulse.z + impulse.z
                 if (newImpulse < 0.0f) {
+                    // The limit constraint is violating the inequality constraint (it should be >= 0).
+                    // We need to re-solve with the limit impulse set to 0 (clamped).
+                    // RHS = -Cdot1 - (mass.column3 * accumulated_limit_impulse) ??
+                    // Actually, we just solve the 2x2 point-to-point constraint.
                     val rhs = pool.popVec2()
                     rhs.set(mass.ez.x, mass.ez.y).mulLocal(this.impulse.z).subLocal(Cdot1)
                     mass.solve22ToOut(rhs, temp)
@@ -305,6 +358,7 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
             } else if (limitState == LimitState.AT_UPPER) {
                 val newImpulse = this.impulse.z + impulse.z
                 if (newImpulse > 0.0f) {
+                    // Violation of inequality (should be <= 0).
                     val rhs = pool.popVec2()
                     rhs.set(mass.ez.x, mass.ez.y).mulLocal(this.impulse.z).subLocal(Cdot1)
                     mass.solve22ToOut(rhs, temp)
@@ -319,6 +373,7 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
                     this.impulse.addLocal(impulse)
                 }
             }
+
             val P = pool.popVec2()
             P.set(impulse.x, impulse.y)
             vA.x = vA.x - mA * P.x
@@ -327,30 +382,37 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
             vB.x = vB.x + mB * P.x
             vB.y = vB.y + mB * P.y
             wB = wB + iB * (Vec2.cross(rB, P) + impulse.z)
+
             pool.pushVec2(2)
             pool.pushVec3(2)
         } else {
-            // Solve point-to-point constraint
+            // Solve point-to-point constraint only.
             val Cdot = pool.popVec2()
             val impulse = pool.popVec2()
+
             Vec2.crossToOutUnsafe(wA, rA, temp)
             Vec2.crossToOutUnsafe(wB, rB, Cdot)
             Cdot.addLocal(vB).subLocal(vA).subLocal(temp)
-            mass.solve22ToOut(Cdot.negateLocal(), impulse) // just leave negated
+            mass.solve22ToOut(Cdot.negateLocal(), impulse) // solve Ax = b, where b = -Cdot
+
             this.impulse.x += impulse.x
             this.impulse.y += impulse.y
+
             vA.x = vA.x - mA * impulse.x
             vA.y = vA.y - mA * impulse.y
             wA = wA - iA * Vec2.cross(rA, impulse)
             vB.x = vB.x + mB * impulse.x
             vB.y = vB.y + mB * impulse.y
             wB = wB + iB * Vec2.cross(rB, impulse)
+
             pool.pushVec2(2)
         }
+
         // data.velocities[indexA].v.set(vA);
         data.velocities!![indexA].w = wA
         // data.velocities[indexB].v.set(vB);
         data.velocities!![indexB].w = wB
+
         pool.pushVec2(1)
     }
 
@@ -363,9 +425,11 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
         var aB = data.positions!![indexB].a
         qA.set(aA)
         qB.set(aB)
+
         var angularError = 0.0f
         val positionError: Float
         val fixedRotation = invIA + invIB == 0.0f
+
         // Solve angular limit constraint.
         if (enableLimit && limitState != LimitState.INACTIVE && !fixedRotation) {
             val angle = aB - aA - referenceAngle
@@ -392,6 +456,7 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
             aA -= invIA * limitImpulse
             aB += invIB * limitImpulse
         }
+
         // Solve point-to-point constraint.
         run {
             qA.set(aA)
@@ -400,35 +465,47 @@ class RevoluteJoint(argWorld: WorldPool, def: RevoluteJointDef) : Joint(argWorld
             val rB = pool.popVec2()
             val C = pool.popVec2()
             val impulse = pool.popVec2()
+
             Rot.mulToOutUnsafe(qA, C.set(localAnchorA).subLocal(localCenterA), rA)
             Rot.mulToOutUnsafe(qB, C.set(localAnchorB).subLocal(localCenterB), rB)
+
+            // C = cB + rB - cA - rA
             C.set(cB).addLocal(rB).subLocal(cA).subLocal(rA)
             positionError = C.length()
+
             val mA = invMassA
             val mB = invMassB
             val iA = invIA
             val iB = invIB
+
             val K = pool.popMat22()
             K.ex.x = mA + mB + iA * rA.y * rA.y + iB * rB.y * rB.y
             K.ex.y = -iA * rA.x * rA.y - iB * rB.x * rB.y
             K.ey.x = K.ex.y
             K.ey.y = mA + mB + iA * rA.x * rA.x + iB * rB.x * rB.x
+
             K.solveToOut(C, impulse)
             impulse.negateLocal()
+
             cA.x = cA.x - mA * impulse.x
             cA.y = cA.y - mA * impulse.y
             aA = aA - iA * Vec2.cross(rA, impulse)
+
             cB.x = cB.x + mB * impulse.x
             cB.y = cB.y + mB * impulse.y
             aB = aB + iB * Vec2.cross(rB, impulse)
+
             pool.pushVec2(4)
             pool.pushMat22(1)
         }
+
         // data.positions[indexA].c.set(cA);
         data.positions!![indexA].a = aA
         // data.positions[indexB].c.set(cB);
         data.positions!![indexB].a = aB
+
         pool.pushRot(2)
+
         return positionError <= Settings.linearSlop && angularError <= Settings.angularSlop
     }
 

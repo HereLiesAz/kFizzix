@@ -46,6 +46,22 @@ import kotlin.math.min
  *
  * @author Daniel Murphy
  */
+/**
+ * A fixture connects a shape to a body.
+ *
+ * While a [Body] defines the position and velocity, a [Fixture] defines the
+ * physical properties like size, shape, friction, and bounciness.
+ * A body can have multiple fixtures (e.g., a "dumbbell" made of two circles and a rectangle).
+ *
+ * **Key Properties:**
+ * *   [shape]: The geometry (Circle, Polygon, etc.).
+ * *   [density]: Used to calculate mass (mass = density * area).
+ * *   [friction]: Slippery (0.0) vs. Rough (1.0).
+ * *   [restitution]: Bounciness (0.0 = no bounce, 1.0 = perfect bounce).
+ * *   [isSensor]: If true, detects collision but doesn't physically react (ghost).
+ *
+ * @author Daniel Murphy
+ */
 class Fixture {
     // The next fixture in the body's linked list of fixtures.
     var next: Fixture? = null
@@ -110,7 +126,7 @@ class Fixture {
         proxyCount = 0
         // Initialize shape to null.
         shape = null
-        // Create a new default filter.
+        // 2. Clean Up: Nullify references to help GC.
         filter = Filter()
     }
 
@@ -128,6 +144,16 @@ class Fixture {
      * not be called frequently. This will not update contacts until the next
      * time step when either parent body is awake. This automatically calls
      * refilter.
+     */
+    /**
+     * Set the contact filtering data.
+     * This allows you to say "This fixture should collide with category A but not B".
+     *
+     * **Performance Note:**
+     * This is an expensive operation as it may need to update the BroadPhase.
+     * Do not call this every frame.
+     *
+     * @param filter The new filter definition.
      */
     fun setFilterData(filter: Filter) {
         // Update the internal filter data.
@@ -177,6 +203,12 @@ class Fixture {
      *
      * @param p A point in the world coordinates.
      */
+    /**
+     * Check if a point is inside this fixture.
+     *
+     * @param p The point in World coordinates.
+     * @return True if the point is inside.
+     */
     fun testPoint(p: Vec2): Boolean {
         // Delegate to the shape's testPoint method, transforming by the body's transform.
         return shape!!.testPoint(body!!.xf, p)
@@ -187,6 +219,14 @@ class Fixture {
      *
      * @param output The ray-cast results.
      * @param input The ray-cast input parameters.
+     */
+    /**
+     * Cast a ray against this specific fixture.
+     *
+     * @param output The results will be stored here if the ray hits.
+     * @param input The definition of the ray (start point, max fraction).
+     * @param childIndex The child index of the shape (0 for most shapes, index for Chains).
+     * @return True if the ray hits the fixture.
      */
     fun raycast(
         output: RayCastOutput, input: RayCastInput,
@@ -247,7 +287,7 @@ class Fixture {
     fun create(body: Body, def: FixtureDef) {
         // Copy user data from definition.
         userData = def.userData
-        // Copy friction from definition.
+        // 1. Initialize Data: Copy properties from the definition.
         friction = def.friction
         // Copy restitution from definition.
         restitution = def.restitution
@@ -261,11 +301,13 @@ class Fixture {
         isSensor = def.isSensor
         // Clone the shape from definition to ensure ownership.
         shape = def.shape!!.clone()
+        // 2. Clone Shape: We must own the shape, so we clone it.
         // Reserve proxy space
         // Get the number of children (e.g. 1 for circle/poly, N for chain).
         val childCount = shape!!.childCount
         // If proxies array is null, allocate it.
         if (proxies == null) {
+        // 3. Allocate Proxies: Prepare the array for BroadPhase proxies.
             proxies = arrayOfNulls(childCount)
             for (i in 0 until childCount) {
                 // Initialize each proxy.
@@ -300,9 +342,10 @@ class Fixture {
     fun destroy() {
         // The proxies must be destroyed before calling this.
         assert(proxyCount == 0)
+        // 1. Verify: Proxies must be destroyed via Body.destroyFixture before calling this.
         // Free the child shape.
         shape = null
-        // Release proxies array reference.
+        // 2. Clean Up: Nullify references to help GC.
         proxies = null
         // Reset next pointer.
         next = null
@@ -314,6 +357,7 @@ class Fixture {
     fun createProxies(broadPhase: BroadPhase, xf: Transform) {
         // Ensure no proxies currently exist.
         assert(proxyCount == 0)
+        // 1. Verify: Proxies must be destroyed via Body.destroyFixture before calling this.
         // Create proxies in the broad-phase.
         proxyCount = shape!!.childCount
         // Iterate over all children of the shape.
@@ -360,6 +404,7 @@ class Fixture {
     ) {
         // If no proxies, nothing to synchronize.
         if (proxyCount == 0) {
+        // 1. Early Exit: No proxies to sync.
             return
         }
         // Iterate over all proxies.
@@ -371,10 +416,11 @@ class Fixture {
             val aab = pool2
             // Compute AABB at start transform.
             shape!!.computeAABB(aabb1, transform1, proxy!!.childIndex)
-            // Compute AABB at end transform.
+            // 2. Compute Swept AABB: Calculate AABB at start and end transforms.
             shape!!.computeAABB(aab, transform2, proxy.childIndex)
             // Combine AABBs to create a swept AABB.
             proxy.aabb.lowerBound.x = min(aabb1.lowerBound.x, aab.lowerBound.x)
+            // 3. Union: Combine both AABBs to cover the entire swept path.
             proxy.aabb.lowerBound.y = min(aabb1.lowerBound.y, aab.lowerBound.y)
             proxy.aabb.upperBound.x = max(aabb1.upperBound.x, aab.upperBound.x)
             proxy.aabb.upperBound.y = max(aabb1.upperBound.y, aab.upperBound.y)
@@ -383,6 +429,7 @@ class Fixture {
             displacement.y = transform2.p.y - transform1.p.y
             // Move the proxy in the broad-phase with the new AABB and displacement.
             broadPhase.moveProxy(proxy.proxyId, proxy.aabb, displacement)
+            // 4. Update Tree: Move the proxy in the dynamic tree.
         }
     }
 }

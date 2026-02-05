@@ -210,7 +210,7 @@ class Vec2(
      * If v = (x, y), then skew(v) = (-y, x).
      * This is useful for cross product calculations in 2D.
      *
-     * Explaination:
+     * Explanation:
      * `dot(skew_vec, other) == cross(vec, other)`
      *
      * @return A new vector representing the skew.

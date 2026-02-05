@@ -424,8 +424,8 @@ class PbDeserializer : JbDeserializer {
         }
         jd.bodyB = bodyMap[joint.bodyB]
         val realJoint = world.createJoint(jd)
-        if (listener != null && joint.hasTag()) {
-            listener!!.processJoint(realJoint!!, joint.tag)
+        if (realJoint != null && listener != null && joint.hasTag()) {
+            listener!!.processJoint(realJoint, joint.tag)
         }
         return realJoint!!
     }

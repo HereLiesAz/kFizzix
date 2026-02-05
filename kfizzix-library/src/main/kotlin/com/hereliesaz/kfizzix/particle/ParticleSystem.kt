@@ -1146,7 +1146,7 @@ class ParticleSystem(var world: World) {
     /**
      * @repolink https://github.com/google/liquidfun/blob/7f20402173fd143a3988c921bc384459c6a858f2/liquidfun/Box2D/Box2D/Particle/b2ParticleSystem.cpp#L3774-L3796
      */
-    fun solveColorMixing(@Suppress("UNUSED_PARAMETER") step: TimeStep) {
+    fun solveColorMixing(_: TimeStep) {
         // mixes color between contacting particles
         colorBuffer.data = requestParticleBuffer(
             ParticleColor::class.java,

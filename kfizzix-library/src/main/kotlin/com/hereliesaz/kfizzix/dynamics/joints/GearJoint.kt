@@ -186,15 +186,18 @@ class GearJoint(argWorldPool: WorldPool, def: GearJointDef) : Joint(argWorldPool
         impulse = 0.0f
     }
 
-    override fun getAnchorA(argOut: Vec2) {
+    override fun getAnchorA(out: Vec2) { val argOut = out
+
         bodyA!!.getWorldPointToOut(localAnchorA, argOut)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
+    override fun getAnchorB(out: Vec2) { val argOut = out
+
         bodyB!!.getWorldPointToOut(localAnchorB, argOut)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) { val argOut = out
+
         argOut.set(JvAC).mulLocal(impulse)
         argOut.mulLocal(invDt)
     }

@@ -9,4 +9,4 @@ build/
 .gradle/
 
 
-KPhysics/
+KPhysics/local.properties

@@ -147,7 +147,8 @@ class ConstantVolumeJoint(argWorld: World, def: ConstantVolumeJointDef) : Joint(
         return done
     }
 
-    override fun initVelocityConstraints(step: SolverData) {
+    override fun initVelocityConstraints(data: SolverData) { val step = data
+
         val velocities = step.velocities!!
         val positions = step.positions!!
         val d = pool.getVec2Array(bodies.size)
@@ -177,7 +178,8 @@ class ConstantVolumeJoint(argWorld: World, def: ConstantVolumeJointDef) : Joint(
         return constrainEdges(step.positions!!)
     }
 
-    override fun solveVelocityConstraints(step: SolverData) {
+    override fun solveVelocityConstraints(data: SolverData) { val step = data
+
         var crossMassSum = 0.0f
         var dotMassSum = 0.0f
         val velocities = step.velocities!!
@@ -206,17 +208,20 @@ class ConstantVolumeJoint(argWorld: World, def: ConstantVolumeJointDef) : Joint(
     /**
      * No-op
      */
-    override fun getAnchorA(argOut: Vec2) {}
+    override fun getAnchorA(out: Vec2) { val argOut = out
+}
 
     /**
      * No-op
      */
-    override fun getAnchorB(argOut: Vec2) {}
+    override fun getAnchorB(out: Vec2) { val argOut = out
+}
 
     /**
      * No-op
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {}
+    override fun getReactionForce(invDt: Float, out: Vec2) { val argOut = out
+}
 
     /**
      * No-op

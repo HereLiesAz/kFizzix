@@ -1666,7 +1666,10 @@ class ParticleSystem(var world: World) {
      * Callback used with VoronoiDiagram.
      */
     class CreateParticleGroupCallback : VoronoiDiagramCallback {
-        override fun callback(a: Int, b: Int, c: Int) {
+        override fun callback(aTag: Int, bTag: Int, cTag: Int) {
+            val a = aTag
+            val b = bTag
+            val c = cTag
             val pa = system!!.positionBuffer.data!![a]!!
             val pb = system!!.positionBuffer.data!![b]!!
             val pc = system!!.positionBuffer.data!![c]!!
@@ -1718,7 +1721,10 @@ class ParticleSystem(var world: World) {
 
     // Callback used with VoronoiDiagram.
     class JoinParticleGroupsCallback : VoronoiDiagramCallback {
-        override fun callback(a: Int, b: Int, c: Int) {
+        override fun callback(aTag: Int, bTag: Int, cTag: Int) {
+            val a = aTag
+            val b = bTag
+            val c = cTag
             // Create a triad if it will contain particles from both groups.
             val countA = ((if (a < groupB!!.firstIndex) 1 else 0)
                     + (if (b < groupB!!.firstIndex) 1 else 0)

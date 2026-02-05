@@ -77,15 +77,18 @@ class MouseJoint(argWorld: WorldPool, def: MouseJointDef) : Joint(argWorld, def)
         gamma = 0.0f
     }
 
-    override fun getAnchorA(argOut: Vec2) {
+    override fun getAnchorA(out: Vec2) { val argOut = out
+
         argOut.set(targetA)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
+    override fun getAnchorB(out: Vec2) { val argOut = out
+
         bodyB!!.getWorldPointToOut(localAnchorB, argOut)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) { val argOut = out
+
         argOut.set(impulse).mulLocal(invDt)
     }
 

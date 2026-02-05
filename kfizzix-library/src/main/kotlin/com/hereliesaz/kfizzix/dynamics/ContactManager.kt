@@ -50,9 +50,9 @@ class ContactManager(private val pool: World, val broadPhase: BroadPhase) : Pair
     /**
      * Broad-phase callback.
      */
-    override fun addPair(proxyUserDataA: Any, proxyUserDataB: Any) {
-        val proxyA = proxyUserDataA as FixtureProxy
-        val proxyB = proxyUserDataB as FixtureProxy
+    override fun addPair(userDataA: Any, userDataB: Any) {
+        val proxyA = userDataA as FixtureProxy
+        val proxyB = userDataB as FixtureProxy
         var fixtureA = proxyA.fixture
         var fixtureB = proxyB.fixture
         var indexA = proxyA.childIndex

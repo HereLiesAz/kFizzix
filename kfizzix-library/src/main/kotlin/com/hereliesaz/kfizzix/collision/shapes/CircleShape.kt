@@ -115,7 +115,8 @@ class CircleShape(
     }
 
     // Test if a point is inside the circle.
-    override fun testPoint(transform: Transform, p: Vec2): Boolean {
+    override fun testPoint(xf: Transform, p: Vec2): Boolean {
+        val transform = xf
         // Transform local center to world coordinates.
         val center = transform.mul(this.p)
         // Vector from center to point.
@@ -186,7 +187,8 @@ class CircleShape(
     }
 
     // Compute AABB.
-    override fun computeAABB(aabb: AABB, transform: Transform, childIndex: Int) {
+    override fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int) {
+        val transform = xf
         // Transform center.
         val center = transform.mul(p)
         // Expand by radius.

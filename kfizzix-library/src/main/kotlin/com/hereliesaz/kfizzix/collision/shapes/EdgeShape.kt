@@ -115,8 +115,9 @@ class EdgeShape : Shape(ShapeType.EDGE) {
     // s * e - t * d = p1 - v1
     override fun raycast(
         output: RayCastOutput, input: RayCastInput,
-        xf: Transform, childIndex: Int
+        transform: Transform, childIndex: Int
     ): Boolean {
+        val xf = transform
         // Put the ray into the edge's frame of reference.
         val p1 = xf.q.mulTrans(input.p1 - xf.p)
         val p2 = xf.q.mulTrans(input.p2 - xf.p)

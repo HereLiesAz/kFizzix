@@ -110,7 +110,8 @@ class ChainShape : Shape(ShapeType.CHAIN) {
         return false
     }
 
-    override fun raycast(output: RayCastOutput, input: RayCastInput, xf: Transform, childIndex: Int): Boolean {
+    override fun raycast(output: RayCastOutput, input: RayCastInput, transform: Transform, childIndex: Int): Boolean {
+        val xf = transform
         assert(childIndex < count)
         val edgeShape = pool0
 

@@ -299,14 +299,16 @@ class DistanceJoint(argWorld: WorldPool, def: DistanceJointDef) : Joint(argWorld
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L316-L319
      */
-    override fun getAnchorA(argOut: Vec2) {
+    override fun getAnchorA(out: Vec2) { val argOut = out
+
         bodyA!!.getWorldPointToOut(localAnchorA, argOut)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L321-L324
      */
-    override fun getAnchorB(argOut: Vec2) {
+    override fun getAnchorB(out: Vec2) { val argOut = out
+
         bodyB!!.getWorldPointToOut(localAnchorB, argOut)
     }
 
@@ -315,7 +317,8 @@ class DistanceJoint(argWorld: WorldPool, def: DistanceJointDef) : Joint(argWorld
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_distance_joint.cpp#L326-L330
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) { val argOut = out
+
         argOut.x = impulse * u.x * invDt
         argOut.y = impulse * u.y * invDt
     }

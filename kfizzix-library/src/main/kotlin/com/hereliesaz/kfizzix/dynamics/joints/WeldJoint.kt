@@ -99,21 +99,24 @@ class WeldJoint(argWorld: WorldPool, def: WeldJointDef) : Joint(argWorld, def) {
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L308-L311
      */
-    override fun getAnchorA(argOut: Vec2) {
+    override fun getAnchorA(out: Vec2) { val argOut = out
+
         bodyA!!.getWorldPointToOut(localAnchorA, argOut)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L313-L316
      */
-    override fun getAnchorB(argOut: Vec2) {
+    override fun getAnchorB(out: Vec2) { val argOut = out
+
         bodyB!!.getWorldPointToOut(localAnchorB, argOut)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L318-L322
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) { val argOut = out
+
         argOut.set(impulse.x, impulse.y)
         argOut.mulLocal(invDt)
     }

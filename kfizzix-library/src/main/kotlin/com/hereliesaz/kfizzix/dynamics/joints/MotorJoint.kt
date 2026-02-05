@@ -94,15 +94,18 @@ class MotorJoint(pool: WorldPool, def: MotorJointDef) : Joint(pool, def) {
         correctionFactor = def.correctionFactor
     }
 
-    override fun getAnchorA(argOut: Vec2) {
+    override fun getAnchorA(out: Vec2) { val argOut = out
+
         argOut.set(bodyA!!.position)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
+    override fun getAnchorB(out: Vec2) { val argOut = out
+
         argOut.set(bodyB!!.position)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) { val argOut = out
+
         argOut.set(linearImpulse).mulLocal(invDt)
     }
 

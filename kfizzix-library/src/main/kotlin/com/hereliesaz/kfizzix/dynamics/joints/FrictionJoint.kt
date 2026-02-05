@@ -64,15 +64,18 @@ class FrictionJoint(argWorldPool: WorldPool, def: FrictionJointDef) : Joint(argW
         maxTorque = def.maxTorque
     }
 
-    override fun getAnchorA(argOut: Vec2) {
+    override fun getAnchorA(out: Vec2) { val argOut = out
+
         bodyA!!.getWorldPointToOut(localAnchorA, argOut)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
+    override fun getAnchorB(out: Vec2) { val argOut = out
+
         bodyB!!.getWorldPointToOut(localAnchorB, argOut)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) { val argOut = out
+
         argOut.set(linearImpulse).mulLocal(invDt)
     }
 

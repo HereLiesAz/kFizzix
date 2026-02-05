@@ -353,11 +353,11 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
 
     override fun raycast(
         output: RayCastOutput, input: RayCastInput,
-        xf: Transform, childIndex: Int
+        transform: Transform, childIndex: Int
     ): Boolean {
         // Put the ray into the polygon's frame of reference.
-        val p1 = xf.q.mulTrans(input.p1 - xf.p)
-        val p2 = xf.q.mulTrans(input.p2 - xf.p)
+        val p1 = transform.q.mulTrans(input.p1 - transform.p)
+        val p2 = transform.q.mulTrans(input.p2 - transform.p)
         val d = p2 - p1
 
         var lower = 0f
@@ -403,7 +403,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
 
         if (index >= 0) {
             output.fraction = lower
-            output.normal.set(xf.q.mul(normals[index]))
+            output.normal.set(transform.q.mul(normals[index]))
             return true
         }
         return false

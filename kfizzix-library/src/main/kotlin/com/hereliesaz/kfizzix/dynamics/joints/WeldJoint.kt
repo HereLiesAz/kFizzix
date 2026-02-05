@@ -99,23 +99,23 @@ class WeldJoint(argWorld: WorldPool, def: WeldJointDef) : Joint(argWorld, def) {
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L308-L311
      */
-    override fun getAnchorA(argOut: Vec2) {
-        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    override fun getAnchorA(out: Vec2) {
+        bodyA!!.getWorldPointToOut(localAnchorA, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L313-L316
      */
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_weld_joint.cpp#L318-L322
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
-        argOut.set(impulse.x, impulse.y)
-        argOut.mulLocal(invDt)
+    override fun getReactionForce(invDt: Float, out: Vec2) {
+        out.set(impulse.x, impulse.y)
+        out.mulLocal(invDt)
     }
 
     /**

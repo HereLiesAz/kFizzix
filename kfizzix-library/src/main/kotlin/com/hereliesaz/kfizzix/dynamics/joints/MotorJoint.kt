@@ -94,16 +94,16 @@ class MotorJoint(pool: WorldPool, def: MotorJointDef) : Joint(pool, def) {
         correctionFactor = def.correctionFactor
     }
 
-    override fun getAnchorA(argOut: Vec2) {
-        argOut.set(bodyA!!.position)
+    override fun getAnchorA(out: Vec2) {
+        out.set(bodyA!!.position)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
-        argOut.set(bodyB!!.position)
+    override fun getAnchorB(out: Vec2) {
+        out.set(bodyB!!.position)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
-        argOut.set(linearImpulse).mulLocal(invDt)
+    override fun getReactionForce(invDt: Float, out: Vec2) {
+        out.set(linearImpulse).mulLocal(invDt)
     }
 
     override fun getReactionTorque(invDt: Float): Float {
@@ -124,8 +124,8 @@ class MotorJoint(pool: WorldPool, def: MotorJointDef) : Joint(pool, def) {
     /**
      * Get the target linear offset, in frame A, in meters.
      */
-    fun getLinearOffset(argOut: Vec2) {
-        argOut.set(linearOffset)
+    fun getLinearOffset(out: Vec2) {
+        out.set(linearOffset)
     }
 
     /**

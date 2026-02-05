@@ -229,16 +229,16 @@ class RopeJoint(worldPool: WorldPool, def: RopeJointDef) : Joint(worldPool, def)
         return length - maxLength < Settings.linearSlop
     }
 
-    override fun getAnchorA(argOut: Vec2) {
-        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    override fun getAnchorA(out: Vec2) {
+        bodyA!!.getWorldPointToOut(localAnchorA, out)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, out)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
-        argOut.set(u).mulLocal(invDt).mulLocal(impulse)
+    override fun getReactionForce(invDt: Float, out: Vec2) {
+        out.set(u).mulLocal(invDt).mulLocal(impulse)
     }
 
     override fun getReactionTorque(invDt: Float): Float {

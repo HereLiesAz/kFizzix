@@ -146,24 +146,24 @@ class WheelJoint(argPool: WorldPool, def: WheelJointDef) : Joint(argPool, def) {
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L446-L449
      */
-    override fun getAnchorA(argOut: Vec2) {
-        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    override fun getAnchorA(out: Vec2) {
+        bodyA!!.getWorldPointToOut(localAnchorA, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L451-L454
      */
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, out)
     }
 
     /**
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_wheel_joint.cpp#L456-L459
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) {
         val temp = pool.popVec2()
         temp.set(ay).mulLocal(impulse)
-        argOut.set(ax).mulLocal(springImpulse).addLocal(temp).mulLocal(invDt)
+        out.set(ax).mulLocal(springImpulse).addLocal(temp).mulLocal(invDt)
         pool.pushVec2(1)
     }
 

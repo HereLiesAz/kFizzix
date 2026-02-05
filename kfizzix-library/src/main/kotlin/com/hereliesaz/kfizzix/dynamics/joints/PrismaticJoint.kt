@@ -141,18 +141,18 @@ class PrismaticJoint(argWorld: WorldPool, def: PrismaticJointDef) : Joint(argWor
         limitState = LimitState.INACTIVE
     }
 
-    override fun getAnchorA(argOut: Vec2) {
-        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    override fun getAnchorA(out: Vec2) {
+        bodyA!!.getWorldPointToOut(localAnchorA, out)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, out)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
+    override fun getReactionForce(invDt: Float, out: Vec2) {
         val temp = pool.popVec2()
         temp.set(axis).mulLocal(motorImpulse + impulse.z)
-        argOut.set(perp).mulLocal(impulse.x).addLocal(temp).mulLocal(invDt)
+        out.set(perp).mulLocal(impulse.x).addLocal(temp).mulLocal(invDt)
         pool.pushVec2(1)
     }
 

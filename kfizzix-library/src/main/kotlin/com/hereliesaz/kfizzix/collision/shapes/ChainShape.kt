@@ -110,7 +110,7 @@ class ChainShape : Shape(ShapeType.CHAIN) {
         return false
     }
 
-    override fun raycast(output: RayCastOutput, input: RayCastInput, xf: Transform, childIndex: Int): Boolean {
+    override fun raycast(output: RayCastOutput, input: RayCastInput, transform: Transform, childIndex: Int): Boolean {
         assert(childIndex < count)
         val edgeShape = pool0
 
@@ -119,7 +119,7 @@ class ChainShape : Shape(ShapeType.CHAIN) {
         edgeShape.vertex1.set(vertices!![childIndex])
         edgeShape.vertex2.set(vertices!![i2])
 
-        return edgeShape.raycast(output, input, xf, 0)
+        return edgeShape.raycast(output, input, transform, 0)
     }
 
     override fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int) {

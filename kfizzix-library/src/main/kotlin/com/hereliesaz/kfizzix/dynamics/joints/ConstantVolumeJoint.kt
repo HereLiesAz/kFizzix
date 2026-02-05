@@ -206,17 +206,17 @@ class ConstantVolumeJoint(argWorld: World, def: ConstantVolumeJointDef) : Joint(
     /**
      * No-op
      */
-    override fun getAnchorA(argOut: Vec2) {}
+    override fun getAnchorA(out: Vec2) {}
 
     /**
      * No-op
      */
-    override fun getAnchorB(argOut: Vec2) {}
+    override fun getAnchorB(out: Vec2) {}
 
     /**
      * No-op
      */
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {}
+    override fun getReactionForce(invDt: Float, out: Vec2) {}
 
     /**
      * No-op

@@ -135,16 +135,16 @@ class PulleyJoint(argWorldPool: WorldPool, def: PulleyJointDef) : Joint(argWorld
         return length
     }
 
-    override fun getAnchorA(argOut: Vec2) {
-        bodyA!!.getWorldPointToOut(localAnchorA, argOut)
+    override fun getAnchorA(out: Vec2) {
+        bodyA!!.getWorldPointToOut(localAnchorA, out)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, out)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
-        argOut.set(uB).mulLocal(impulse).mulLocal(invDt)
+    override fun getReactionForce(invDt: Float, out: Vec2) {
+        out.set(uB).mulLocal(impulse).mulLocal(invDt)
     }
 
     override fun getReactionTorque(invDt: Float): Float {

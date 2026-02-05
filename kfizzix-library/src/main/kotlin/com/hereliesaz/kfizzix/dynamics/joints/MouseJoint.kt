@@ -77,16 +77,16 @@ class MouseJoint(argWorld: WorldPool, def: MouseJointDef) : Joint(argWorld, def)
         gamma = 0.0f
     }
 
-    override fun getAnchorA(argOut: Vec2) {
-        argOut.set(targetA)
+    override fun getAnchorA(out: Vec2) {
+        out.set(targetA)
     }
 
-    override fun getAnchorB(argOut: Vec2) {
-        bodyB!!.getWorldPointToOut(localAnchorB, argOut)
+    override fun getAnchorB(out: Vec2) {
+        bodyB!!.getWorldPointToOut(localAnchorB, out)
     }
 
-    override fun getReactionForce(invDt: Float, argOut: Vec2) {
-        argOut.set(impulse).mulLocal(invDt)
+    override fun getReactionForce(invDt: Float, out: Vec2) {
+        out.set(impulse).mulLocal(invDt)
     }
 
     override fun getReactionTorque(invDt: Float): Float {

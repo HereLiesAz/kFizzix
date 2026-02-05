@@ -286,17 +286,20 @@ class Body(bd: BodyDef, @JvmField var world: World) {
             return null
         }
         val fixture = Fixture()
+        // 1. Create Fixture: Instantiate and initialize the fixture from the definition.
         fixture.create(this, def)
         if (flags and activeFlag == activeFlag) {
             val broadPhase = world.contactManager.broadPhase
             fixture.createProxies(broadPhase, xf)
         }
         fixture.next = fixtureList
+        // 3. Add to List: Prepend the fixture to the body's linked list.
         fixtureList = fixture
         ++fixtureCount
         fixture.body = this
         // Adjust mass properties if needed.
         if (fixture.density > 0.0f) {
+        // 4. Update Mass: If the fixture adds mass, recalculate the body's mass data.
             resetMassData()
         }
         // Let the world know we have a new fixture. This will cause new
@@ -354,6 +357,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
         var found = false
         while (node != null) {
             if (node === fixture) {
+        // 4. Unlink: Remove the fixture from the body's linked list.
                 node = fixture!!.next
                 found = true
                 break
@@ -371,6 +375,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
         }
         // Destroy any contacts associated with the fixture.
         var edge = contactList
+        // 3. Destroy Contacts: Remove any contacts associated with this fixture.
         while (edge != null) {
             val c = edge.contact
             edge = edge.next
@@ -504,6 +509,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      */
     fun applyForce(force: Vec2, point: Vec2) {
         if (type != BodyType.DYNAMIC) {
+        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -527,6 +533,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      */
     fun applyForceToCenter(force: Vec2) {
         if (type != BodyType.DYNAMIC) {
+        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -553,6 +560,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      */
     fun applyTorque(torque: Float) {
         if (type != BodyType.DYNAMIC) {
+        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -583,6 +591,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      */
     fun applyLinearImpulse(impulse: Vec2, point: Vec2, wake: Boolean) {
         if (type != BodyType.DYNAMIC) {
+        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -607,6 +616,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      */
     fun applyAngularImpulse(impulse: Float) {
         if (type != BodyType.DYNAMIC) {
+        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -649,6 +659,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
             return
         }
         if (type != BodyType.DYNAMIC) {
+        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         invMass = 0.0f

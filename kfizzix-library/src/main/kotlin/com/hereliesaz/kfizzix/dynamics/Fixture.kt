@@ -113,6 +113,7 @@ class Fixture {
         proxies = null
         proxyCount = 0
         shape = null
+        // 2. Clean Up: Nullify references to help GC.
         filter = Filter()
     }
 
@@ -256,6 +257,7 @@ class Fixture {
     // allowed by C++).
     fun create(body: Body, def: FixtureDef) {
         userData = def.userData
+        // 1. Initialize Data: Copy properties from the definition.
         friction = def.friction
         restitution = def.restitution
         this.body = body
@@ -263,9 +265,11 @@ class Fixture {
         filter.set(def.filter)
         isSensor = def.isSensor
         shape = def.shape!!.clone()
+        // 2. Clone Shape: We must own the shape, so we clone it.
         // Reserve proxy space
         val childCount = shape!!.childCount
         if (proxies == null) {
+        // 3. Allocate Proxies: Prepare the array for BroadPhase proxies.
             proxies = arrayOfNulls(childCount)
             for (i in 0 until childCount) {
                 proxies!![i] = FixtureProxy()
@@ -293,8 +297,10 @@ class Fixture {
     fun destroy() {
         // The proxies must be destroyed before calling this.
         assert(proxyCount == 0)
+        // 1. Verify: Proxies must be destroyed via Body.destroyFixture before calling this.
         // Free the child shape.
         shape = null
+        // 2. Clean Up: Nullify references to help GC.
         proxies = null
         next = null
         // TODO pool shapes
@@ -304,6 +310,7 @@ class Fixture {
     // These support body activation/deactivation.
     fun createProxies(broadPhase: BroadPhase, xf: Transform) {
         assert(proxyCount == 0)
+        // 1. Verify: Proxies must be destroyed via Body.destroyFixture before calling this.
         // Create proxies in the broad-phase.
         proxyCount = shape!!.childCount
         for (i in 0 until proxyCount) {
@@ -340,6 +347,7 @@ class Fixture {
         transform1: Transform, transform2: Transform
     ) {
         if (proxyCount == 0) {
+        // 1. Early Exit: No proxies to sync.
             return
         }
         for (i in 0 until proxyCount) {
@@ -349,14 +357,17 @@ class Fixture {
             val aabb1 = pool1
             val aab = pool2
             shape!!.computeAABB(aabb1, transform1, proxy!!.childIndex)
+            // 2. Compute Swept AABB: Calculate AABB at start and end transforms.
             shape!!.computeAABB(aab, transform2, proxy.childIndex)
             proxy.aabb.lowerBound.x = min(aabb1.lowerBound.x, aab.lowerBound.x)
+            // 3. Union: Combine both AABBs to cover the entire swept path.
             proxy.aabb.lowerBound.y = min(aabb1.lowerBound.y, aab.lowerBound.y)
             proxy.aabb.upperBound.x = max(aabb1.upperBound.x, aab.upperBound.x)
             proxy.aabb.upperBound.y = max(aabb1.upperBound.y, aab.upperBound.y)
             displacement.x = transform2.p.x - transform1.p.x
             displacement.y = transform2.p.y - transform1.p.y
             broadPhase.moveProxy(proxy.proxyId, proxy.aabb, displacement)
+            // 4. Update Tree: Move the proxy in the dynamic tree.
         }
     }
 }

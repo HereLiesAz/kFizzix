@@ -31,25 +31,39 @@ import java.io.Serializable
  * @author Daniel Murphy
  */
 class Mat22(
+    // The first column vector.
     @JvmField val ex: Vec2 = Vec2(),
+    // The second column vector.
     @JvmField val ey: Vec2 = Vec2()
 ) : Serializable {
 
+    // Creates a copy of the matrix.
     fun copy(ex: Vec2 = this.ex, ey: Vec2 = this.ey): Mat22 {
+        // Return a new Mat22 with copies of the columns.
         return Mat22(ex.copy(), ey.copy())
     }
 
+    // Checks equality with another object.
     override fun equals(other: Any?): Boolean {
+        // If same instance, true.
         if (this === other) return true
+        // If different class or null, false.
         if (javaClass != other?.javaClass) return false
+        // Cast to Mat22.
         other as Mat22
+        // Check first column equality.
         if (ex != other.ex) return false
+        // Check second column equality.
         if (ey != other.ey) return false
+        // All good.
         return true
     }
 
+    // Computes hash code.
     override fun hashCode(): Int {
+        // Hash of first column.
         var result = ex.hashCode()
+        // Combine with hash of second column.
         result = 31 * result + ey.hashCode()
         return result
     }
@@ -72,18 +86,27 @@ class Mat22(
      * @param m Matrix to copy
      */
     fun set(m: Mat22): Mat22 {
+        // Copy components of first column.
         ex.x = m.ex.x
         ex.y = m.ex.y
+        // Copy components of second column.
         ey.x = m.ey.x
         ey.y = m.ey.y
+        // Return for chaining.
         return this
     }
 
+    // Sets the matrix components directly.
     fun set(exx: Float, col2x: Float, exy: Float, col2y: Float): Mat22 {
+        // Set first column x.
         ex.x = exx
+        // Set first column y.
         ex.y = exy
+        // Set second column x.
         ey.x = col2x
+        // Set second column y.
         ey.y = col2y
+        // Return for chaining.
         return this
     }
 
@@ -93,11 +116,15 @@ class Mat22(
      * @param angle Rotation (in radians) that matrix represents.
      */
     fun set(angle: Float) {
+        // Calculate cosine.
         val c = MathUtils.cos(angle)
+        // Calculate sine.
         val s = MathUtils.sin(angle)
+        // Set column 1 (c, s).
         ex.x = c
-        ey.x = -s
         ex.y = s
+        // Set column 2 (-s, c).
+        ey.x = -s
         ey.y = c
     }
 
@@ -105,16 +132,19 @@ class Mat22(
      * Set as the identity matrix.
      */
     fun setIdentity() {
+        // Set diagonal to 1.
         ex.x = 1.0f
+        ey.y = 1.0f
+        // Set off-diagonal to 0.
         ey.x = 0.0f
         ex.y = 0.0f
-        ey.y = 1.0f
     }
 
     /**
      * Set as the zero matrixes.
      */
     fun setZero() {
+        // Zero out all components.
         ex.x = 0.0f
         ey.x = 0.0f
         ex.y = 0.0f
@@ -134,9 +164,11 @@ class Mat22(
      * @param c2 Column 2
      */
     operator fun set(c1: Vec2, c2: Vec2) {
+        // Copy first column.
         ex.x = c1.x
-        ey.x = c2.x
         ex.y = c1.y
+        // Copy second column.
+        ey.x = c2.x
         ey.y = c2.y
     }
 
@@ -144,15 +176,20 @@ class Mat22(
      * Returns the inverted Mat22 - does NOT invert the matrix locally!
      */
     fun invert(): Mat22 {
+        // Get components locally.
         val a = ex.x
         val b = ey.x
         val c = ex.y
         val d = ey.y
+        // Create result matrix.
         val B = Mat22()
+        // Calculate determinant (ad - bc).
         var det = a * d - b * c
+        // If not singular, invert determinant.
         if (det != 0f) {
             det = 1.0f / det
         }
+        // Calculate inverse components.
         B.ex.x = det * d
         B.ey.x = -det * b
         B.ex.y = -det * c
@@ -165,18 +202,23 @@ class Mat22(
      * For a non-mutating version, see [invert].
      */
     fun invertLocal(): Mat22 {
+        // Get components.
         val a = ex.x
         val b = ey.x
         val c = ex.y
         val d = ey.y
+        // Calculate determinant.
         var det = a * d - b * c
+        // Invert determinant.
         if (det != 0f) {
             det = 1.0f / det
         }
+        // Apply inverse formula.
         ex.x = det * d
         ey.x = -det * b
         ex.y = -det * c
         ey.y = det * a
+        // Return for chaining.
         return this
     }
 
@@ -214,7 +256,9 @@ class Mat22(
      * This method alters the original matrix. For a non-mutating version, see [abs].
      */
     fun absLocal() {
+        // Set ex components to absolute values.
         ex.absLocal()
+        // Set ey components to absolute values.
         ey.absLocal()
     }
 
@@ -226,6 +270,7 @@ class Mat22(
      * @return Resulting vector
      */
     fun mul(v: Vec2): Vec2 {
+        // (ex.x * vx + ey.x * vy, ex.y * vx + ey.y * vy)
         return Vec2(ex.x * v.x + ey.x * v.y, ex.y * v.x + ey.y * v.y)
     }
 
@@ -237,8 +282,11 @@ class Mat22(
      * @param out the vector to store the result in
      */
     fun mulToOut(v: Vec2, out: Vec2) {
+        // Calculate y first to avoid aliasing.
         val tempY = ex.y * v.x + ey.y * v.y
+        // Set x.
         out.x = ex.x * v.x + ey.x * v.y
+        // Set y.
         out.y = tempY
     }
 
@@ -251,6 +299,7 @@ class Mat22(
      */
     @DelicateFizzixApi
     fun mulToOutUnsafe(v: Vec2, out: Vec2) {
+        // Ensure no aliasing.
         assert(v !== out)
         out.x = ex.x * v.x + ey.x * v.y
         out.y = ex.y * v.x + ey.y * v.y
@@ -260,7 +309,9 @@ class Mat22(
      * Multiply another matrix by this one (this one on left).
      */
     fun mul(R: Mat22): Mat22 {
+        // Create result matrix.
         val C = Mat22()
+        // Compute product (A * R).
         C.ex.x = ex.x * R.ex.x + ey.x * R.ex.y
         C.ex.y = ex.y * R.ex.x + ey.y * R.ex.y
         C.ey.x = ex.x * R.ey.x + ey.x * R.ey.y
@@ -276,6 +327,7 @@ class Mat22(
      * @return this matrix for chaining
      */
     fun mulLocal(R: Mat22): Mat22 {
+        // Store result in 'this'.
         mulToOut(R, this)
         return this
     }
@@ -288,6 +340,7 @@ class Mat22(
      * @param out the matrix to store the result in
      */
     fun mulToOut(R: Mat22, out: Mat22) {
+        // Calculate temp values to handle aliasing.
         val tempY1 = ex.y * R.ex.x + ey.y * R.ex.y
         out.ex.x = ex.x * R.ex.x + ey.x * R.ex.y
         out.ex.y = tempY1
@@ -305,6 +358,7 @@ class Mat22(
      */
     @DelicateFizzixApi
     fun mulToOutUnsafe(R: Mat22, out: Mat22) {
+        // Ensure no aliasing.
         assert(out !== R)
         assert(out !== this)
         out.ex.x = ex.x * R.ex.x + ey.x * R.ex.y
@@ -318,6 +372,7 @@ class Mat22(
      */
     fun mulTrans(B: Mat22): Mat22 {
         val C = Mat22()
+        // Transpose multiply involves dot products of columns.
         C.ex.x = Vec2.dot(ex, B.ex)
         C.ex.y = Vec2.dot(ey, B.ex)
         C.ey.x = Vec2.dot(ex, B.ey)
@@ -376,6 +431,7 @@ class Mat22(
      * Multiply a vector by the transpose of this matrix.
      */
     fun mulTrans(v: Vec2): Vec2 {
+        // (x * vx + y * vy, ...)
         return Vec2(v.x * ex.x + v.y * ex.y, v.x * ey.x + v.y * ey.y)
     }
 
@@ -396,7 +452,6 @@ class Mat22(
      * Add this matrix to B, return the result.
      */
     fun add(B: Mat22): Mat22 {
-        // return new Mat22(ex.add(B.ex), col2.add(B.ey));
         val m = Mat22()
         m.ex.x = ex.x + B.ex.x
         m.ex.y = ex.y + B.ex.y
@@ -409,8 +464,6 @@ class Mat22(
      * Add B to this matrix locally.
      */
     fun addLocal(B: Mat22): Mat22 {
-        // ex.addLocal(B.ex);
-        // col2.addLocal(B.ey);
         ex.x += B.ex.x
         ex.y += B.ex.y
         ey.x += B.ey.x
@@ -435,6 +488,7 @@ class Mat22(
         return Vec2(det * (a22 * b.x - a12 * b.y), det * (a11 * b.y - a21 * b.x))
     }
 
+    // Solve to output vector.
     fun solveToOut(b: Vec2, out: Vec2) {
         val a11 = ex.x
         val a12 = ey.x
@@ -608,7 +662,7 @@ class Mat22(
             assert(B !== out)
             out.ex.x = A.ex.x * B.ex.x + A.ex.y * B.ex.y
             out.ex.y = A.ey.x * B.ex.x + A.ey.y * B.ex.y
-            out.ey.x = A.ex.x * B.ey.x + A.ey.x * B.ey.y
+            out.ey.x = A.ex.x * B.ey.x + A.ex.y * B.ey.y
             out.ey.y = A.ey.x * B.ey.x + A.ey.y * B.ey.y
         }
 

@@ -37,13 +37,22 @@ object Settings {
     const val PI = Math.PI.toFloat()
 
     // JBox2D specific settings
+
+    // Uses a lookup table for MathUtils.abs, might be faster on some JVMs.
     var FAST_ABS = true
+    // Uses a lookup table or optimized logic for MathUtils.floor.
     var FAST_FLOOR = true
+    // Uses a lookup table or optimized logic for MathUtils.ceil.
     var FAST_CEIL = true
+    // Uses a lookup table or optimized logic for MathUtils.round.
     var FAST_ROUND = true
+    // Uses a fast approximation for atan2. Defaults to false for precision.
     var FAST_ATAN2 = false
+    // Uses a fast approximation for power functions.
     var FAST_POW = true
+    // Initial size of contact listener stacks.
     var CONTACT_STACK_INIT_SIZE = 10
+    // Enable/Disable Sin/Cos Lookup Table. Defaults to false.
     var SINCOS_LUT_ENABLED = false
 
     /**
@@ -74,6 +83,7 @@ object Settings {
      *
      */
     const val SINCOS_LUT_PRECISION = .00011f
+    // Length of the sin/cos lookup table based on precision.
     const val SINCOS_LUT_LENGTH = (Math.PI * 2 / SINCOS_LUT_PRECISION).toInt()
 
     /**
@@ -83,14 +93,18 @@ object Settings {
      * lerp. Or, run the tests yourself in `SinCosTest`.
      */
     var SINCOS_LUT_LERP = false
+
     // Collision
+
     /**
      * The maximum number of contact points between two convex shapes.
+     * Box2D supports up to 2 points for polygon-polygon (edge-edge) collisions.
      */
     var maxManifoldPoints = 2
 
     /**
      * The maximum number of vertices on a convex polygon.
+     * Changing this requires recompiling the library.
      */
     var maxPolygonVertices = 8
 
@@ -111,6 +125,7 @@ object Settings {
     /**
      * A small length used as a collision and constraint tolerance. Usually it
      * is chosen to be numerically significant, but visually insignificant.
+     * If objects overlap by less than this, the solver considers them "touching" but not "penetrating".
      */
     var linearSlop = 0.005f
 
@@ -125,14 +140,19 @@ object Settings {
      * Making this smaller means polygons will have and insufficient for
      * continuous collision. Making it larger may create artifacts for vertex
      * collision.
+     *
+     * Polygons are actually treated as a core polygon + a radius (skin).
      */
     var polygonRadius = 2.0f * linearSlop
 
     /**
      * Maximum number of sub-steps per contact in continuous physics simulation.
+     * Higher values are more expensive but handle fast moving objects better.
      */
     var maxSubSteps = 8
+
     // Dynamics
+
     /**
      * Maximum number of contacts to be handled to solve a TOI island.
      */
@@ -141,7 +161,7 @@ object Settings {
     /**
      * A velocity threshold for elastic collisions. Any collision with a
      * relative linear velocity below this threshold will be treated as
-     * inelastic.
+     * inelastic. This prevents "jittering" for objects resting on the floor.
      */
     var velocityThreshold = 1.0f
 
@@ -162,6 +182,8 @@ object Settings {
      * used to prevent numerical problems. You shouldn't need to adjust this.
      */
     var maxTranslation = 2.0f
+
+    // Squared value for optimization.
     var maxTranslationSquared = maxTranslation * maxTranslation
 
     /**
@@ -169,6 +191,8 @@ object Settings {
      * used to prevent numerical problems. You shouldn't need to adjust this.
      */
     var maxRotation = 0.5f * PI
+
+    // Squared value for optimization.
     var maxRotationSquared = maxRotation * maxRotation
 
     /**
@@ -177,8 +201,12 @@ object Settings {
      * values close to 1 often lead to overshoot.
      */
     var baumgarte = 0.2f
+
+    // Baumgarte factor for Time of Impact (TOI) solving.
     var toiBaugarte = 0.75f
+
     // Sleep
+
     /**
      * The time that a body must be still before it will go to sleep.
      */
@@ -193,7 +221,9 @@ object Settings {
      * A body cannot sleep if its angular velocity is above this tolerance.
      */
     var angularSleepTolerance = 2.0f / 180.0f * PI
+
     // Particle
+
     /**
      * A symbolic constant that stands for particle allocation error.
      */
@@ -219,6 +249,8 @@ object Settings {
      * particle radius.
      */
     const val maxTriadDistance = 2
+
+    // Squared value.
     const val maxTriadDistanceSquared = maxTriadDistance * maxTriadDistance
 
     /**
@@ -227,18 +259,20 @@ object Settings {
     const val minParticleBufferCapacity = 256
 
     /**
-     * Friction mixing law. Feel free to customize this. TODO djm: add
-     * customization
+     * Friction mixing law. Feel free to customize this.
+     * By default, it uses the geometric mean: sqrt(f1 * f2).
      */
     fun mixFriction(friction1: Float, friction2: Float): Float {
+        // Return geometric mean.
         return MathUtils.sqrt(friction1 * friction2)
     }
 
     /**
-     * Restitution mixing law. Feel free to customize this. TODO djm: add
-     * customization
+     * Restitution mixing law. Feel free to customize this.
+     * By default, it uses the maximum of the two values.
      */
     fun mixRestitution(restitution1: Float, restitution2: Float): Float {
+        // Return max.
         return Math.max(restitution1, restitution2)
     }
 }

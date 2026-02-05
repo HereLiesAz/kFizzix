@@ -48,9 +48,9 @@ class PbDeserializer : JbDeserializer {
         listener = objectListener
     }
 
-    constructor(listener: UnsupportedListener?, objectListener: JbDeserializer.ObjectListener?) {
-        unsupportedlistener = listener
-        this.listener = objectListener
+    constructor(unsupportedListener: UnsupportedListener?, objectListener: JbDeserializer.ObjectListener?) {
+        this.unsupportedlistener = unsupportedListener
+        listener = objectListener
     }
 
     override fun setObjectListener(listener: JbDeserializer.ObjectListener) {

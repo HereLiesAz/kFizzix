@@ -76,6 +76,7 @@ object Settings {
      * * .0001098
      */
     const val SINCOS_LUT_PRECISION = .00011f
+    // Length of the sin/cos lookup table based on precision.
     const val SINCOS_LUT_LENGTH = (Math.PI * 2 / SINCOS_LUT_PRECISION).toInt()
 
     /**
@@ -182,12 +183,16 @@ object Settings {
      * if a body is blasted with huge force.
      */
     var maxTranslation = 2.0f
+
+    // Squared value for optimization.
     var maxTranslationSquared = maxTranslation * maxTranslation
 
     /**
      * The maximum angular velocity of a body (rad/s).
      */
     var maxRotation = 0.5f * PI
+
+    // Squared value for optimization.
     var maxRotationSquared = maxRotation * maxRotation
 
     /**
@@ -201,6 +206,8 @@ object Settings {
      * *   0.2: Remove 20% of the overlap per step. This is a safe default (smooth, sponge-like correction).
      */
     var baumgarte = 0.2f
+
+    // Baumgarte factor for Time of Impact (TOI) solving.
     var toiBaugarte = 0.75f
 
     // --- Sleep Settings ---
@@ -237,6 +244,8 @@ object Settings {
 
     /** The maximum distance between particles in a triad, divided by the particle radius. */
     const val maxTriadDistance = 2
+
+    // Squared value.
     const val maxTriadDistanceSquared = maxTriadDistance * maxTriadDistance
 
     /** The initial size of particle data buffers. */
@@ -248,6 +257,7 @@ object Settings {
      * Default: sqrt(f1 * f2).
      */
     fun mixFriction(friction1: Float, friction2: Float): Float {
+        // Return geometric mean.
         return MathUtils.sqrt(friction1 * friction2)
     }
 
@@ -257,6 +267,7 @@ object Settings {
      * Default: max(r1, r2). If one object is bouncy, the collision is bouncy.
      */
     fun mixRestitution(restitution1: Float, restitution2: Float): Float {
+        // Return max.
         return Math.max(restitution1, restitution2)
     }
 }

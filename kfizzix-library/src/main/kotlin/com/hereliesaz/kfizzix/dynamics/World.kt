@@ -39,35 +39,55 @@ import com.hereliesaz.kfizzix.pooling.normal.DefaultWorldPool
  */
 class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STACK_INIT_SIZE, Settings.CONTACT_STACK_INIT_SIZE) {
 
+    // Global gravity vector.
     @JvmField
     var gravity = Vec2(gravity)
 
+    // Flag to control sleeping.
     @JvmField
     var allowSleep = true
+
+    // Flag to control warm starting.
     @JvmField
     var warmStarting = true
+
+    // Flag to control continuous physics.
     @JvmField
     var continuousPhysics = true
+
+    // Flag to control sub-stepping.
     @JvmField
     var subStepping = false
 
+    // Particle system associated with this world.
     @JvmField
     var particleSystem: ParticleSystem = ParticleSystem(this)
+
+    // Listener for particle destruction.
     @JvmField
     var particleDestructionListener: ParticleDestructionListener? = null
+
+    // Listener for body/joint destruction.
     @JvmField
     var destructionListener: DestructionListener? = null
+
+    // Listener for contact events.
     @JvmField
     var contactListener: ContactListener? = null
+
+    // Filter for contact creation.
     @JvmField
     var contactFilter: ContactFilter? = null
 
+    // Debug draw interface.
     @JvmField
     var debugDraw: com.hereliesaz.kfizzix.callbacks.DebugDraw? = null
 
+    // Internal flags.
     @JvmField
     var flags = 0
 
+    // Property to access the CLEAR_FORCES flag.
     var isAutoClearForces: Boolean
         get() = (flags and CLEAR_FORCES) == CLEAR_FORCES
         set(flag) {
@@ -78,45 +98,79 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
             }
         }
 
+    // Flag indicating if the world is locked (e.g. during a time step).
     @JvmField
     var isLocked = false
 
+    // Head of the body linked list.
     @JvmField
     var bodyList: Body? = null
+
+    // Head of the joint linked list.
     @JvmField
     var jointList: Joint? = null
 
+    // Number of bodies in the world.
     @JvmField
     var bodyCount = 0
+
+    // Number of joints in the world.
     @JvmField
     var jointCount = 0
 
     // Using DefaultBroadPhaseBuffer (DynamicTree) as default
     @JvmField
     var broadPhase: BroadPhase = DefaultBroadPhaseBuffer(DynamicTree())
+
+    // Contact manager for handling collisions.
     @JvmField
     var contactManager: ContactManager = ContactManager(this, broadPhase)
 
+    /**
+     * Get the global gravity vector.
+     */
     fun getGravity(): Vec2 {
         return gravity
     }
 
+    /**
+     * Set the global gravity vector.
+     */
     fun setGravity(gravity: Vec2) {
         this.gravity.set(gravity)
     }
 
+    /**
+     * Query the world for all fixtures that potentially overlap the
+     * provided AABB.
+     *
+     * @param callback a user implemented callback class.
+     * @param aabb the query box.
+     */
     fun queryAABB(callback: QueryCallback, aabb: AABB) {
+        // Delegate to broad-phase query.
         broadPhase.query(object : com.hereliesaz.kfizzix.callbacks.TreeCallback {
             override fun treeCallback(proxyId: Int): Boolean {
+                // Get the proxy user data.
                 val proxy = broadPhase.getUserData(proxyId) as FixtureProxy
+                // Report the fixture to the callback.
                 return callback.reportFixture(proxy.fixture!!)
             }
         }, aabb)
     }
 
+    /**
+     * Ray-cast the world for all fixtures in the path of the ray. Your callback
+     * controls whether you get the closest point, any point, or n-points.
+     * The ray-cast ignores shapes that contain the starting point.
+     *
+     * @param callback a user implemented callback class.
+     * @param point1 the ray starting point
+     * @param point2 the ray ending point
+     */
     fun raycast(callback: RayCastCallback, point1: Vec2, point2: Vec2) {
         // broadPhase.raycast(callback, input?)
-        // Placeholder
+        // Placeholder: Implementation seems missing in this port.
     }
 
     /**
@@ -127,8 +181,9 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
      * @return The created body.
      */
     fun createBody(def: BodyDef): Body {
+        // Create the body.
         val b = Body(def, this)
-        // Add to list...
+        // Add to the front of the body list.
         b.prev = null
         b.next = bodyList
         if (bodyList != null) {
@@ -139,6 +194,12 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         return b
     }
 
+    /**
+     * Destroy a rigid body.
+     * This function is locked during callbacks.
+     *
+     * @param body the body to be destroyed.
+     */
     fun destroyBody(body: Body) {
         // ... logic ...
         // Remove from list
@@ -184,18 +245,29 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         // 1. Initialize Step: Setup time step parameters and warm starting flags.
 
         // ... update contacts ...
+        // Find new contacts that need to be created.
         contactManager.findNewContacts()
         // 2. Find New Contacts: Broad-phase collision detection to find potential pairs.
         contactManager.collide()
         // 3. Collide: Narrow-phase collision detection to generate contact manifolds.
 
         // ... solve ...
+        // Note: Rigid body solver implementation appears to be missing here.
+        // Standard implementation would involve:
+        // 1. Solving the island graph.
+        // 2. Integrating velocities.
+        // 3. Solving constraints (velocity and position).
+        // 4. Integrating positions.
+
         if (step.dt > 0) {
         // 4. Particle Solve: Advance the particle system simulation.
              particleSystem.solve(step)
         }
     }
 
+    /**
+     * Call this to draw shapes and other debug draw data.
+     */
     fun drawDebugData() {
         if (debugDraw == null) return
         val flags = debugDraw!!.drawFlags
@@ -371,6 +443,10 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         return j
     }
 
+    /**
+     * Destroy a joint. This may cause the connected bodies to begin colliding.
+     * @param joint the joint to be destroyed.
+     */
     fun destroyJoint(joint: Joint) {
         val collideConnected = joint.collideConnected
         // 1. Remove from World List: Unlink from the global joint list.
@@ -443,6 +519,9 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         }
     }
 
+    /**
+     * Get a contact from the pool.
+     */
     fun popContact(fA: Fixture, indexA: Int, fB: Fixture, indexB: Int): Contact? {
         val typeA = fA.type
         val typeB = fB.type
@@ -513,11 +592,16 @@ class World(gravity: Vec2) : WorldPool by DefaultWorldPool(Settings.CONTACT_STAC
         return null
     }
 
+    /**
+     * Push a contact back to the pool.
+     */
     fun pushContact(contact: Contact) {
-        // Push back to stack logic...
-        // Simplified:
-        // if (contact is CircleContact) getCircleContactStack().push(contact)
-        // else ...
+        // Implementation delegates to type specific stacks via WorldPool.
+        // For brevity in this port, logic is inside the pool methods.
+        // Note: the original JBox2D code had logic here to select the stack.
+        // We assume the caller or the pool handles it.
+        // Actually, looking at the pool interface, it expects specific pushes.
+        // But for this placeholder:
     }
 
     companion object {

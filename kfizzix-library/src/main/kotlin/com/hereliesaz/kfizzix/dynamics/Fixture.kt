@@ -63,7 +63,10 @@ import kotlin.math.min
  * @author Daniel Murphy
  */
 class Fixture {
+    // The next fixture in the body's linked list of fixtures.
     var next: Fixture? = null
+
+    // The parent body of this fixture.
     var body: Body? = null
 
     /**
@@ -103,15 +106,25 @@ class Fixture {
      */
     val filter: Filter
 
+    // Array of proxies used by the broad-phase collision detection.
+    // A single fixture (like a ChainShape) might have multiple proxies.
     var proxies: Array<FixtureProxy?>? = null
+
+    // The number of proxies currently in use.
     var proxyCount = 0
 
     init {
+        // Initialize user data to null.
         userData = null
+        // Initialize body reference to null.
         body = null
+        // Initialize next pointer to null.
         next = null
+        // Initialize proxies array to null.
         proxies = null
+        // Initialize proxy count to 0.
         proxyCount = 0
+        // Initialize shape to null.
         shape = null
         // 2. Clean Up: Nullify references to help GC.
         filter = Filter()
@@ -143,7 +156,9 @@ class Fixture {
      * @param filter The new filter definition.
      */
     fun setFilterData(filter: Filter) {
+        // Update the internal filter data.
         this.filter.set(filter)
+        // Trigger refiltering to update contacts.
         refilter()
     }
 
@@ -152,24 +167,32 @@ class Fixture {
      * disabled by ContactFilter::ShouldCollide.
      */
     fun refilter() {
+        // If the fixture is not attached to a body, do nothing.
         if (body == null) {
             return
         }
         // Flag associated contacts for filtering.
+        // Start iterating from the body's contact list.
         var edge = body!!.contactList
         while (edge != null) {
             val contact = edge.contact
             val fixtureA = contact!!.fixtureA
             val fixtureB = contact.fixtureB
+            // If this fixture is one of the participants in the contact...
             if (fixtureA === this || fixtureB === this) {
+                // Mark the contact for filtering in the next step.
                 contact.flagForFiltering()
             }
+            // Move to the next contact edge.
             edge = edge.next
         }
         val world = body!!.world
         // Touch each proxy so that new pairs may be created
+        // Get the broad-phase from the world's contact manager.
         val broadPhase = world.contactManager.broadPhase
+        // Iterate over all proxies associated with this fixture.
         for (i in 0 until proxyCount) {
+            // Touch the proxy in the broad-phase to trigger overlap updates.
             broadPhase.touchProxy(proxies!![i]!!.proxyId)
         }
     }
@@ -187,6 +210,7 @@ class Fixture {
      * @return True if the point is inside.
      */
     fun testPoint(p: Vec2): Boolean {
+        // Delegate to the shape's testPoint method, transforming by the body's transform.
         return shape!!.testPoint(body!!.xf, p)
     }
 
@@ -208,6 +232,7 @@ class Fixture {
         output: RayCastOutput, input: RayCastInput,
         childIndex: Int
     ): Boolean {
+        // Delegate to the shape's raycast method.
         return shape!!.raycast(output, input, body!!.xf, childIndex)
     }
 
@@ -216,6 +241,7 @@ class Fixture {
      * and the shape. The rotational inertia is about the shape's origin.
      */
     fun getMassData(massData: MassData) {
+        // Delegate calculation to the shape, passing the fixture's density.
         shape!!.computeMass(massData, density)
     }
 
@@ -225,7 +251,9 @@ class Fixture {
      * transform.
      */
     fun getAABB(childIndex: Int): AABB {
+        // Ensure the child index is valid.
         assert(childIndex >= 0 && childIndex < proxyCount)
+        // Return the AABB stored in the proxy.
         return proxies!![childIndex]!!.aabb
     }
 
@@ -251,37 +279,52 @@ class Fixture {
         */
         return 0f // Placeholder to fix compilation
     }
+
     // We need separation create/destroy functions from the
     // constructor/destructor because
     // the destructor cannot access the allocator (no destructor arguments
     // allowed by C++).
     fun create(body: Body, def: FixtureDef) {
+        // Copy user data from definition.
         userData = def.userData
         // 1. Initialize Data: Copy properties from the definition.
         friction = def.friction
+        // Copy restitution from definition.
         restitution = def.restitution
+        // Set the parent body.
         this.body = body
+        // Reset next pointer.
         next = null
+        // Copy filter data.
         filter.set(def.filter)
+        // Set sensor flag.
         isSensor = def.isSensor
+        // Clone the shape from definition to ensure ownership.
         shape = def.shape!!.clone()
         // 2. Clone Shape: We must own the shape, so we clone it.
         // Reserve proxy space
+        // Get the number of children (e.g. 1 for circle/poly, N for chain).
         val childCount = shape!!.childCount
+        // If proxies array is null, allocate it.
         if (proxies == null) {
         // 3. Allocate Proxies: Prepare the array for BroadPhase proxies.
             proxies = arrayOfNulls(childCount)
             for (i in 0 until childCount) {
+                // Initialize each proxy.
                 proxies!![i] = FixtureProxy()
                 proxies!![i]!!.fixture = null
                 proxies!![i]!!.proxyId = BroadPhase.NULL_PROXY
             }
         }
+        // If proxies array is too small, resize it.
         if (proxies!!.size < childCount) {
             val old = proxies
+            // Double the size or match childCount.
             val newLen = MathUtils.max(old!!.size * 2, childCount)
             proxies = arrayOfNulls(newLen)
+            // Copy old proxies.
             System.arraycopy(old, 0, proxies!!, 0, old.size)
+            // Initialize new slots.
             for (i in 0 until newLen) {
                 if (i >= old.size) {
                     proxies!![i] = FixtureProxy()
@@ -290,7 +333,9 @@ class Fixture {
                 proxies!![i]!!.proxyId = BroadPhase.NULL_PROXY
             }
         }
+        // Reset proxy count.
         proxyCount = 0
+        // Set density.
         density = def.density
     }
 
@@ -302,6 +347,7 @@ class Fixture {
         shape = null
         // 2. Clean Up: Nullify references to help GC.
         proxies = null
+        // Reset next pointer.
         next = null
         // TODO pool shapes
         // TODO pool fixtures
@@ -309,15 +355,21 @@ class Fixture {
 
     // These support body activation/deactivation.
     fun createProxies(broadPhase: BroadPhase, xf: Transform) {
+        // Ensure no proxies currently exist.
         assert(proxyCount == 0)
         // 1. Verify: Proxies must be destroyed via Body.destroyFixture before calling this.
         // Create proxies in the broad-phase.
         proxyCount = shape!!.childCount
+        // Iterate over all children of the shape.
         for (i in 0 until proxyCount) {
             val proxy = proxies!![i]
+            // Compute the AABB for this child.
             shape!!.computeAABB(proxy!!.aabb, xf, i)
+            // Create a proxy in the broad-phase tree and get its ID.
             proxy.proxyId = broadPhase.createProxy(proxy.aabb, proxy)
+            // Link the proxy back to this fixture.
             proxy.fixture = this
+            // Set the child index.
             proxy.childIndex = i
         }
     }
@@ -329,12 +381,16 @@ class Fixture {
         // Destroy proxies in the broad-phase.
         for (i in 0 until proxyCount) {
             val proxy = proxies!![i]
+            // Remove the proxy from the broad-phase tree.
             broadPhase.destroyProxy(proxy!!.proxyId)
+            // Reset the proxy ID to null.
             proxy.proxyId = BroadPhase.NULL_PROXY
         }
+        // Reset the proxy count.
         proxyCount = 0
     }
 
+    // Temporary pool objects for synchronization.
     private val pool1 = AABB()
     private val pool2 = AABB()
     private val displacement = Vec2()
@@ -346,26 +402,32 @@ class Fixture {
         broadPhase: BroadPhase,
         transform1: Transform, transform2: Transform
     ) {
+        // If no proxies, nothing to synchronize.
         if (proxyCount == 0) {
         // 1. Early Exit: No proxies to sync.
             return
         }
+        // Iterate over all proxies.
         for (i in 0 until proxyCount) {
             val proxy = proxies!![i]
             // Compute an AABB that covers the swept shape (may miss some
             // rotation effect).
             val aabb1 = pool1
             val aab = pool2
+            // Compute AABB at start transform.
             shape!!.computeAABB(aabb1, transform1, proxy!!.childIndex)
             // 2. Compute Swept AABB: Calculate AABB at start and end transforms.
             shape!!.computeAABB(aab, transform2, proxy.childIndex)
+            // Combine AABBs to create a swept AABB.
             proxy.aabb.lowerBound.x = min(aabb1.lowerBound.x, aab.lowerBound.x)
             // 3. Union: Combine both AABBs to cover the entire swept path.
             proxy.aabb.lowerBound.y = min(aabb1.lowerBound.y, aab.lowerBound.y)
             proxy.aabb.upperBound.x = max(aabb1.upperBound.x, aab.upperBound.x)
             proxy.aabb.upperBound.y = max(aabb1.upperBound.y, aab.upperBound.y)
+            // Calculate displacement vector.
             displacement.x = transform2.p.x - transform1.p.x
             displacement.y = transform2.p.y - transform1.p.y
+            // Move the proxy in the broad-phase with the new AABB and displacement.
             broadPhase.moveProxy(proxy.proxyId, proxy.aabb, displacement)
             // 4. Update Tree: Move the proxy in the dynamic tree.
         }

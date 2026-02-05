@@ -44,7 +44,10 @@ import java.io.Serializable
  * @author Daniel Murphy
  */
 class Vec2(
+    // The x-coordinate of the vector.
+    // Annotated with @JvmField to expose it as a public field in Java byte code for performance.
     @JvmField var x: Float = 0f,
+    // The y-coordinate of the vector.
     @JvmField var y: Float = 0f
 ) : Serializable {
 
@@ -72,6 +75,7 @@ class Vec2(
      * @return A new Vec2 with the same values.
      */
     fun clone(): Vec2 {
+        // Return a new instance with the same values.
         return Vec2(x, y)
     }
 
@@ -80,7 +84,9 @@ class Vec2(
      * Use this to reset a vector for reuse.
      */
     fun setZero() {
+        // Set x to zero.
         x = 0.0f
+        // Set y to zero.
         y = 0.0f
     }
 
@@ -91,8 +97,11 @@ class Vec2(
      * @return This vector (for chaining).
      */
     fun set(x: Float, y: Float): Vec2 {
+        // Assign the new x value.
         this.x = x
+        // Assign the new y value.
         this.y = y
+        // Return this instance to allow chaining method calls.
         return this
     }
 
@@ -102,8 +111,11 @@ class Vec2(
      * @return This vector (for chaining).
      */
     fun set(v: Vec2): Vec2 {
+        // Copy the x value from the source vector.
         this.x = v.x
+        // Copy the y value from the source vector.
         this.y = v.y
+        // Return this instance.
         return this
     }
 
@@ -216,6 +228,7 @@ class Vec2(
      * @return A new vector representing the skew.
      */
     fun skew(): Vec2 {
+        // Return a new vector perpendicular to this one (-y, x).
         return Vec2(-y, x)
     }
 
@@ -224,7 +237,9 @@ class Vec2(
      * @param out The vector to store the result in.
      */
     fun skew(out: Vec2) {
+        // Set the output x to -y.
         out.x = -y
+        // Set the output y to x.
         out.y = x
     }
 
@@ -234,6 +249,7 @@ class Vec2(
      * @return The length.
      */
     fun length(): Float {
+        // Calculate the square root of the sum of squares.
         return MathUtils.sqrt(x * x + y * y)
     }
 
@@ -245,6 +261,7 @@ class Vec2(
      * @return The squared length.
      */
     fun lengthSquared(): Float {
+        // Calculate x^2 + y^2. avoiding the expensive sqrt() call.
         return x * x + y * y
     }
 
@@ -255,13 +272,19 @@ class Vec2(
      * @return The original length of the vector.
      */
     fun normalize(): Float {
+        // Calculate the current length.
         val length = length()
+        // If the length is too small, avoid division by zero/instability.
         if (length < Settings.EPSILON) {
             return 0f
         }
+        // Calculate the inverse length (1/length) to use multiplication instead of division.
         val invLength = 1.0f / length
+        // Scale x by the inverse length.
         x *= invLength
+        // Scale y by the inverse length.
         y *= invLength
+        // Return the original length.
         return length
     }
 
@@ -270,6 +293,7 @@ class Vec2(
      * @return True if x and y are not NaN and not Infinite.
      */
     fun isValid(): Boolean {
+        // Check if x is not NaN and not Infinite, AND y is not NaN and not Infinite.
         return !x.isNaN() && !x.isInfinite() && !y.isNaN() && !y.isInfinite()
     }
 
@@ -278,6 +302,7 @@ class Vec2(
      * @return new Vec2(|x|, |y|).
      */
     fun abs(): Vec2 {
+        // Return a new Vec2 with absolute values of components.
         return Vec2(MathUtils.abs(x), MathUtils.abs(y))
     }
 
@@ -285,7 +310,9 @@ class Vec2(
      * Modifies this vector to contain the absolute value of its components (mutation).
      */
     fun absLocal() {
+        // Update x to its absolute value.
         x = MathUtils.abs(x)
+        // Update y to its absolute value.
         y = MathUtils.abs(y)
     }
 
@@ -298,6 +325,7 @@ class Vec2(
      * @return The scalar dot product.
      */
     fun dot(v: Vec2): Float {
+        // The dot product is the sum of the products of corresponding components.
         return x * v.x + y * v.y
     }
 
@@ -339,6 +367,7 @@ class Vec2(
          */
         @JvmStatic
         fun abs(a: Vec2): Vec2 {
+            // Create a new vector with absolute components of 'a'.
             return Vec2(MathUtils.abs(a.x), MathUtils.abs(a.y))
         }
 
@@ -349,7 +378,9 @@ class Vec2(
          */
         @JvmStatic
         fun absToOut(a: Vec2, out: Vec2) {
+            // Set out.x to absolute value of a.x.
             out.x = MathUtils.abs(a.x)
+            // Set out.y to absolute value of a.y.
             out.y = MathUtils.abs(a.y)
         }
 
@@ -362,6 +393,7 @@ class Vec2(
          */
         @JvmStatic
         fun dot(a: Vec2, b: Vec2): Float {
+            // Calculate a.x * b.x + a.y * b.y.
             return a.x * b.x + a.y * b.y
         }
 
@@ -376,6 +408,7 @@ class Vec2(
          */
         @JvmStatic
         fun cross(a: Vec2, b: Vec2): Float {
+            // Calculate determinant: a.x * b.y - a.y * b.x.
             return a.x * b.y - a.y * b.x
         }
 
@@ -389,6 +422,7 @@ class Vec2(
          */
         @JvmStatic
         fun cross(a: Vec2, s: Float): Vec2 {
+            // Result is (s * a.y, -s * a.x).
             return Vec2(s * a.y, -s * a.x)
         }
 
@@ -400,8 +434,13 @@ class Vec2(
          */
         @JvmStatic
         fun crossToOut(a: Vec2, s: Float, out: Vec2) {
+            // Calculate the new y component first to safe-guard against aliasing if a === out.
+            // Wait, if a === out, then updating out.x first would corrupt a.x needed for out.y.
+            // So we use a temp variable.
             val tempY = -s * a.x
+            // Update out.x using the original a.y.
             out.x = s * a.y
+            // Update out.y using the calculated tempY.
             out.y = tempY
         }
 
@@ -412,8 +451,11 @@ class Vec2(
         @DelicateFizzixApi
         @JvmStatic
         fun crossToOutUnsafe(a: Vec2, s: Float, out: Vec2) {
+            // Assert that 'out' is not the same object as 'a'.
             assert(out !== a)
+            // Directly assign x without temp variable.
             out.x = s * a.y
+            // Directly assign y without temp variable.
             out.y = -s * a.x
         }
 
@@ -427,6 +469,7 @@ class Vec2(
          */
         @JvmStatic
         fun cross(s: Float, a: Vec2): Vec2 {
+            // Result is (-s * a.y, s * a.x).
             return Vec2(-s * a.y, s * a.x)
         }
 
@@ -438,8 +481,11 @@ class Vec2(
          */
         @JvmStatic
         fun crossToOut(s: Float, a: Vec2, out: Vec2) {
+            // Calculate temp y to handle potential aliasing.
             val tempY = s * a.x
+            // Update out.x using original a.y.
             out.x = -s * a.y
+            // Update out.y using tempY.
             out.y = tempY
         }
 
@@ -450,8 +496,11 @@ class Vec2(
         @DelicateFizzixApi
         @JvmStatic
         fun crossToOutUnsafe(s: Float, a: Vec2, out: Vec2) {
+            // Assert that 'out' is not the same object as 'a'.
             assert(out !== a)
+            // Directly assign x.
             out.x = -s * a.y
+            // Directly assign y.
             out.y = s * a.x
         }
 
@@ -461,7 +510,9 @@ class Vec2(
          */
         @JvmStatic
         fun negateToOut(a: Vec2, out: Vec2) {
+            // Set out.x to negative a.x.
             out.x = -a.x
+            // Set out.y to negative a.y.
             out.y = -a.y
         }
 
@@ -471,6 +522,7 @@ class Vec2(
          */
         @JvmStatic
         fun min(a: Vec2, b: Vec2): Vec2 {
+            // Return new Vec2(min(ax, bx), min(ay, by)).
             return Vec2(MathUtils.min(a.x, b.x), MathUtils.min(a.y, b.y))
         }
 
@@ -480,6 +532,7 @@ class Vec2(
          */
         @JvmStatic
         fun max(a: Vec2, b: Vec2): Vec2 {
+            // Return new Vec2(max(ax, bx), max(ay, by)).
             return Vec2(MathUtils.max(a.x, b.x), MathUtils.max(a.y, b.y))
         }
 
@@ -488,7 +541,9 @@ class Vec2(
          */
         @JvmStatic
         fun minToOut(a: Vec2, b: Vec2, out: Vec2) {
+            // Update out.x to min(ax, bx).
             out.x = MathUtils.min(a.x, b.x)
+            // Update out.y to min(ay, by).
             out.y = MathUtils.min(a.y, b.y)
         }
 
@@ -497,7 +552,9 @@ class Vec2(
          */
         @JvmStatic
         fun maxToOut(a: Vec2, b: Vec2, out: Vec2) {
+            // Update out.x to max(ax, bx).
             out.x = MathUtils.max(a.x, b.x)
+            // Update out.y to max(ay, by).
             out.y = MathUtils.max(a.y, b.y)
         }
     }

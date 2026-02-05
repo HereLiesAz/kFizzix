@@ -56,24 +56,24 @@ class PbSerializer : JbSerializer {
         signer = argSigner
     }
 
-    override fun setObjectSigner(argSigner: JbSerializer.ObjectSigner) {
-        signer = argSigner
+    override fun setObjectSigner(signer: JbSerializer.ObjectSigner) {
+        this.signer = signer
     }
 
-    override fun setUnsupportedListener(argListener: UnsupportedListener) {
-        listener = argListener
+    override fun setUnsupportedListener(listener: UnsupportedListener) {
+        this.listener = listener
     }
 
-    override fun serialize(argWorld: World): SerializationResult {
-        val world = serializeWorld(argWorld).build()
+    override fun serialize(world: World): SerializationResult {
+        val pbWorld = serializeWorld(world).build()
         return object : SerializationResult {
             @Throws(IOException::class)
             override fun writeTo(argOutputStream: OutputStream) {
-                world.writeTo(argOutputStream)
+                pbWorld.writeTo(argOutputStream)
             }
 
             override fun getValue(): Any {
-                return world
+                return pbWorld
             }
         }
     }
@@ -126,17 +126,17 @@ class PbSerializer : JbSerializer {
         return builder
     }
 
-    override fun serialize(argBody: Body): SerializationResult {
-        val builder = serializeBody(argBody)
-        val body = builder.build()
+    override fun serialize(body: Body): SerializationResult {
+        val builder = serializeBody(body)
+        val pbBody = builder.build()
         return object : SerializationResult {
             @Throws(IOException::class)
             override fun writeTo(argOutputStream: OutputStream) {
-                body.writeTo(argOutputStream)
+                pbBody.writeTo(argOutputStream)
             }
 
             override fun getValue(): Any {
-                return body
+                return pbBody
             }
         }
     }
@@ -182,16 +182,16 @@ class PbSerializer : JbSerializer {
         return builder
     }
 
-    override fun serialize(argFixture: Fixture): SerializationResult {
-        val fixture = serializeFixture(argFixture).build()
+    override fun serialize(fixture: Fixture): SerializationResult {
+        val pbFixture = serializeFixture(fixture).build()
         return object : SerializationResult {
             @Throws(IOException::class)
             override fun writeTo(argOutputStream: OutputStream) {
-                fixture.writeTo(argOutputStream)
+                pbFixture.writeTo(argOutputStream)
             }
 
             override fun getValue(): Any {
-                return fixture
+                return pbFixture
             }
         }
     }
@@ -213,18 +213,18 @@ class PbSerializer : JbSerializer {
         return builder
     }
 
-    override fun serialize(argShape: Shape): SerializationResult {
-        val builder = serializeShape(argShape)
+    override fun serialize(shape: Shape): SerializationResult {
+        val builder = serializeShape(shape)
 // should we do lazy building?
-        val shape = builder.build()
+        val pbShape = builder.build()
         return object : SerializationResult {
             @Throws(IOException::class)
             override fun writeTo(argOutputStream: OutputStream) {
-                shape.writeTo(argOutputStream)
+                pbShape.writeTo(argOutputStream)
             }
 
             override fun getValue(): Any {
-                return shape
+                return pbShape
             }
         }
     }
@@ -287,19 +287,19 @@ class PbSerializer : JbSerializer {
         return builder
     }
 
-    override fun serialize(argJoint: Joint, argBodyIndexMap: Map<Body, Int>,
-                           argJointIndexMap: Map<Joint, Int>): SerializationResult {
-        val builder = serializeJoint(argJoint, argBodyIndexMap,
-                argJointIndexMap)
-        val joint = builder.build()
+    override fun serialize(joint: Joint, bodyIndexMap: Map<Body, Int>,
+                           jointIndexMap: Map<Joint, Int>): SerializationResult {
+        val builder = serializeJoint(joint, bodyIndexMap,
+                jointIndexMap)
+        val pbJoint = builder.build()
         return object : SerializationResult {
             @Throws(IOException::class)
             override fun writeTo(argOutputStream: OutputStream) {
-                joint.writeTo(argOutputStream)
+                pbJoint.writeTo(argOutputStream)
             }
 
             override fun getValue(): Any {
-                return joint
+                return pbJoint
             }
         }
     }

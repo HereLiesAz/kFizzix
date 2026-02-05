@@ -31,8 +31,6 @@ import com.hereliesaz.kfizzix.common.Rot
 import com.hereliesaz.kfizzix.common.Settings
 import com.hereliesaz.kfizzix.common.Transform
 import com.hereliesaz.kfizzix.common.Vec2
-// import com.hereliesaz.kfizzix.pooling.arrays.IntArray
-// import com.hereliesaz.kfizzix.pooling.arrays.Vec2Array
 
 /**
  * A convex polygon shape. Polygons have a maximum number of vertices equal to
@@ -66,7 +64,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
      */
     var count: Int
 
-    // pooling
+    // pooling objects to avoid allocation
     private val pool1 = Vec2()
     private val pool2 = Vec2()
     private val pool3 = Vec2()
@@ -74,16 +72,22 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
     private val poolt1 = Transform()
 
     init {
+        // Initialize count to 0.
         count = 0
+        // Pre-allocate arrays for max vertices.
         vertices = Array(Settings.maxPolygonVertices) { Vec2() }
         normals = Array(Settings.maxPolygonVertices) { Vec2() }
+        // Set default radius (skin thickness).
         radius = Settings.polygonRadius
+        // Reset centroid.
         centroid.setZero()
     }
 
+    // Creates a deep copy of the polygon.
     public override fun clone(): Shape {
         val shape = PolygonShape()
         shape.centroid.set(centroid)
+        // Copy vertices and normals.
         for (i in shape.normals.indices) {
             shape.normals[i].set(normals[i])
             shape.vertices[i].set(vertices[i])
@@ -102,11 +106,12 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
      * @warning collinear points are removed.
      */
     fun set(vertices: Array<Vec2>, count: Int) {
-        // Removed pooling for simplification as per memory constraints or lack of pooling classes
-        // set(vertices, count, null, null)
+        // Ensure valid vertex count.
         assert(3 <= count && count <= Settings.maxPolygonVertices)
         var n = MathUtils.min(count, Settings.maxPolygonVertices)
+
         // Perform welding and copy vertices into local buffer.
+        // Welding removes points that are too close together.
         val ps = Array(Settings.maxPolygonVertices) { Vec2() }
         var tempCount = 0
         for (i in 0 until n) {
@@ -124,13 +129,15 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         }
         n = tempCount
         if (n < 3) {
-            // Polygon is degenerate.
+            // Polygon is degenerate (too few unique points).
             assert(false)
             setAsBox(1.0f, 1.0f)
             return
         }
+
         // Create the convex hull using the Gift wrapping algorithm
         // http://en.wikipedia.org/wiki/Gift_wrapping_algorithm
+
         // Find the right most point on the hull
         var i0 = 0
         var x0 = ps[0].x
@@ -141,9 +148,12 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
                 x0 = x
             }
         }
+
         val hull = IntArray(Settings.maxPolygonVertices)
         var m = 0
         var ih = i0
+
+        // Wrap around points to find the hull.
         while (true) {
             hull[m] = ih
             var ie = 0
@@ -155,28 +165,29 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
                 val r = pool1.set(ps[ie]).subLocal(ps[hull[m]])
                 val v = pool2.set(ps[j]).subLocal(ps[hull[m]])
                 val c = Vec2.cross(r, v)
+                // If c < 0, then v is to the right of r, so j is a better candidate.
                 if (c < 0.0f) {
                     ie = j
                 }
-                // Collinearity check
+                // Collinearity check: pick the farthest point.
                 if (c == 0.0f && v.lengthSquared() > r.lengthSquared()) {
                     ie = j
                 }
             }
             ++m
             ih = ie
+            // If we wrapped around to the start, we are done.
             if (ie == i0) {
                 break
             }
         }
         this.count = m
-        // Copy vertices.
+
+        // Copy vertices from hull.
         for (i in 0 until this.count) {
-            // if (vertices[i] == null) {
-            //     vertices[i] = Vec2()
-            // }
             this.vertices[i].set(ps[hull[i]])
         }
+
         val edge = pool1
         // Compute normals. Ensure the edges have non-zero length.
         for (i in 0 until this.count) {
@@ -184,6 +195,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
             val i2 = if (i + 1 < this.count) i + 1 else 0
             edge.set(this.vertices[i2]).subLocal(this.vertices[i1])
             assert(edge.lengthSquared() > Settings.EPSILON * Settings.EPSILON)
+            // Normal is cross product of edge vector and scalar 1 (90 degree rotation).
             Vec2.crossToOutUnsafe(edge, 1f, normals[i])
             normals[i].normalize()
         }
@@ -232,7 +244,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         val xf = poolt1
         xf.p.set(center)
         xf.q.set(angle)
-        // Transform vertices and normals.
+        // Transform vertices and normals to account for orientation.
         for (i in 0 until count) {
             Transform.mulToOut(xf, vertices[i], vertices[i])
             Rot.mulToOut(xf.q, normals[i], normals[i])
@@ -243,6 +255,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         get() = 1
 
     override fun testPoint(xf: Transform, p: Vec2): Boolean {
+        // Transform point to local coordinates.
         val pLocal = xf.q.mulTrans(p - xf.p)
 
         if (debug) {
@@ -254,6 +267,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
             println("pLocal: $pLocal")
         }
 
+        // Check if point is inside all planes defined by edges.
         for (i in 0 until count) {
             val dot = normals[i].dot(pLocal - vertices[i])
             if (dot > 0.0f) {
@@ -264,6 +278,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
     }
 
     override fun computeAABB(aabb: AABB, xf: Transform, childIndex: Int) {
+        // Find min and max of vertices transformed to world space.
         val v1 = xf.mul(vertices[0])
         aabb.lowerBound.set(v1)
         aabb.upperBound.set(v1)
@@ -276,6 +291,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
             aabb.upperBound.y = maxOf(aabb.upperBound.y, v2.y)
         }
 
+        // Expand by skin radius.
         aabb.lowerBound.x -= radius
         aabb.lowerBound.y -= radius
         aabb.upperBound.x += radius
@@ -303,6 +319,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         var maxDistance = -Float.MAX_VALUE
         val normalForMaxDistance = Vec2()
 
+        // Find the max separation from edges.
         for (i in 0 until count) {
             val dot = normals[i].dot(pLocal - vertices[i])
             if (dot > maxDistance) {
@@ -312,6 +329,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
         }
 
         return if (maxDistance > 0) {
+            // Point is outside. Find closest vertex or edge.
             var minDistance2 = Float.MAX_VALUE
             val minDistanceVec = Vec2()
 
@@ -327,6 +345,7 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
             normalOut.normalize()
             MathUtils.sqrt(minDistance2)
         } else {
+            // Point is inside.
             normalOut.set(xf.q.mul(normalForMaxDistance))
             maxDistance
         }
@@ -346,11 +365,15 @@ class PolygonShape : Shape(ShapeType.POLYGON) {
 
         var index = -1
 
+        // Clip ray against all polygon edges.
         for (i in 0 until count) {
+            // numerator = dot(normal, vertex - p1)
             val numerator = normals[i].dot(vertices[i] - p1)
+            // denominator = dot(normal, d)
             val denominator = normals[i].dot(d)
 
             if (denominator == 0.0f) {
+                // Ray is parallel to edge. If outside, failure.
                 if (numerator < 0.0f) {
                     return false
                 }

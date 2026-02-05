@@ -18,7 +18,7 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF this SOFTWARE, EVEN IF ADVISED OF THE
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
 package com.hereliesaz.kfizzix.collision.broadphase
@@ -46,14 +46,14 @@ import com.hereliesaz.kfizzix.common.Vec2
  *
  *
  *
- * The b2BroadPhase class reduces this load by using a dynamic tree for pair
+ * The BroadPhase class reduces this load by using a dynamic tree for pair
  * management. This greatly reduces the number of narrow-phase calls.
  *
  *
  *
- * Normally you do not interact with the broad-phase directly. Instead, Box2D
- * creates and manages a broad-phase internally. Also, b2BroadPhase is designed
- * with Box2D's simulation loop in mind, so it is likely not suited for other
+ * Normally you do not interact with the broad-phase directly. Instead, the engine
+ * creates and manages a broad-phase internally. Also, BroadPhase is designed
+ * with the simulation loop in mind, so it is likely not suited for other
  * use cases.
  *
  *
@@ -66,48 +66,103 @@ interface BroadPhase {
      * Get the number of proxies.
      */
     val proxyCount: Int
+
     /**
      * Get the height of the embedded tree.
      */
     val treeHeight: Int
+
+    /**
+     * Get the balance of the embedded tree.
+     */
     val treeBalance: Int
+
+    /**
+     * Get the quality metric of the embedded tree.
+     */
     val treeQuality: Float
 
     /**
      * Create a proxy with an initial AABB. Pairs are not reported until
      * updatePairs is called.
+     *
+     * @param aabb The axis aligned bounding box.
+     * @param userData User data (usually a FixtureProxy).
+     * @return The proxy ID.
      */
     fun createProxy(aabb: AABB, userData: Any): Int
+
     /**
      * Destroy a proxy. It is up to the client to remove any pairs.
+     *
+     * @param proxyId The proxy ID to destroy.
      */
     fun destroyProxy(proxyId: Int)
 
     /**
      * Call MoveProxy as many times as you like, then when you are done call
      * UpdatePairs to finalize the proxy pairs (for your time step).
+     *
+     * @param proxyId The proxy ID.
+     * @param aabb The new AABB.
+     * @param displacement The displacement since the last move.
      */
     fun moveProxy(proxyId: Int, aabb: AABB, displacement: Vec2)
 
     /**
      * Call to trigger a re-processing of its pairs on the next call to
      * UpdatePairs.
+     *
+     * @param proxyId The proxy ID to touch.
      */
     fun touchProxy(proxyId: Int)
+
+    /**
+     * Get the user data associated with a proxy.
+     *
+     * @param proxyId The proxy ID.
+     * @return The user data.
+     */
     fun getUserData(proxyId: Int): Any
+
+    /**
+     * Get the "fat" AABB (expanded AABB) of a proxy.
+     *
+     * @param proxyId The proxy ID.
+     * @return The fat AABB.
+     */
     fun getFatAABB(proxyId: Int): AABB
+
+    /**
+     * Test overlap of two proxies.
+     *
+     * @param proxyIdA The first proxy ID.
+     * @param proxyIdB The second proxy ID.
+     * @return True if they overlap.
+     */
     fun testOverlap(proxyIdA: Int, proxyIdB: Int): Boolean
+
+    /**
+     * Draw the broad-phase tree for debugging.
+     *
+     * @param argDraw The debug draw interface.
+     */
     fun drawTree(argDraw: DebugDraw)
 
     /**
      * Update the pairs. This results in pair callbacks. This can only add
      * pairs.
+     *
+     * @param callback The callback to report new pairs.
      */
     fun updatePairs(callback: PairCallback)
 
     /**
      * Query an AABB for overlapping proxies. The callback class is called for
      * each proxy that overlaps the supplied AABB.
+     *
+     * @param callback The callback for reporting overlaps.
+     * @param aabb The query AABB.
      */
     fun query(callback: TreeCallback, aabb: AABB)
 

@@ -2074,13 +2074,13 @@ class ParticleSystem(var world: World) {
         }
 
         fun setParticleBuffer(buffer: ParticleBufferInt, newData: IntArray?, newCapacity: Int) {
-            assert(newData != null && newCapacity >= newData.size)
+            assert(newData != null && newCapacity >= newData!!.size)
             buffer.data = newData
             buffer.userSuppliedCapacity = newCapacity
         }
 
         fun <T> setParticleBuffer(buffer: ParticleBuffer<T>, newData: Array<T?>?, newCapacity: Int) {
-            assert(newData != null && newCapacity >= newData.size)
+            assert(newData != null && newCapacity >= newData!!.size)
             buffer.data = newData
             buffer.userSuppliedCapacity = newCapacity
         }
@@ -2145,11 +2145,6 @@ class ParticleSystem(var world: World) {
 
     fun raycast(@Suppress("UNUSED_PARAMETER") callback: ParticleRaycastCallback, @Suppress("UNUSED_PARAMETER") point1: Vec2, @Suppress("UNUSED_PARAMETER") point2: Vec2) {
         // Simple check
-        // val p = tempVec
-        for (i in 0 until count) {
-            // val pos = positionBuffer.data!![i]!!
-            // Check distance to segment?
-            // Stub: do nothing or iterate all
-        }
+        // TODO: Implement raycast
     }
 }

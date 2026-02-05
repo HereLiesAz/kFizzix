@@ -41,22 +41,6 @@ import com.hereliesaz.kfizzix.dynamics.joints.JointEdge
  *
  * @author Daniel Murphy
  */
-/**
- * A rigid body. These are created via [World.createBody].
- *
- * **Body Types:**
- * *   [BodyType.STATIC]: Zero mass, zero velocity, may be manually moved. (e.g., Walls, Ground).
- * *   [BodyType.KINEMATIC]: Zero mass, non-zero velocity set by user, moved by solver. (e.g., Moving Platforms).
- * *   [BodyType.DYNAMIC]: Positive mass, non-zero velocity determined by forces & collisions. (e.g., Player, Balls).
- *
- * **Key Properties:**
- * *   [position]: The world position of the body's origin.
- * *   [angle]: The world rotation (radians).
- * *   [linearVelocity]: The speed and direction.
- * *   [angularVelocity]: The rotation speed.
- *
- * @author Daniel Murphy
- */
 class Body(bd: BodyDef, @JvmField var world: World) {
 
     /**
@@ -313,18 +297,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L204-L211
      */
-    /**
-     * Creates a fixture and attaches it to this body. Use this function if you need
-     * to set some fixture parameters, like friction. Otherwise you can create the
-     * fixture directly from a shape.
-     *
-     * If the density is non-zero, this function automatically updates the mass of the body.
-     * Contacts are not created until the next time step.
-     *
-     * @param def The fixture definition.
-     * @warning This function is locked during callbacks.
-     * @return The created fixture.
-     */
     fun createFixture(def: FixtureDef): Fixture? {
         // Ensure world is not locked (e.g. during a time step).
         assert(!world.isLocked)
@@ -334,7 +306,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
 
         // Create the fixture.
         val fixture = Fixture()
-        // 1. Create Fixture: Instantiate and initialize the fixture from the definition.
         fixture.create(this, def)
 
         // If body is active, create proxies in broad-phase.
@@ -345,7 +316,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
 
         // Add to the front of the fixture list.
         fixture.next = fixtureList
-        // 3. Add to List: Prepend the fixture to the body's linked list.
         fixtureList = fixture
         ++fixtureCount
 
@@ -354,7 +324,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
 
         // Adjust mass properties if needed.
         if (fixture.density > 0.0f) {
-        // 4. Update Mass: If the fixture adds mass, recalculate the body's mass data.
             resetMassData()
         }
 
@@ -415,8 +384,7 @@ class Body(bd: BodyDef, @JvmField var world: World) {
         var found = false
         while (node != null) {
             if (node === fixture) {
-        // 4. Unlink: Remove the fixture from the body's linked list.
-                node = fixture!!.next
+                node = fixture!!.next // Just to exit loop logic cleanly or use break.
                 found = true
                 break
             }
@@ -436,7 +404,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
 
         // Destroy any contacts associated with the fixture.
         var edge = contactList
-        // 3. Destroy Contacts: Remove any contacts associated with this fixture.
         while (edge != null) {
             val c = edge.contact
             edge = edge.next
@@ -475,14 +442,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      * @param angle The world rotation in radians.
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/src/dynamics/b2_body.cpp#L420-L445
-     */
-    /**
-     * Set the position of the body's origin and rotation.
-     * This breaks any contacts and wakes the other bodies.
-     * Manipulating a body's transform may cause non-physical behavior.
-     *
-     * @param position The world position of the body's local origin.
-     * @param angle The world rotation in radians.
      */
     fun setTransform(position: Vec2, angle: Float) {
         // Ensure world is not locked.
@@ -574,18 +533,9 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L743-L761
      */
-    /**
-     * Apply a force at a world point. If the force is not
-     * applied at the center of mass, it will generate a torque and
-     * affect the angular velocity. This wakes up the body.
-     *
-     * @param force The world force vector, usually in Newtons (N).
-     * @param point The world position of the point of application.
-     */
     fun applyForce(force: Vec2, point: Vec2) {
         // Only dynamic bodies are affected by forces.
         if (type != BodyType.DYNAMIC) {
-        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         // Wake the body.
@@ -609,7 +559,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      */
     fun applyForceToCenter(force: Vec2) {
         if (type != BodyType.DYNAMIC) {
-        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -627,16 +576,8 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L782-L799
      */
-    /**
-     * Apply a torque. This affects the angular velocity
-     * without affecting the linear velocity of the center of mass.
-     * This wakes up the body.
-     *
-     * @param torque The torque (N-m).
-     */
     fun applyTorque(torque: Float) {
         if (type != BodyType.DYNAMIC) {
-        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -657,17 +598,8 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      *
      * @repolink https://github.com/erincatto/box2d/blob/411acc32eb6d4f2e96fc70ddbdf01fe5f9b16230/include/box2d/b2_body.h#L801-L819
      */
-    /**
-     * Apply an impulse at a point. This immediately modifies the velocity.
-     * It also modifies the angular velocity if the point of application
-     * is not at the center of mass. This wakes up the body.
-     *
-     * @param impulse The world impulse vector, usually in N-seconds or kg-m/s.
-     * @param point The world position of the point of application.
-     */
     fun applyLinearImpulse(impulse: Vec2, point: Vec2, wake: Boolean) {
         if (type != BodyType.DYNAMIC) {
-        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -694,7 +626,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      */
     fun applyAngularImpulse(impulse: Float) {
         if (type != BodyType.DYNAMIC) {
-        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         if (!isAwake) {
@@ -738,7 +669,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
             return
         }
         if (type != BodyType.DYNAMIC) {
-        // 1. Type Check: Only dynamic bodies can be affected by forces.
             return
         }
         // Initialize inverses.
@@ -875,12 +805,6 @@ class Body(bd: BodyDef, @JvmField var world: World) {
      * @param localPoint A point on the body measured relative the body's
      *     origin.
      *
-     * @return The same point expressed in world coordinates.
-     */
-    /**
-     * Get the world coordinates of a point given the local coordinates.
-     *
-     * @param localPoint A point on the body measured relative the the body's origin.
      * @return The same point expressed in world coordinates.
      */
     fun getWorldPoint(localPoint: Vec2): Vec2 {

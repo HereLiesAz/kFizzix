@@ -1,70 +1,46 @@
 # kfizzix
 
-**Hello!** 👋
+## What is this?
+kfizzix is a toy box for your computer code! It helps you make things move and bump into each other, just like in real life. If you want to make a ball bounce or a block fall, kfizzix does the math for you.
 
-Imagine you have a big box of blocks, balls, and toy cars. You can stack them up, knock them over, and watch them roll.
+It is written in a language called Kotlin. It is very fast and works on phones (Android) and computers.
 
-**kfizzix** (say "Kay-Fizz-Icks") is a special computer program that lets you do exactly that inside your computer screen!
-
-*   🍎 **Gravity:** It knows how things fall down.
-*   💥 **Bumping:** It knows when two things hit each other (Boink!).
-*   🧱 **Stacking:** It lets you build tall towers.
-
-It's like magic math that makes your games feel real.
-
----
-
-## For the Grown-Ups (Developers) 🤓
-
-kfizzix is a rigid body physics engine written in 100% Kotlin. It is a port of JBox2D, optimized for the JVM and Android.
-
-### How to Install
-
-If you are including this in your project, add the library dependency:
+## How to use it
+Ask a grown-up (or a developer) to put this in your `build.gradle.kts` file:
 
 ```kotlin
-implementation("com.hereliesaz.kfizzix:kfizzix-library:1.0.0-SNAPSHOT")
+dependencies {
+    implementation("com.hereliesaz.kfizzix:kfizzix-library:1.0.0-SNAPSHOT")
+}
 ```
 
-### Features
-
-*   **Rigid Bodies:** Dynamic (moving), Static (walls), and Kinematic (moving platforms).
-*   **Joints:** Connect bodies together with hinges, springs, and sliders.
-*   **Collision Detection:** Efficiently detects when Polygons, Circles, and Chains overlap.
-*   **Particle Simulation:** Simulate fluids and soft particles (ported from LiquidFun).
-
-### Simple Example
-
-Here is how you create a world where a box falls onto the ground:
+## Make Code (Example)
+Here is how you make a world with gravity and a box:
 
 ```kotlin
-import com.hereliesaz.kfizzix.dynamics.*
-import com.hereliesaz.kfizzix.collision.shapes.*
-import com.hereliesaz.kfizzix.common.*
-
 // 1. Make a World. Gravity pulls down!
 val gravity = Vec2(0.0f, -10.0f)
 val world = World(gravity)
 
 // 2. Make the Ground (so things don't fall forever)
 val groundDef = BodyDef()
-groundDef.position.set(0.0f, -10.0f) // 10 meters down
+groundDef.position.set(0.0f, -10.0f)
 val groundBody = world.createBody(groundDef)
 val groundShape = PolygonShape()
-groundShape.setAsBox(50.0f, 10.0f) // A huge floor
-groundBody.createFixture(groundShape, 0.0f) // 0 mass (static)
+groundShape.setAsBox(50.0f, 10.0f)
+groundBody.createFixture(groundShape, 0.0f)
 
 // 3. Make a Box that falls
 val boxDef = BodyDef()
-boxDef.type = BodyType.DYNAMIC // It moves!
-boxDef.position.set(0.0f, 4.0f) // 4 meters up
+boxDef.type = BodyType.DYNAMIC // Dynamic means it moves!
+boxDef.position.set(0.0f, 4.0f)
 val boxBody = world.createBody(boxDef)
 val boxShape = PolygonShape()
-boxShape.setAsBox(1.0f, 1.0f) // A 2x2 meter box
-boxBody.createFixture(boxShape, 1.0f) // Density 1.0
+boxShape.setAsBox(1.0f, 1.0f)
+boxBody.createFixture(boxShape, 1.0f) // 1.0f is how heavy it is
 
 // 4. Time step! (Move the world forward a tiny bit)
-// In a game loop, you call this 60 times a second.
+// Do this in a loop, like in a video game.
 world.step(1.0f / 60.0f, 6, 2)
 ```
 

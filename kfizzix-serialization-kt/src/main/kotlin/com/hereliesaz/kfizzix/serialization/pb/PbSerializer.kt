@@ -43,56 +43,56 @@ class PbSerializer : JbSerializer {
     private var listener: UnsupportedListener? = null
 
     constructor()
-    constructor(argListener: UnsupportedListener?) {
-        listener = argListener
+    constructor(listener: UnsupportedListener?) {
+        this.listener = listener
     }
 
-    constructor(argSigner: JbSerializer.ObjectSigner?) {
-        signer = argSigner
+    constructor(signer: JbSerializer.ObjectSigner?) {
+        this.signer = signer
     }
 
-    constructor(argListener: UnsupportedListener?, argSigner: JbSerializer.ObjectSigner?) {
-        listener = argListener
-        signer = argSigner
+    constructor(listener: UnsupportedListener?, signer: JbSerializer.ObjectSigner?) {
+        this.listener = listener
+        this.signer = signer
     }
 
-    override fun setObjectSigner(argSigner: JbSerializer.ObjectSigner) {
-        signer = argSigner
+    override fun setObjectSigner(signer: JbSerializer.ObjectSigner) {
+        this.signer = signer
     }
 
-    override fun setUnsupportedListener(argListener: UnsupportedListener) {
-        listener = argListener
+    override fun setUnsupportedListener(listener: UnsupportedListener) {
+        this.listener = listener
     }
 
-    override fun serialize(argWorld: World): SerializationResult {
-        val world = serializeWorld(argWorld).build()
+    override fun serialize(world: World): SerializationResult {
+        val pbWorld = serializeWorld(world).build()
         return object : SerializationResult {
             @Throws(IOException::class)
-            override fun writeTo(argOutputStream: OutputStream) {
-                world.writeTo(argOutputStream)
+            override fun writeTo(outputStream: OutputStream) {
+                pbWorld.writeTo(outputStream)
             }
 
             override fun getValue(): Any {
-                return world
+                return pbWorld
             }
         }
     }
 
-    fun serializeWorld(argWorld: World): PbWorld.Builder {
+    fun serializeWorld(world: World): PbWorld.Builder {
         val builder = PbWorld.newBuilder()
         if (signer != null) {
-            val tag = signer!!.getTag(argWorld)
+            val tag = signer!!.getTag(world)
             if (tag != null) {
                 builder.tag = tag
             }
         }
-        builder.setGravity(vecToPb(argWorld.gravity))
-        builder.autoClearForces = argWorld.isAutoClearForces
-        builder.allowSleep = argWorld.allowSleep
-        builder.continuousPhysics = argWorld.continuousPhysics
-        builder.warmStarting = argWorld.warmStarting
-        builder.subStepping = argWorld.subStepping
-        var cbody = argWorld.bodyList
+        builder.setGravity(vecToPb(world.gravity))
+        builder.autoClearForces = world.isAutoClearForces
+        builder.allowSleep = world.allowSleep
+        builder.continuousPhysics = world.continuousPhysics
+        builder.warmStarting = world.warmStarting
+        builder.subStepping = world.subStepping
+        var cbody = world.bodyList
         var cnt = 0
         val bodies = HashMap<Body, Int>()
         while (cbody != null) {
@@ -103,7 +103,7 @@ class PbSerializer : JbSerializer {
         }
         cnt = 0
         val joints = HashMap<Joint, Int>()
-        var cjoint = argWorld.jointList
+        var cjoint = world.jointList
         // first pass
         while (cjoint != null) {
             if (SerializationHelper.isIndependentJoint(cjoint.type)) {
@@ -114,7 +114,7 @@ class PbSerializer : JbSerializer {
             cjoint = cjoint.next
         }
         // second pass for dependent joints
-        cjoint = argWorld.jointList
+        cjoint = world.jointList
         while (cjoint != null) {
             if (!SerializationHelper.isIndependentJoint(cjoint.type)) {
                 builder.addJoints(serializeJoint(cjoint, bodies, joints))
@@ -126,55 +126,55 @@ class PbSerializer : JbSerializer {
         return builder
     }
 
-    override fun serialize(argBody: Body): SerializationResult {
-        val builder = serializeBody(argBody)
-        val body = builder.build()
+    override fun serialize(body: Body): SerializationResult {
+        val builder = serializeBody(body)
+        val pbBody = builder.build()
         return object : SerializationResult {
             @Throws(IOException::class)
-            override fun writeTo(argOutputStream: OutputStream) {
-                body.writeTo(argOutputStream)
+            override fun writeTo(outputStream: OutputStream) {
+                pbBody.writeTo(outputStream)
             }
 
             override fun getValue(): Any {
-                return body
+                return pbBody
             }
         }
     }
 
-    fun serializeBody(argBody: Body): PbBody.Builder {
+    fun serializeBody(body: Body): PbBody.Builder {
         val builder = PbBody.newBuilder()
         if (signer != null) {
-            val id = signer!!.getTag(argBody)
+            val id = signer!!.getTag(body)
             if (id != null) {
                 builder.tag = id
             }
         }
-        when (argBody.type) {
+        when (body.type) {
             BodyType.DYNAMIC -> builder.type = PbBodyType.DYNAMIC
             BodyType.KINEMATIC -> builder.type = PbBodyType.KINEMATIC
             BodyType.STATIC -> builder.type = PbBodyType.STATIC
             else -> {
                 val e = UnsupportedObjectException(
-                        "Unknown body type: " + argBody.type, Type.BODY)
+                        "Unknown body type: " + body.type, Type.BODY)
                 if (listener == null || listener!!.isUnsupported(e)) {
                     throw e
                 }
                 throw e
             }
         }
-        builder.setPosition(vecToPb(argBody.position))
-        builder.angle = argBody.angle
-        builder.setLinearVelocity(vecToPb(argBody.linearVelocity))
-        builder.angularVelocity = argBody.angularVelocity
-        builder.linearDamping = argBody.linearDamping
-        builder.angularDamping = argBody.angularDamping
-        builder.gravityScale = argBody.gravityScale
-        builder.bullet = argBody.isBullet
-        builder.allowSleep = argBody.isSleepingAllowed
-        builder.awake = argBody.isAwake
-        builder.active = argBody.isActive
-        builder.fixedRotation = argBody.isFixedRotation
-        var curr = argBody.fixtureList
+        builder.setPosition(vecToPb(body.position))
+        builder.angle = body.angle
+        builder.setLinearVelocity(vecToPb(body.linearVelocity))
+        builder.angularVelocity = body.angularVelocity
+        builder.linearDamping = body.linearDamping
+        builder.angularDamping = body.angularDamping
+        builder.gravityScale = body.gravityScale
+        builder.bullet = body.isBullet
+        builder.allowSleep = body.isSleepingAllowed
+        builder.awake = body.isAwake
+        builder.active = body.isActive
+        builder.fixedRotation = body.isFixedRotation
+        var curr = body.fixtureList
         while (curr != null) {
             builder.addFixtures(serializeFixture(curr))
             curr = curr.next
@@ -182,70 +182,70 @@ class PbSerializer : JbSerializer {
         return builder
     }
 
-    override fun serialize(argFixture: Fixture): SerializationResult {
-        val fixture = serializeFixture(argFixture).build()
+    override fun serialize(fixture: Fixture): SerializationResult {
+        val pbFixture = serializeFixture(fixture).build()
         return object : SerializationResult {
             @Throws(IOException::class)
-            override fun writeTo(argOutputStream: OutputStream) {
-                fixture.writeTo(argOutputStream)
+            override fun writeTo(outputStream: OutputStream) {
+                pbFixture.writeTo(outputStream)
             }
 
             override fun getValue(): Any {
-                return fixture
+                return pbFixture
             }
         }
     }
 
-    fun serializeFixture(argFixture: Fixture): PbFixture.Builder {
+    fun serializeFixture(fixture: Fixture): PbFixture.Builder {
         val builder = PbFixture.newBuilder()
         if (signer != null) {
-            val tag = signer!!.getTag(argFixture)
+            val tag = signer!!.getTag(fixture)
             if (tag != null) {
                 builder.tag = tag
             }
         }
-        builder.density = argFixture.density
-        builder.friction = argFixture.friction
-        builder.restitution = argFixture.restitution
-        builder.sensor = argFixture.isSensor
-        builder.setShape(serializeShape(argFixture.shape!!))
-        builder.setFilter(serializeFilter(argFixture.filter!!))
+        builder.density = fixture.density
+        builder.friction = fixture.friction
+        builder.restitution = fixture.restitution
+        builder.sensor = fixture.isSensor
+        builder.setShape(serializeShape(fixture.shape!!))
+        builder.setFilter(serializeFilter(fixture.filter!!))
         return builder
     }
 
-    override fun serialize(argShape: Shape): SerializationResult {
-        val builder = serializeShape(argShape)
+    override fun serialize(shape: Shape): SerializationResult {
+        val builder = serializeShape(shape)
 // should we do lazy building?
-        val shape = builder.build()
+        val pbShape = builder.build()
         return object : SerializationResult {
             @Throws(IOException::class)
-            override fun writeTo(argOutputStream: OutputStream) {
-                shape.writeTo(argOutputStream)
+            override fun writeTo(outputStream: OutputStream) {
+                pbShape.writeTo(outputStream)
             }
 
             override fun getValue(): Any {
-                return shape
+                return pbShape
             }
         }
     }
 
-    fun serializeShape(argShape: Shape): PbShape.Builder {
+    fun serializeShape(shape: Shape): PbShape.Builder {
         val builder = PbShape.newBuilder()
         if (signer != null) {
-            val tag = signer!!.getTag(argShape)
+            val tag = signer!!.getTag(shape)
             if (tag != null) {
                 builder.tag = tag
             }
         }
-        builder.radius = argShape.radius
-        when (argShape.type) {
+        builder.radius = shape.radius
+        when (shape.type) {
             ShapeType.CIRCLE -> {
-                val c = argShape as CircleShape
+                val c = shape as CircleShape
                 builder.type = PbShapeType.CIRCLE
                 builder.setCenter(vecToPb(c.p))
             }
             ShapeType.POLYGON -> {
-                val p = argShape as PolygonShape
+                val p = shape as PolygonShape
                 builder.type = PbShapeType.POLYGON
                 builder.setCentroid(vecToPb(p.centroid))
                 for (i in 0 until p.count) {
@@ -254,7 +254,7 @@ class PbSerializer : JbSerializer {
                 }
             }
             ShapeType.EDGE -> {
-                val e = argShape as EdgeShape
+                val e = shape as EdgeShape
                 builder.type = PbShapeType.EDGE
                 builder.setV0(vecToPb(e.vertex0))
                 builder.setV1(vecToPb(e.vertex1))
@@ -264,7 +264,7 @@ class PbSerializer : JbSerializer {
                 builder.setHas3(e.hasVertex3)
             }
             ShapeType.CHAIN -> {
-                val h = argShape as ChainShape
+                val h = shape as ChainShape
                 builder.type = PbShapeType.CHAIN
                 for (i in 0 until h.count) {
                     builder.addPoints(vecToPb(h.vertices!![i]))
@@ -287,26 +287,26 @@ class PbSerializer : JbSerializer {
         return builder
     }
 
-    override fun serialize(argJoint: Joint, argBodyIndexMap: Map<Body, Int>,
-                           argJointIndexMap: Map<Joint, Int>): SerializationResult {
-        val builder = serializeJoint(argJoint, argBodyIndexMap,
-                argJointIndexMap)
-        val joint = builder.build()
+    override fun serialize(joint: Joint, bodyIndexMap: Map<Body, Int>,
+                           jointIndexMap: Map<Joint, Int>): SerializationResult {
+        val builder = serializeJoint(joint, bodyIndexMap,
+                jointIndexMap)
+        val pbJoint = builder.build()
         return object : SerializationResult {
             @Throws(IOException::class)
-            override fun writeTo(argOutputStream: OutputStream) {
-                joint.writeTo(argOutputStream)
+            override fun writeTo(outputStream: OutputStream) {
+                pbJoint.writeTo(outputStream)
             }
 
             override fun getValue(): Any {
-                return joint
+                return pbJoint
             }
         }
     }
 
     fun serializeJoint(joint: Joint,
-                       argBodyIndexMap: Map<Body, Int>,
-                       argJointIndexMap: Map<Joint, Int>): PbJoint.Builder {
+                       bodyIndexMap: Map<Body, Int>,
+                       jointIndexMap: Map<Joint, Int>): PbJoint.Builder {
         val builder = PbJoint.newBuilder()
         if (signer != null) {
             val tag = signer!!.getTag(joint)
@@ -318,16 +318,16 @@ class PbSerializer : JbSerializer {
         }
         val bA = joint.bodyA
         val bB = joint.bodyB
-        if (!argBodyIndexMap.containsKey(bA)) {
+        if (!bodyIndexMap.containsKey(bA)) {
             throw IllegalArgumentException(
                     "Body $bA is not present in the index map")
         }
-        builder.setBodyA(argBodyIndexMap[bA]!!)
-        if (!argBodyIndexMap.containsKey(bB)) {
+        builder.setBodyA(bodyIndexMap[bA]!!)
+        if (!bodyIndexMap.containsKey(bB)) {
             throw IllegalArgumentException(
                     "Body $bB is not present in the index map")
         }
-        builder.setBodyB(argBodyIndexMap[bB]!!)
+        builder.setBodyB(bodyIndexMap[bB]!!)
         builder.collideConnected = joint.collideConnected
         when (joint.type) {
             JointType.REVOLUTE -> {
@@ -389,14 +389,14 @@ class PbSerializer : JbSerializer {
                 val j = joint as GearJoint
                 builder.type = PbJointType.GEAR
                 builder.ratio = j.ratio
-                if (!argJointIndexMap.containsKey(j.joint1)) {
+                if (!jointIndexMap.containsKey(j.joint1)) {
                     throw IllegalArgumentException("Joint 1 not in map")
                 }
-                val j1 = argJointIndexMap[j.joint1]!!
-                if (!argJointIndexMap.containsKey(j.joint2)) {
+                val j1 = jointIndexMap[j.joint1]!!
+                if (!jointIndexMap.containsKey(j.joint2)) {
                     throw IllegalArgumentException("Joint 2 not in map")
                 }
-                val j2 = argJointIndexMap[j.joint2]!!
+                val j2 = jointIndexMap[j.joint2]!!
                 builder.setJoint1(j1)
                 builder.setJoint2(j2)
             }
@@ -414,15 +414,15 @@ class PbSerializer : JbSerializer {
                 for (i in j.bodies.indices) {
                     val b = j.bodies[i]
                     val distanceJoint = j.joints[i]
-                    if (!argBodyIndexMap.containsKey(b)) {
+                    if (!bodyIndexMap.containsKey(b)) {
                         throw IllegalArgumentException(
                                 "Body $b is not present in the index map")
                     }
-                    builder.addBodies(argBodyIndexMap[b]!!)
-                    if (!argJointIndexMap.containsKey(distanceJoint)) {
+                    builder.addBodies(bodyIndexMap[b]!!)
+                    if (!jointIndexMap.containsKey(distanceJoint)) {
                         throw IllegalArgumentException("Joint $distanceJoint is not present in the index map")
                     }
-                    builder.addJoints(argJointIndexMap[distanceJoint]!!)
+                    builder.addJoints(jointIndexMap[distanceJoint]!!)
                 }
             }
             JointType.WHEEL -> {
@@ -465,18 +465,18 @@ class PbSerializer : JbSerializer {
         return builder
     }
 
-    fun serializeFilter(argFilter: Filter): PbFilter.Builder {
+    fun serializeFilter(filter: Filter): PbFilter.Builder {
         val builder = PbFilter.newBuilder()
-        builder.categoryBits = argFilter.categoryBits
-        builder.groupIndex = argFilter.groupIndex
-        builder.maskBits = argFilter.maskBits
+        builder.categoryBits = filter.categoryBits
+        builder.groupIndex = filter.groupIndex
+        builder.maskBits = filter.maskBits
         return builder
     }
 
-    private fun vecToPb(argVec: Vec2?): PbVec2? {
-        if (argVec == null) {
+    private fun vecToPb(vec: Vec2?): PbVec2? {
+        if (vec == null) {
             return null
         }
-        return PbVec2.newBuilder().setX(argVec.x).setY(argVec.y).build()
+        return PbVec2.newBuilder().setX(vec.x).setY(vec.y).build()
     }
 }

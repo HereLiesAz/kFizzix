@@ -40,25 +40,25 @@ class PbDeserializer : JbDeserializer {
     private var unsupportedlistener: UnsupportedListener? = null
 
     constructor()
-    constructor(argListener: UnsupportedListener?) {
-        unsupportedlistener = argListener
+    constructor(unsupportedListener: UnsupportedListener?) {
+        this.unsupportedlistener = unsupportedListener
     }
 
-    constructor(argObjectListener: JbDeserializer.ObjectListener?) {
-        listener = argObjectListener
+    constructor(objectListener: JbDeserializer.ObjectListener?) {
+        listener = objectListener
     }
 
-    constructor(argListener: UnsupportedListener?, argObjectListener: JbDeserializer.ObjectListener?) {
-        unsupportedlistener = argListener
-        listener = argObjectListener
+    constructor(unsupportedListener: UnsupportedListener?, objectListener: JbDeserializer.ObjectListener?) {
+        this.unsupportedlistener = unsupportedListener
+        listener = objectListener
     }
 
-    override fun setObjectListener(argListener: JbDeserializer.ObjectListener) {
-        listener = argListener
+    override fun setObjectListener(listener: JbDeserializer.ObjectListener) {
+        this.listener = listener
     }
 
-    override fun setUnsupportedListener(argListener: UnsupportedListener) {
-        unsupportedlistener = argListener
+    override fun setUnsupportedListener(unsupportedListener: UnsupportedListener) {
+        this.unsupportedlistener = unsupportedListener
     }
 
     private fun isIndependentJoint(argType: PbJointType): Boolean {
@@ -66,8 +66,8 @@ class PbDeserializer : JbDeserializer {
     }
 
     @Throws(IOException::class)
-    override fun deserializeWorld(argInput: InputStream): World {
-        val world = PbWorld.parseFrom(argInput)
+    override fun deserializeWorld(input: InputStream): World {
+        val world = PbWorld.parseFrom(input)
         return deserializeWorld(world)
     }
 
@@ -112,31 +112,31 @@ class PbDeserializer : JbDeserializer {
     }
 
     @Throws(IOException::class)
-    override fun deserializeBody(argWorld: World, argInput: InputStream): Body {
-        val body = PbBody.parseFrom(argInput)
-        return deserializeBody(argWorld, body)
+    override fun deserializeBody(world: World, input: InputStream): Body {
+        val body = PbBody.parseFrom(input)
+        return deserializeBody(world, body)
     }
 
-    fun deserializeBody(argWorld: World, argBody: PbBody): Body {
+    fun deserializeBody(world: World, pbBody: PbBody): Body {
         val bd = BodyDef()
-        bd.position.set(pbToVec(argBody.position))
-        bd.angle = argBody.angle
-        bd.linearDamping = argBody.linearDamping
-        bd.angularDamping = argBody.angularDamping
-        bd.gravityScale = argBody.gravityScale
+        bd.position.set(pbToVec(pbBody.position))
+        bd.angle = pbBody.angle
+        bd.linearDamping = pbBody.linearDamping
+        bd.angularDamping = pbBody.angularDamping
+        bd.gravityScale = pbBody.gravityScale
         // velocities are populated after fixture addition
-        bd.bullet = argBody.bullet
-        bd.allowSleep = argBody.allowSleep
-        bd.awake = argBody.awake
-        bd.active = argBody.active
-        bd.fixedRotation = argBody.fixedRotation
-        when (argBody.type) {
+        bd.bullet = pbBody.bullet
+        bd.allowSleep = pbBody.allowSleep
+        bd.awake = pbBody.awake
+        bd.active = pbBody.active
+        bd.fixedRotation = pbBody.fixedRotation
+        when (pbBody.type) {
             PbBodyType.DYNAMIC -> bd.type = BodyType.DYNAMIC
             PbBodyType.KINEMATIC -> bd.type = BodyType.KINEMATIC
             PbBodyType.STATIC -> bd.type = BodyType.STATIC
             else -> {
                 val e = UnsupportedObjectException(
-                        "Unknown body type: " + argBody.type, Type.BODY)
+                        "Unknown body type: " + pbBody.type, Type.BODY)
                 if (unsupportedlistener == null
                         || unsupportedlistener!!.isUnsupported(e)) {
                     throw e
@@ -144,95 +144,95 @@ class PbDeserializer : JbDeserializer {
                 throw e
             }
         }
-        val body = argWorld.createBody(bd)
-        for (i in 0 until argBody.fixturesCount) {
-            deserializeFixture(body, argBody.getFixtures(i))
+        val body = world.createBody(bd)
+        for (i in 0 until pbBody.fixturesCount) {
+            deserializeFixture(body, pbBody.getFixtures(i))
         }
         // adding fixtures can change this, so we put this here and set it
 // directly in the body
-        body.linearVelocity.set(pbToVec(argBody.linearVelocity))
-        body.angularVelocity = argBody.angularVelocity
-        if (listener != null && argBody.hasTag()) {
-            listener!!.processBody(body, argBody.tag)
+        body.linearVelocity.set(pbToVec(pbBody.linearVelocity))
+        body.angularVelocity = pbBody.angularVelocity
+        if (listener != null && pbBody.hasTag()) {
+            listener!!.processBody(body, pbBody.tag)
         }
         return body
     }
 
     @Throws(IOException::class)
-    override fun deserializeFixture(argBody: Body, argInput: InputStream): Fixture {
-        val fixture = PbFixture.parseFrom(argInput)
-        return deserializeFixture(argBody, fixture)
+    override fun deserializeFixture(body: Body, input: InputStream): Fixture {
+        val fixture = PbFixture.parseFrom(input)
+        return deserializeFixture(body, fixture)
     }
 
-    fun deserializeFixture(argBody: Body, argFixture: PbFixture): Fixture {
+    fun deserializeFixture(body: Body, pbFixture: PbFixture): Fixture {
         val fd = FixtureDef()
-        fd.density = argFixture.density
-        fd.filter.categoryBits = argFixture.filter.categoryBits
-        fd.filter.groupIndex = argFixture.filter.groupIndex
-        fd.filter.maskBits = argFixture.filter.maskBits
-        fd.friction = argFixture.friction
-        fd.isSensor = argFixture.sensor
-        fd.restitution = argFixture.restitution
-        fd.shape = deserializeShape(argFixture.shape)
-        val fixture = argBody.createFixture(fd)
-        if (listener != null && argFixture.hasTag()) {
-            listener!!.processFixture(fixture!!, argFixture.tag)
+        fd.density = pbFixture.density
+        fd.filter.categoryBits = pbFixture.filter.categoryBits
+        fd.filter.groupIndex = pbFixture.filter.groupIndex
+        fd.filter.maskBits = pbFixture.filter.maskBits
+        fd.friction = pbFixture.friction
+        fd.isSensor = pbFixture.sensor
+        fd.restitution = pbFixture.restitution
+        fd.shape = deserializeShape(pbFixture.shape)
+        val fixture = body.createFixture(fd)
+        if (fixture != null && listener != null && pbFixture.hasTag()) {
+            listener!!.processFixture(fixture, pbFixture.tag)
         }
         return fixture!!
     }
 
     @Throws(IOException::class)
-    override fun deserializeShape(argInput: InputStream): Shape {
-        val s = PbShape.parseFrom(argInput)
+    override fun deserializeShape(input: InputStream): Shape {
+        val s = PbShape.parseFrom(input)
         return deserializeShape(s)
     }
 
-    fun deserializeShape(argShape: PbShape): Shape {
+    fun deserializeShape(pbShape: PbShape): Shape {
         val shape: Shape
-        when (argShape.type) {
+        when (pbShape.type) {
             PbShapeType.CIRCLE -> {
                 val c = CircleShape()
-                c.p.set(pbToVec(argShape.center))
+                c.p.set(pbToVec(pbShape.center))
                 shape = c
             }
             PbShapeType.POLYGON -> {
                 val p = PolygonShape()
-                p.centroid.set(pbToVec(argShape.centroid))
-                p.count = argShape.pointsCount
+                p.centroid.set(pbToVec(pbShape.centroid))
+                p.count = pbShape.pointsCount
                 for (i in 0 until p.count) {
-                    p.vertices[i].set(pbToVec(argShape.getPoints(i)))
-                    p.normals[i].set(pbToVec(argShape.getNormals(i)))
+                    p.vertices[i].set(pbToVec(pbShape.getPoints(i)))
+                    p.normals[i].set(pbToVec(pbShape.getNormals(i)))
                 }
                 shape = p
             }
             PbShapeType.EDGE -> {
                 val edge = EdgeShape()
-                edge.vertex0.set(pbToVec(argShape.v0))
-                edge.vertex1.set(pbToVec(argShape.v1))
-                edge.vertex2.set(pbToVec(argShape.v2))
-                edge.vertex3.set(pbToVec(argShape.v3))
-                edge.hasVertex0 = argShape.has0
-                edge.hasVertex3 = argShape.has3
+                edge.vertex0.set(pbToVec(pbShape.v0))
+                edge.vertex1.set(pbToVec(pbShape.v1))
+                edge.vertex2.set(pbToVec(pbShape.v2))
+                edge.vertex3.set(pbToVec(pbShape.v3))
+                edge.hasVertex0 = pbShape.has0
+                edge.hasVertex3 = pbShape.has3
                 shape = edge
             }
             PbShapeType.CHAIN -> {
                 val chain = ChainShape()
-                chain.count = argShape.pointsCount
+                chain.count = pbShape.pointsCount
                 chain.vertices = Array(chain.count) { Vec2() }
                 for (i in 0 until chain.count) {
 
-                    chain.vertices!![i] = Vec2(pbToVec(argShape.getPoints(i)))
+                    chain.vertices!![i] = Vec2(pbToVec(pbShape.getPoints(i)))
 
                 }
-                chain.hasPrevVertex = argShape.has0
-                chain.hasNextVertex = argShape.has3
-                chain.prevVertex.set(pbToVec(argShape.prev))
-                chain.nextVertex.set(pbToVec(argShape.next))
+                chain.hasPrevVertex = pbShape.has0
+                chain.hasNextVertex = pbShape.has3
+                chain.prevVertex.set(pbToVec(pbShape.prev))
+                chain.nextVertex.set(pbToVec(pbShape.next))
                 shape = chain
             }
             else -> {
                 val e = UnsupportedObjectException(
-                        "Unknown shape type: " + argShape.type, Type.SHAPE)
+                        "Unknown shape type: " + pbShape.type, Type.SHAPE)
                 if (unsupportedlistener == null
                         || unsupportedlistener!!.isUnsupported(e)) {
                     throw e
@@ -240,22 +240,22 @@ class PbDeserializer : JbDeserializer {
                 throw e
             }
         }
-        shape.radius = argShape.radius
-        if (listener != null && argShape.hasTag()) {
-            listener!!.processShape(shape, argShape.tag)
+        shape.radius = pbShape.radius
+        if (listener != null && pbShape.hasTag()) {
+            listener!!.processShape(shape, pbShape.tag)
         }
         return shape
     }
 
     @Throws(IOException::class)
-    override fun deserializeJoint(argWorld: World, argInput: InputStream,
-                                  argBodyMap: Map<Int, Body>, jointMap: Map<Int, Joint>): Joint {
-        val joint = PbJoint.parseFrom(argInput)
-        return deserializeJoint(argWorld, joint, argBodyMap, jointMap)
+    override fun deserializeJoint(world: World, input: InputStream,
+                                  bodyMap: Map<Int, Body>, jointMap: Map<Int, Joint>): Joint {
+        val joint = PbJoint.parseFrom(input)
+        return deserializeJoint(world, joint, bodyMap, jointMap)
     }
 
-    fun deserializeJoint(argWorld: World, joint: PbJoint,
-                         argBodyMap: Map<Int, Body>, jointMap: Map<Int, Joint>): Joint {
+    fun deserializeJoint(world: World, joint: PbJoint,
+                         bodyMap: Map<Int, Body>, jointMap: Map<Int, Joint>): Joint {
         val jd: JointDef
         when (joint.type) {
             PbJointType.PRISMATIC -> {
@@ -375,7 +375,7 @@ class PbDeserializer : JbDeserializer {
                 }
                 for (i in 0 until joint.bodiesCount) {
                     val body = joint.getBodies(i)
-                    if (!argBodyMap.containsKey(body)) {
+                    if (!bodyMap.containsKey(body)) {
                         throw IllegalArgumentException("Index " + body
                                 + " is not present in the body map")
                     }
@@ -389,7 +389,7 @@ class PbDeserializer : JbDeserializer {
                         throw IllegalArgumentException(
                                 "Joints for constant volume joint must be distance joints")
                     }
-                    def.addBodyAndJoint(argBodyMap[body]!!,
+                    def.addBodyAndJoint(bodyMap[body]!!,
                             djoint as DistanceJoint)
                 }
             }
@@ -413,24 +413,24 @@ class PbDeserializer : JbDeserializer {
             }
         }
         jd.collideConnected = joint.collideConnected
-        if (!argBodyMap.containsKey(joint.bodyA)) {
+        if (!bodyMap.containsKey(joint.bodyA)) {
             throw IllegalArgumentException("Index " + joint.bodyA
                     + " is not present in the body map")
         }
-        jd.bodyA = argBodyMap[joint.bodyA]
-        if (!argBodyMap.containsKey(joint.bodyB)) {
+        jd.bodyA = bodyMap[joint.bodyA]
+        if (!bodyMap.containsKey(joint.bodyB)) {
             throw IllegalArgumentException("Index " + joint.bodyB
                     + " is not present in the body map")
         }
-        jd.bodyB = argBodyMap[joint.bodyB]
-        val realJoint = argWorld.createJoint(jd)
-        if (listener != null && joint.hasTag()) {
-            listener!!.processJoint(realJoint!!, joint.tag)
+        jd.bodyB = bodyMap[joint.bodyB]
+        val realJoint = world.createJoint(jd)
+        if (realJoint != null && listener != null && joint.hasTag()) {
+            listener!!.processJoint(realJoint, joint.tag)
         }
         return realJoint!!
     }
 
-    private fun pbToVec(argVec: PbVec2): Vec2 {
-        return Vec2(argVec.x, argVec.y)
+    private fun pbToVec(v: PbVec2): Vec2 {
+        return Vec2(v.x, v.y)
     }
 }

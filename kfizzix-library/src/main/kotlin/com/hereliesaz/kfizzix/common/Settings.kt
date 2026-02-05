@@ -24,27 +24,16 @@
 package com.hereliesaz.kfizzix.common
 
 /**
- * Global tuning constants based on MKS (Meters-Kilograms-Seconds) units.
- *
- * This file controls the "physics laws" of the engine. Adjusting these values
- * can significantly change the stability and behavior of the simulation.
- *
- * **Note on Units:**
- * Box2D/kfizzix is tuned for meters, kilograms, and seconds.
- * *   Objects between 0.1 and 10 meters work best.
- * *   Do not use pixels as units! (e.g., a 100x100 pixel box is 100 meters tall -> a skyscraper).
- * *   Scale your graphics to match the physics world, not the other way around.
+ * Global tuning constants based on MKS units and various integer maximums
+ * (vertices per shape, pairs, etc.).
  *
  * @author Daniel Murphy
  */
 object Settings {
-    /**
-     * A "close to zero" float epsilon value.
-     * Used for floating point comparisons to handle precision errors.
-     */
+    /** A "close to zero" float epsilon value for use */
     const val EPSILON = 1.1920928955078125E-7f
 
-    /** Pi. (3.14159...) */
+    /** Pi. */
     const val PI = Math.PI.toFloat()
 
     // JBox2D specific settings
@@ -67,21 +56,41 @@ object Settings {
     var SINCOS_LUT_ENABLED = false
 
     /**
-     * Precision for the Sin/Cos Lookup Table.
-     * Smaller precision = larger table.
+     * smaller the precision, the larger the table. If a small table is used
+     * (eg, precision is .006 or greater), make sure you set the table to lerp
+     * it's results. Accuracy chart is in the MathUtils source. Or, run the
+     * tests yourself in `SinCosTest`.
+     *
      *
      * Good lerp precision values:
-     * * .0092
-     * * .002807
-     * * .0001098
+     *
+     *  * .0092
+     *  * .008201
+     *  * .005904
+     *  * .005204
+     *  * .004305
+     *  * .002807
+     *  * .001508
+     *  * 9.32500E-4
+     *  * 7.48000E-4
+     *  * 8.47000E-4
+     *  * .0005095
+     *  * .0001098
+     *  * 9.50499E-5
+     *  * 6.08500E-5
+     *  * 3.07000E-5
+     *  * 1.53999E-5
+     *
      */
     const val SINCOS_LUT_PRECISION = .00011f
     // Length of the sin/cos lookup table based on precision.
     const val SINCOS_LUT_LENGTH = (Math.PI * 2 / SINCOS_LUT_PRECISION).toInt()
 
     /**
-     * Use linear interpolation for the Sin/Cos LUT.
-     * More expensive than raw lookup, but much more accurate for large precision steps.
+     * Use if the table's precision is large (eg .006 or greater). Although it
+     * is more expensive, it greatly increases accuracy. Look in the MathUtils
+     * source for some test results on the accuracy and speed of lerp vs non
+     * lerp. Or, run the tests yourself in `SinCosTest`.
      */
     var SINCOS_LUT_LERP = false
 
@@ -100,15 +109,16 @@ object Settings {
     var maxPolygonVertices = 8
 
     /**
-     * "Fattening" factor for AABBs (Axis Aligned Bounding Boxes) in the broad-phase.
-     * We add this buffer (in meters) to the AABB so that objects can move slightly
-     * without triggering an expensive tree re-insertion.
+     * This is used to fatten AABBs in the dynamic tree. This allows proxies to
+     * move by a small amount without triggering a tree adjustment. This is in
+     * meters.
      */
     var aabbExtension = 0.1f
 
     /**
-     * Multiplier for AABB extension based on velocity.
-     * Used to predict where the object will be next frame.
+     * This is used to fatten AABBs in the dynamic tree. This is used to predict
+     * the future position based on the current displacement. This is a
+     * dimensionless multiplier.
      */
     var aabbMultiplier = 2.0f
 
@@ -120,10 +130,8 @@ object Settings {
     var linearSlop = 0.005f
 
     /**
-     * **Angular Slop**
-     *
-     * Similar to Linear Slop, but for angles (radians).
-     * Allows small angular errors in joints without correction.
+     * A small angle used as a collision and constraint tolerance. Usually it is
+     * chosen to be numerically significant, but visually insignificant.
      */
     var angularSlop = 2.0f / 180.0f * PI
 
@@ -146,7 +154,7 @@ object Settings {
     // Dynamics
 
     /**
-     * Maximum number of contacts to be handled to solve a TOI (Time of Impact) island.
+     * Maximum number of contacts to be handled to solve a TOI island.
      */
     var maxTOIContacts = 32
 
@@ -159,19 +167,19 @@ object Settings {
 
     /**
      * The maximum linear position correction used when solving constraints.
-     * This helps to prevent overshoot when pushing overlapping objects apart.
+     * This helps to prevent overshoot.
      */
     var maxLinearCorrection = 0.2f
 
     /**
      * The maximum angular position correction used when solving constraints.
+     * This helps to prevent overshoot.
      */
     var maxAngularCorrection = 8.0f / 180.0f * PI
 
     /**
-     * The maximum linear velocity of a body (m/s).
-     * This limit is very large and is used to prevent numerical problems (instability)
-     * if a body is blasted with huge force.
+     * The maximum linear velocity of a body. This limit is very large and is
+     * used to prevent numerical problems. You shouldn't need to adjust this.
      */
     var maxTranslation = 2.0f
 
@@ -179,7 +187,8 @@ object Settings {
     var maxTranslationSquared = maxTranslation * maxTranslation
 
     /**
-     * The maximum angular velocity of a body (rad/s).
+     * The maximum angular velocity of a body. This limit is very large and is
+     * used to prevent numerical problems. You shouldn't need to adjust this.
      */
     var maxRotation = 0.5f * PI
 
@@ -187,14 +196,9 @@ object Settings {
     var maxRotationSquared = maxRotation * maxRotation
 
     /**
-     * **Baumgarte Stabilization Factor**
-     *
-     * This scale factor controls how fast overlap is resolved.
-     * Range: [0, 1].
-     *
-     * *   0.0: No correction (objects stay overlapping).
-     * *   1.0: Remove all overlap in a single time step (can cause violent instability/overshoot).
-     * *   0.2: Remove 20% of the overlap per step. This is a safe default (smooth, sponge-like correction).
+     * This scale factor controls how fast overlap is resolved. Ideally this
+     * would be 1 so that overlap is removed in one time step. However, using
+     * values close to 1 often lead to overshoot.
      */
     var baumgarte = 0.2f
 
@@ -204,18 +208,17 @@ object Settings {
     // Sleep
 
     /**
-     * The time (seconds) that a body must be still before it will go to sleep.
-     * Sleeping bodies are removed from simulation to save CPU.
+     * The time that a body must be still before it will go to sleep.
      */
     var timeToSleep = 0.5f
 
     /**
-     * A body cannot sleep if its linear velocity is above this tolerance (m/s).
+     * A body cannot sleep if its linear velocity is above this tolerance.
      */
     var linearSleepTolerance = 0.01f
 
     /**
-     * A body cannot sleep if its angular velocity is above this tolerance (rad/s).
+     * A body cannot sleep if its angular velocity is above this tolerance.
      */
     var angularSleepTolerance = 2.0f / 180.0f * PI
 
@@ -226,22 +229,33 @@ object Settings {
      */
     const val invalidParticleIndex = -1
 
-    /** The standard distance between particles, divided by the particle radius. */
+    /**
+     * The standard distance between particles, divided by the particle radius.
+     */
     const val particleStride = 0.75f
 
-    /** The minimum particle weight that produces pressure. */
+    /**
+     * The minimum particle weight that produces pressure.
+     */
     const val minParticleWeight = 1.0f
 
-    /** The upper limit for particle weight used in pressure calculation. */
+    /**
+     * The upper limit for particle weight used in pressure calculation.
+     */
     const val maxParticleWeight = 5.0f
 
-    /** The maximum distance between particles in a triad, divided by the particle radius. */
+    /**
+     * The maximum distance between particles in a triad, divided by the
+     * particle radius.
+     */
     const val maxTriadDistance = 2
 
     // Squared value.
     const val maxTriadDistanceSquared = maxTriadDistance * maxTriadDistance
 
-    /** The initial size of particle data buffers. */
+    /**
+     * The initial size of particle data buffers.
+     */
     const val minParticleBufferCapacity = 256
 
     /**

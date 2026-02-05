@@ -44,5 +44,5 @@ interface SerializationResult {
      * Writes the result to the given output stream.
      */
     @Throws(IOException::class)
-    fun writeTo(argOutputStream: OutputStream)
+    fun writeTo(outputStream: OutputStream)
 }
